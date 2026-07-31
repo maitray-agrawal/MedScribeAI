@@ -29,6 +29,7 @@
 | `@types/express` | `^4.17.21` | TypeScript definitions for Express |
 | `autoprefixer` | `^10.4.21` | PostCSS plugin to parse CSS and add vendor prefixes |
 | `esbuild` | `^0.25.0` | Lightning-fast JavaScript/TypeScript bundler for server build |
+| `happy-dom` | `^20.11.1` | Lightweight browser environment for Vitest, sidestepping jsdom/undici worker startup crashes |
 | `tailwindcss` | `^4.1.14` | Utility-first CSS framework |
 | `tsx` | `^4.21.0` | TypeScript Execute (Node.js runtime for ts files) |
 | `typescript` | `~5.8.2` | TypeScript language compiler |

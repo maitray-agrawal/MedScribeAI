@@ -34,6 +34,7 @@
 - [x] Wire design tokens into Tailwind CSS v4 config (`src/index.css`)
 - [x] Systematically refactor all components across `src/components/` to use token-based classes
 - [x] Set up automated unit/component test harness (`vitest` + `@testing-library/react`)
+- [x] Resolve Vitest worker startup CI crash by switching test environment from `jsdom` to `happy-dom`
 - [x] Configure CI/CD check pipeline (`.github/workflows/ci.yml`)
 
 ---

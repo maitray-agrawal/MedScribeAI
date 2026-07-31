@@ -140,6 +140,18 @@ Initial deep-dive audit of the existing MedScribe Lite codebase and setup of the
 - **Startup Repository Assets**: Rewrote `README.md` to professional startup standards and generated `LICENSE` (MIT), `SECURITY.md`, and `CHANGELOG.md`.
 - **Phase 1 Verification**: Checked off all remaining Phase 1 items in `todo.md` and verified full Phase 1 completion.
 
+---
+
+## Session Log: 2026-07-31 — Vitest Worker Startup CI Fix (jsdom/undici -> happy-dom)
+
+### Summary of Investigation & Fix
+- **Issue**: Vitest worker startup crashed in CI prior to test execution with `TypeError: webidl.util.markAsUncloneable is not a function` inside `jsdom` -> `undici`'s `CacheStorage`.
+- **Dependency Audit**: Ran `npm ls undici`. Output confirmed only a single resolved copy of `undici` (`undici@8.9.0` under `jsdom@30.0.0`) existed in the tree, ruling out duplicate package version collisions.
+- **Resolution**: Installed `happy-dom` (`^20.11.1`) as a devDependency and updated `vite.config.ts` to switch Vitest test environment from `'jsdom'` to `'happy-dom'`. This sidesteps `jsdom`'s problematic `undici` `CacheStorage` webidl initialization chain during Vitest worker setup.
+- **Lockbase & Governance**: Recorded `happy-dom` in `dependency-lockbase.md` devDependencies and updated `todo.md`.
+- **Local Verification**: Ran `npm run lint` (0 TypeScript errors), `npm test` (28/28 tests passed across 5 test suites), and `npm run build` (successful production bundle build).
+
+
 
 
 

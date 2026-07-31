@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { SAMPLE_SCENARIOS } from '../data/sampleScenarios';
-import { Mic, MicOff, Upload, Sparkles, Trash2, Play, Pause, AlertCircle, RefreshCw, Cpu } from 'lucide-react';
+import { Mic, MicOff, Upload, Sparkles, Trash2, Play, Pause, AlertCircle, RefreshCw, Cpu, AlertTriangle } from 'lucide-react';
+import { useTranslation } from '../i18n';
+import { isNonEnglishTranscript } from '../utils/languageDetector';
 
 interface TranscriptInputProps {
   transcript: string;
@@ -10,6 +12,7 @@ interface TranscriptInputProps {
   onGenerateSOAP: (audioData?: { base64: string; mimeType: string }) => void;
   isGenerating: boolean;
   selectedScenarioId?: string;
+  isOfflineMode?: boolean;
 }
 
 export const TranscriptInput: React.FC<TranscriptInputProps> = ({
@@ -19,7 +22,9 @@ export const TranscriptInput: React.FC<TranscriptInputProps> = ({
   onGenerateSOAP,
   isGenerating,
   selectedScenarioId,
+  isOfflineMode,
 }) => {
+  const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [speechSupported, setSpeechSupported] = useState<boolean>(true);
   const [audioFile, setAudioFile] = useState<{ file: File; url: string; base64: string } | null>(null);
@@ -48,7 +53,7 @@ export const TranscriptInput: React.FC<TranscriptInputProps> = ({
   const startRecording = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('Live Speech-to-Text is not supported by your browser. You can type or upload an audio file instead.');
+      alert(t.transcriptInput.micNotSupported);
       return;
     }
 
@@ -150,10 +155,10 @@ export const TranscriptInput: React.FC<TranscriptInputProps> = ({
         <div className="flex items-center space-x-3">
           <span className="w-2 h-6 bg-blue-600 rounded-full shrink-0"></span>
           <h2 id="transcript-title" className="font-bold text-sm text-slate-800">
-            Consultation Transcript / Dictation Workspace
+            {t.transcriptInput.title}
           </h2>
           <span className="text-xs text-slate-400 font-medium">
-            ({wordCount} words | {characterCount} chars)
+            ({wordCount} {t.transcriptInput.wordCount} | {characterCount} {t.transcriptInput.charCount})
           </span>
         </div>
 
@@ -169,20 +174,20 @@ export const TranscriptInput: React.FC<TranscriptInputProps> = ({
                 ? 'btn-danger px-3.5 py-1.5 animate-pulse shadow-md shadow-red-600/30'
                 : 'btn-secondary px-3.5 py-1.5 text-xs'
             }
-            title={speechSupported ? 'Live Ambient Microphone Dictation' : 'Speech recognition not supported'}
+            title={speechSupported ? t.transcriptInput.micStart : t.transcriptInput.micNotSupported}
           >
             {isRecording ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5 text-blue-600" />}
-            <span>{isRecording ? 'Listening...' : 'Live Dictate'}</span>
+            <span>{isRecording ? t.transcriptInput.micListening : t.transcriptInput.micStart}</span>
           </button>
 
           {/* Audio upload button */}
           <label
             id="label-audio-upload"
             className="btn-secondary px-3.5 py-1.5 text-xs cursor-pointer"
-            title="Upload Consultation Audio Recording"
+            title={t.transcriptInput.uploadAudio}
           >
             <Upload className="w-3.5 h-3.5 text-amber-600" />
-            <span className="hidden sm:inline">Upload Audio</span>
+            <span className="hidden sm:inline">{t.transcriptInput.uploadAudio}</span>
             <input
               type="file"
               accept="audio/*"
@@ -198,7 +203,7 @@ export const TranscriptInput: React.FC<TranscriptInputProps> = ({
               type="button"
               onClick={() => onChangeTranscript('')}
               className="btn-secondary p-1.5 hover:text-red-600"
-              title="Clear Transcript Text"
+              title={t.transcriptInput.clearAudio}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -210,7 +215,7 @@ export const TranscriptInput: React.FC<TranscriptInputProps> = ({
       <div id="quick-scenarios-bar" className="px-5 py-3 bg-slate-50/70 border-b border-slate-100 flex items-center space-x-2 overflow-x-auto text-xs scrollbar-thin">
         <span className="text-slate-500 font-bold uppercase text-[10px] tracking-wider whitespace-nowrap flex items-center space-x-1 mr-1">
           <Sparkles className="w-3 h-3 text-blue-600" />
-          <span>Scenarios:</span>
+          <span>{t.transcriptInput.scenarioSelect}:</span>
         </span>
         {SAMPLE_SCENARIOS.map((sc) => {
           const isSelected = selectedScenarioId === sc.id;
@@ -256,7 +261,7 @@ export const TranscriptInput: React.FC<TranscriptInputProps> = ({
           <button
             onClick={removeAudioFile}
             className="text-amber-700 hover:text-red-600 p-1"
-            title="Remove Audio File"
+            title={t.transcriptInput.clearAudio}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -265,6 +270,21 @@ export const TranscriptInput: React.FC<TranscriptInputProps> = ({
 
       {/* Main Textarea */}
       <div className="p-5 relative">
+        {/* Offline Mode Non-English Warning Banner */}
+        {isOfflineMode && isNonEnglishTranscript(transcript) && (
+          <div id="offline-non-english-warning" className="mb-4 p-3.5 bg-amber-50 border border-amber-300 rounded-2xl flex items-start space-x-3 text-amber-900 text-xs shadow-xs">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold">
+                {t.transcriptInput.offlineLanguageWarningTitle}
+              </p>
+              <p className="mt-0.5 text-amber-800 leading-relaxed">
+                {t.transcriptInput.offlineLanguageWarning}
+              </p>
+            </div>
+          </div>
+        )}
+
         {isGenerating ? (
           <div id="transcript-skeleton-overlay" className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 min-h-[220px] flex flex-col justify-between space-y-4 shadow-inner relative overflow-hidden">
             {/* Shimmer effect */}
@@ -277,7 +297,7 @@ export const TranscriptInput: React.FC<TranscriptInputProps> = ({
 
             <div className="flex items-center space-x-3 text-blue-400 font-bold text-xs">
               <Cpu className="w-4 h-4 animate-spin text-blue-400" />
-              <span>Clinical Safety Copilot Processing Consultation Transcript...</span>
+              <span>{t.transcriptInput.generatingBtn}</span>
             </div>
 
             <div className="space-y-3 z-10">
@@ -304,15 +324,15 @@ export const TranscriptInput: React.FC<TranscriptInputProps> = ({
             </div>
 
             <div className="flex items-center justify-between pt-2 text-[11px] text-slate-500 font-medium z-10 border-t border-slate-800/80">
-              <span>Extracting Chief Complaint & Vitals</span>
-              <span>100% Fact Accuracy & Safety Guardrail Active</span>
+              <span>{t.banner.title}</span>
+              <span>{t.banner.guardrails}</span>
             </div>
           </div>
         ) : (
           <textarea
             id="textarea-transcript"
             rows={10}
-            placeholder="Type, paste, or dictate doctor-patient conversation here... (e.g. Doctor: Good morning, what brings you to the clinic today? Patient: I have had a high fever and headache for 3 days...)"
+            placeholder={t.transcriptInput.placeholder}
             value={transcript}
             onChange={(e) => onChangeTranscript(e.target.value)}
             className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-800 text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-mono leading-relaxed resize-y min-h-[200px]"
@@ -323,7 +343,7 @@ export const TranscriptInput: React.FC<TranscriptInputProps> = ({
         {isRecording && !isGenerating && (
           <div className="absolute bottom-8 right-8 bg-red-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 shadow-lg backdrop-blur-sm">
             <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
-            <span>Microphone active — speaking into transcript...</span>
+            <span>{t.transcriptInput.micListening}</span>
           </div>
         )}
       </div>
@@ -332,7 +352,7 @@ export const TranscriptInput: React.FC<TranscriptInputProps> = ({
       <div id="transcript-footer" className="px-5 py-4 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
         <div className="text-xs text-slate-500 font-medium flex items-center space-x-2">
           <AlertCircle className="w-4 h-4 text-blue-600 shrink-0" />
-          <span>Clinical Safety Copilot parses facts strictly from transcript & audits safety guardrails.</span>
+          <span>{t.transcriptInput.subtitle}</span>
         </div>
 
         <button
@@ -358,12 +378,12 @@ export const TranscriptInput: React.FC<TranscriptInputProps> = ({
           {isGenerating ? (
             <>
               <RefreshCw className="w-4 h-4 animate-spin text-white" />
-              <span>Analyzing Clinical Transcript...</span>
+              <span>{t.transcriptInput.generatingBtn}</span>
             </>
           ) : (
             <>
               <Sparkles className="w-4 h-4 text-white fill-white" />
-              <span>Generate Bento SOAP Note & Safety Audit</span>
+              <span>{t.transcriptInput.generateBtn}</span>
             </>
           )}
         </button>
@@ -371,3 +391,4 @@ export const TranscriptInput: React.FC<TranscriptInputProps> = ({
     </div>
   );
 };
+

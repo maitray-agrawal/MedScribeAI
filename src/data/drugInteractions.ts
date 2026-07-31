@@ -90,4 +90,14 @@ export const DRUG_INTERACTION_DATABASE: DrugInteractionRule[] = [
     mechanism: 'Multivalent cations chelate fluoroquinolones in the GI tract, causing up to 90% reduction in antibiotic bioavailability.',
     recommendation: 'Administer fluoroquinolone at least 2 hours before or 6 hours after cation-containing antacids/supplements.',
   },
+  {
+    id: 'paracetamol-curated',
+    drugA: 'paracetamol|acetaminophen',
+    drugB: 'alcohol|liver|hepatic|cirrhosis',
+    type: 'drug-condition',
+    severity: 'medium',
+    title: 'Paracetamol / Acetaminophen Hepatic Precautions',
+    mechanism: 'High doses or chronic alcohol co-ingestion depletes glutathione, increasing toxic NAPQI metabolite formation.',
+    recommendation: 'Do not exceed 4,000mg/24h. Exercise caution in severe hepatic impairment or chronic alcoholism.',
+  },
 ];

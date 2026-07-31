@@ -1,5 +1,6 @@
 import { PatientInfo, SOAPNote, Prescription, ICD10Code, CPTCode } from '../types';
 import { checkDrugInteractions } from './drugInteractionChecker';
+import { isNonEnglishTranscript } from './languageDetector';
 
 /**
  * Deterministic browser-local clinical NLP extraction engine.
@@ -118,6 +119,14 @@ export function generateOfflineSOAPNote(patientInfo: PatientInfo, transcript: st
     patientInfo.medicalHistory || '',
     patientInfo.knownAllergies || ''
   );
+
+  if (isNonEnglishTranscript(transcript)) {
+    safetyAlerts.unshift({
+      type: 'Language Limitation Alert',
+      severity: 'High',
+      message: 'Offline local engine supports English transcripts only. Non-English (Spanish) transcript detected — please switch to Cloud (Gemini) mode for multi-language translation and accurate structured SOAP note generation.',
+    });
+  }
 
   // 5. Generate Section Documentation Confidence Metrics
   const detailLength = transcript.length;

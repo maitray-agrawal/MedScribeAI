@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 import { DocumentationConfidence } from '../../types';
+import { useTranslation } from '../../i18n';
 
 interface SOAPNoteHeaderProps {
   isEditing: boolean;
@@ -44,6 +45,7 @@ export const SOAPNoteHeader: React.FC<SOAPNoteHeaderProps> = ({
   onOpenFHIR,
   onSaveEncounter,
 }) => {
+  const { t } = useTranslation();
   const overallScore = documentationConfidence?.overall_score;
 
   return (
@@ -53,13 +55,13 @@ export const SOAPNoteHeader: React.FC<SOAPNoteHeaderProps> = ({
         <div className="flex items-center space-x-2">
           <FileCheck className="w-5 h-5 text-blue-600" />
           <h2 id="soap-note-title" className="font-bold text-sm text-slate-800 flex items-center space-x-2">
-            <span>Structured SOAP Note Workspace</span>
+            <span>{t.soapView.headerTitle}</span>
             <span className="badge-success">
-              Verified
+              {t.soapView.verifiedBadge}
             </span>
             {isOfflineMode && (
               <span id="badge-offline-engine" className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-300">
-                Offline Engine
+                {t.soapView.offlineBadge}
               </span>
             )}
             {overallScore !== undefined && (
@@ -70,7 +72,7 @@ export const SOAPNoteHeader: React.FC<SOAPNoteHeaderProps> = ({
                   ? 'bg-amber-50 text-amber-700 border-amber-200'
                   : 'bg-red-50 text-red-700 border-red-200'
               }`}>
-                Overall Support: {overallScore}%
+                {t.soapView.overallSupport}: {overallScore}%
               </span>
             )}
           </h2>
@@ -85,40 +87,40 @@ export const SOAPNoteHeader: React.FC<SOAPNoteHeaderProps> = ({
               id="btn-edit-soap"
               onClick={onEdit}
               className="btn-secondary py-2 px-3 text-xs"
-              title="Edit SOAP fields"
+              title={t.soapView.editNote}
             >
               <Edit2 className="w-3.5 h-3.5 text-blue-600" />
-              <span>Edit Note</span>
+              <span>{t.soapView.editNote}</span>
             </button>
 
             <button
               id="btn-copy-ehr"
               onClick={onCopyEHR}
               className="btn-secondary py-2 px-3 text-xs"
-              title="Copy note in EHR format"
+              title={t.soapView.copyEhr}
             >
               {copiedEHR ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
-              <span>{copiedEHR ? 'Copied!' : 'Copy for EHR'}</span>
+              <span>{copiedEHR ? t.soapView.copied : t.soapView.copyEhr}</span>
             </button>
 
             <button
               id="btn-read-aloud"
               onClick={onReadAloud}
               className="btn-secondary py-2 px-3 text-xs"
-              title="Read key findings aloud"
+              title={t.soapView.readAloud}
             >
               {isReadingAloud ? <VolumeX className="w-3.5 h-3.5 text-amber-600" /> : <Volume2 className="w-3.5 h-3.5 text-slate-500" />}
-              <span>{isReadingAloud ? 'Stop Speech' : 'Read Aloud'}</span>
+              <span>{isReadingAloud ? t.soapView.stopSpeech : t.soapView.readAloud}</span>
             </button>
 
             <button
               id="btn-print-rx"
               onClick={onOpenPrintPrescription}
               className="btn-secondary py-2 px-3 text-xs"
-              title="Print Prescription Slip"
+              title={t.soapView.printRx}
             >
               <Printer className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Print Rx Slip</span>
+              <span>{t.soapView.printRx}</span>
             </button>
 
             {onOpenFHIR && (
@@ -126,10 +128,10 @@ export const SOAPNoteHeader: React.FC<SOAPNoteHeaderProps> = ({
                 id="btn-export-fhir"
                 onClick={onOpenFHIR}
                 className="btn-secondary py-2 px-3 text-xs"
-                title="Export HL7 FHIR R4 JSON Bundle"
+                title={t.soapView.exportFhir}
               >
                 <FileCode className="w-3.5 h-3.5 text-teal-600" />
-                <span>Export FHIR</span>
+                <span>{t.soapView.exportFhir}</span>
               </button>
             )}
 
@@ -137,10 +139,10 @@ export const SOAPNoteHeader: React.FC<SOAPNoteHeaderProps> = ({
               id="btn-save-encounter"
               onClick={onSaveEncounter}
               className="btn-primary py-2 px-4 text-xs shadow-xs"
-              title="Save Encounter to History"
+              title={t.soapView.saveRecord}
             >
               <Save className="w-3.5 h-3.5" />
-              <span>Save Record</span>
+              <span>{t.soapView.saveRecord}</span>
             </button>
           </>
         ) : (
@@ -151,14 +153,14 @@ export const SOAPNoteHeader: React.FC<SOAPNoteHeaderProps> = ({
               className="flex items-center space-x-1 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer shadow-xs"
             >
               <Check className="w-3.5 h-3.5" />
-              <span>Done Editing</span>
+              <span>{t.soapView.doneEditing}</span>
             </button>
             <button
               id="btn-cancel-edits"
               onClick={onCancelEdits}
               className="btn-secondary py-2 px-3 text-xs"
             >
-              <span>Cancel</span>
+              <span>{t.soapView.cancel}</span>
             </button>
           </>
         )}
@@ -166,3 +168,4 @@ export const SOAPNoteHeader: React.FC<SOAPNoteHeaderProps> = ({
     </div>
   );
 };
+

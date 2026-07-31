@@ -145,5 +145,33 @@ Doctor: Treatment plan: Antibiotics are NOT indicated right now as there is no b
 Doctor: Continue eating light meals like rice, bananas, porridge. Avoid fatty foods or dairy for 2 days.
 Patient: Do I need any antibiotics or anti-diarrhea pills?
 Doctor: No anti-motility pills like Loperamide, as we want your body to naturally flush out the toxin. If stool becomes bloody, or if you develop high fever, intractable vomiting, or dizziness, return immediately.`
+  },
+  {
+    id: 'spanish-consultation-fever',
+    title: 'Spanish Consultation (Gastroenteritis & Fever)',
+    category: 'Spanish Consultation',
+    description: 'Spanish language consultation for high fever, severe headache, and acute watery diarrhea.',
+    patientInfo: {
+      name: 'Carlos Rodríguez',
+      age: 38,
+      sex: 'Male',
+      medicalHistory: 'Controlled essential hypertension.',
+      currentMedications: 'Enalapril 10mg daily',
+      knownAllergies: 'Penicillin allergy (causes skin rash)',
+      encounterType: 'Acute Urgent Care Visit',
+      clinicLocation: 'Centro de Salud Rural'
+    },
+    transcript: `Doctor: Buenos días Carlos, tome asiento. ¿Cuál es el motivo de su consulta el día de hoy?
+Paciente: Buenos días doctor. Desde hace tres días tengo mucha fiebre, escalofríos y un dolor de cabeza muy fuerte. Además, ayer empecé con diarrea líquida y dolor abdominal.
+Doctor: Entiendo. ¿Ha tenido náuseas o vómitos? ¿Ha notado sangre en la diarrea?
+Paciente: Tuve dos episodios de vómito anoche y mucha náusea. No he visto sangre en las deposiciones, pero son totalmente líquidas.
+Doctor: ¿Toma alguna medicina actualmente o tiene alguna alergia conocida?
+Paciente: Tomo Enalapril de 10mg para la presión arterial todos los días. Soy alérgico a la penicilina, me da sarpullido.
+Doctor: De acuerdo. Vamos a examinarlo y tomar sus funciones vitales. Presión arterial: 118/78 mmHg, Temperatura: 38.8°C, Frecuencia cardíaca: 96 latidos por minuto, Frecuencia respiratoria: 18.
+Doctor: Al examen físico: Paciente febril, mucosas ligeramente secas. Abdomen blando, ruidos hidroaéreos aumentados, dolor leve a la palpación difusa sin irritación peritoneal.
+Doctor: El diagnóstico es una Gastroenteritis Aguda Infecciosa con deshidratación leve y Síndrome Febril.
+Doctor: Plan de tratamiento: Vamos a iniciar Sales de Rehidratación Oral (SRO), 1 sobre disuelto en 1 litro de agua hervida, tomando a libre demanda tras cada deposición. Para la fiebre, Paracetamol 500mg cada 8 horas por 3 días. No utilizaremos penicilina ni derivados debido a su alergia.
+Paciente: Muchas gracias doctor. ¿Cuándo debo regresar a control?
+Doctor: Si la fiebre no cede en 48 horas, si presenta vómitos persistentes o sangre en las heces, regrese de inmediato. Si mejora, control en 5 días.`
   }
 ];

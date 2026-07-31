@@ -266,6 +266,7 @@ export default function App() {
           onGenerateSOAP={handleGenerateSOAP}
           isGenerating={isGenerating}
           selectedScenarioId={selectedScenarioId}
+          isOfflineMode={isOfflineMode}
         />
 
         {/* Anchor point for smooth auto-scroll */}

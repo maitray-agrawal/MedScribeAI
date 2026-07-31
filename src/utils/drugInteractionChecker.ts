@@ -31,7 +31,25 @@ export function checkDrugInteractions(
     });
   }
 
-  // 2. Check Database Rules for Drug-Drug and Drug-Condition Interactions
+  // 2. Check for Duplicate Prescriptions
+  const seenMeds = new Set<string>();
+  prescriptions.forEach((p) => {
+    const medName = (p.medication || '').trim().toLowerCase();
+    if (!medName) return;
+    if (seenMeds.has(medName)) {
+      if (!alerts.some((a) => a.message.includes(`DUPLICATE PRESCRIPTION DETECTED: '${p.medication}'`))) {
+        alerts.push({
+          type: 'Drug Interaction',
+          severity: 'Medium',
+          message: `DUPLICATE PRESCRIPTION DETECTED: '${p.medication}' is prescribed multiple times in the plan.`,
+        });
+      }
+    } else {
+      seenMeds.add(medName);
+    }
+  });
+
+  // 3. Check Database Rules for Drug-Drug and Drug-Condition Interactions
   DRUG_INTERACTION_DATABASE.forEach((rule) => {
     const patternA = new RegExp(rule.drugA, 'i');
     const patternB = new RegExp(rule.drugB, 'i');
@@ -75,6 +93,24 @@ export function checkDrugInteractions(
           message: matchedDetails,
         });
       }
+    }
+  });
+
+  // 4. Check for Medications Absent from Curated Database ("Not Checked")
+  prescriptions.forEach((p) => {
+    const rawMedName = (p.medication || '').trim();
+    if (!rawMedName) return;
+    const isCurated = DRUG_INTERACTION_DATABASE.some((rule) => {
+      const patternA = new RegExp(rule.drugA, 'i');
+      const patternB = new RegExp(rule.drugB, 'i');
+      return patternA.test(rawMedName) || patternB.test(rawMedName);
+    });
+    if (!isCurated) {
+      alerts.push({
+        type: 'Missing Info',
+        severity: 'Low',
+        message: `Unchecked Medication: '${rawMedName}' is not present in the curated local interaction database and was not checked.`,
+      });
     }
   });
 

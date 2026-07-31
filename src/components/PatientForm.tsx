@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PatientInfo } from '../types';
 import { Activity, AlertCircle, Pill, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import { useTranslation } from '../i18n';
 
 interface PatientFormProps {
   patientInfo: PatientInfo;
@@ -13,6 +14,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   onChange,
   onReset,
 }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
 
   const handleInputChange = (field: keyof PatientInfo, value: any) => {
@@ -32,7 +34,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         <div className="flex items-center space-x-3">
           <span className="w-2 h-6 bg-blue-600 rounded-full shrink-0"></span>
           <h2 id="patient-info-title" className="font-bold text-sm text-slate-800">
-            Patient Context & Clinical Demographics
+            {t.patientForm.title}
           </h2>
           {patientInfo.name && (
             <span id="patient-summary-tag" className="badge-brand ml-2">
@@ -50,10 +52,10 @@ export const PatientForm: React.FC<PatientFormProps> = ({
               onReset();
             }}
             className="btn-secondary py-1 px-3 text-xs"
-            title="Reset Patient Info"
+            title={t.patientForm.resetForm}
           >
             <RotateCcw className="w-3 h-3" />
-            <span>Reset</span>
+            <span>{t.patientForm.resetForm}</span>
           </button>
           {isExpanded ? (
             <ChevronUp className="w-4 h-4 text-slate-400" />
@@ -69,13 +71,13 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             {/* Patient Name */}
             <div>
               <label htmlFor="input-patient-name" className="block text-slate-500 font-bold mb-1 uppercase text-[10px] tracking-wider">
-                Patient Name <span className="text-red-500">*</span>
+                {t.patientForm.name} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
                   id="input-patient-name"
                   type="text"
-                  placeholder="e.g. Kwame Mensah"
+                  placeholder={t.patientForm.namePlaceholder}
                   value={patientInfo.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-800 font-semibold focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs transition-all"
@@ -86,14 +88,14 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             {/* Age */}
             <div>
               <label htmlFor="input-patient-age" className="block text-slate-500 font-bold mb-1 uppercase text-[10px] tracking-wider">
-                Age (years) <span className="text-red-500">*</span>
+                {t.patientForm.age} <span className="text-red-500">*</span>
               </label>
               <input
                 id="input-patient-age"
                 type="number"
                 min="0"
                 max="120"
-                placeholder="e.g. 28"
+                placeholder={t.patientForm.agePlaceholder}
                 value={patientInfo.age}
                 onChange={(e) => handleInputChange('age', e.target.value ? Number(e.target.value) : '')}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-800 font-semibold focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs transition-all"
@@ -103,7 +105,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             {/* Sex */}
             <div>
               <label htmlFor="select-patient-sex" className="block text-slate-500 font-bold mb-1 uppercase text-[10px] tracking-wider">
-                Biological Sex <span className="text-red-500">*</span>
+                {t.patientForm.sex} <span className="text-red-500">*</span>
               </label>
               <select
                 id="select-patient-sex"
@@ -111,23 +113,23 @@ export const PatientForm: React.FC<PatientFormProps> = ({
                 onChange={(e) => handleInputChange('sex', e.target.value as any)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-800 font-semibold focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs transition-all"
               >
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
+                <option value="Male">{t.patientForm.sexMale}</option>
+                <option value="Female">{t.patientForm.sexFemale}</option>
+                <option value="Other">{t.patientForm.sexOther}</option>
               </select>
             </div>
 
-            {/* Encounter Type */}
+            {/* Location */}
             <div>
-              <label htmlFor="input-encounter-type" className="block text-slate-500 font-bold mb-1 uppercase text-[10px] tracking-wider">
-                Encounter Type
+              <label htmlFor="input-location" className="block text-slate-500 font-bold mb-1 uppercase text-[10px] tracking-wider">
+                {t.patientForm.location}
               </label>
               <input
-                id="input-encounter-type"
+                id="input-location"
                 type="text"
-                placeholder="e.g. Acute Unscheduled / Follow-up"
-                value={patientInfo.encounterType || ''}
-                onChange={(e) => handleInputChange('encounterType', e.target.value)}
+                placeholder={t.patientForm.locationPlaceholder}
+                value={patientInfo.clinicLocation || ''}
+                onChange={(e) => handleInputChange('clinicLocation', e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-800 font-semibold focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs transition-all"
               />
             </div>
@@ -138,12 +140,12 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             <div>
               <label htmlFor="input-medical-history" className="block text-slate-500 font-bold mb-1 text-[10px] uppercase tracking-wider flex items-center space-x-1">
                 <Activity className="w-3 h-3 text-blue-600" />
-                <span>Known Chronic Illness / History</span>
+                <span>{t.patientForm.medicalHistory}</span>
               </label>
               <textarea
                 id="input-medical-history"
                 rows={2}
-                placeholder="e.g. Hypertension 5 yrs, Type 2 Diabetes"
+                placeholder={t.patientForm.medicalHistoryPlaceholder}
                 value={patientInfo.medicalHistory || ''}
                 onChange={(e) => handleInputChange('medicalHistory', e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-800 font-medium focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs transition-all"
@@ -154,12 +156,12 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             <div>
               <label htmlFor="input-current-medications" className="block text-slate-500 font-bold mb-1 text-[10px] uppercase tracking-wider flex items-center space-x-1">
                 <Pill className="w-3 h-3 text-amber-600" />
-                <span>Current Medications</span>
+                <span>{t.patientForm.currentMedications}</span>
               </label>
               <textarea
                 id="input-current-medications"
                 rows={2}
-                placeholder="e.g. Metformin 500mg BD, Amlodipine 5mg OD"
+                placeholder={t.patientForm.currentMedicationsPlaceholder}
                 value={patientInfo.currentMedications || ''}
                 onChange={(e) => handleInputChange('currentMedications', e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-800 font-medium focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs transition-all"
@@ -170,12 +172,12 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             <div>
               <label htmlFor="input-allergies" className="block text-slate-500 font-bold mb-1 text-[10px] uppercase tracking-wider flex items-center space-x-1">
                 <AlertCircle className="w-3 h-3 text-red-500" />
-                <span>Known Allergies</span>
+                <span>{t.patientForm.knownAllergies}</span>
               </label>
               <textarea
                 id="input-allergies"
                 rows={2}
-                placeholder="e.g. NKDA or Penicillin (rash), ACE inhibitors (cough)"
+                placeholder={t.patientForm.knownAllergiesPlaceholder}
                 value={patientInfo.knownAllergies || ''}
                 onChange={(e) => handleInputChange('knownAllergies', e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-800 font-medium focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs transition-all"
@@ -187,3 +189,4 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     </div>
   );
 };
+

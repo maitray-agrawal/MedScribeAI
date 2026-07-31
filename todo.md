@@ -1,6 +1,6 @@
 # Project Progress Tracker (todo.md)
 
-**Last updated:** 2026-07-28
+**Last updated:** 2026-07-31
 
 *Refer to `phases.md` for full phase details, descriptions, and exit criteria.*
 
@@ -36,6 +36,7 @@
 - [x] Set up automated unit/component test harness (`vitest` + `@testing-library/react`)
 - [x] Resolve Vitest worker startup CI crash by switching test environment from `jsdom` to `happy-dom`
 - [x] Configure CI/CD check pipeline (`.github/workflows/ci.yml`)
+- [x] Reconcile `dependency-lockbase.md` tables with `package.json` (added missing devDependencies: `jsdom`, `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `happy-dom`)
 
 ---
 
@@ -50,8 +51,18 @@
 ---
 
 ## Phase 4: Feature Backlog
-- [ ] Multi-language consultation input & translation support
+- [x] Multi-language consultation input & translation support (UI chrome localized to English/Spanish via custom React Context dictionary)
 - [x] FHIR JSON export integration
 - [x] Real-time drug-drug interaction database lookup
 - [x] Documentation Confidence scoring per SOAP section (Subjective, Objective, Assessment, Plan metrics with reasoning tooltips)
 - [x] Offline/local-model mode (Browser-local clinical NLP fallback engine & mode toggle)
+
+---
+
+## Phase 5: Hardening
+- [x] Conduct initial Security Review (npm audit, secret isolation, API error leakage, CORS, prompt injection audit, localStorage PHI disclaimer)
+- [x] Update `SECURITY.md` with dated audit findings and synthetic data disclaimer
+- [x] Edge-case and resilience testing (`src/__tests__/resilienceAndEdgeCases.test.tsx`, duplicate Rx alerts, uncurated drug handling, FHIR null safety, offline fallbacks)
+- [x] Spanish-language transcript input support end-to-end (UI chrome localized, Gemini prompt updated for English SOAP generation with verbatim quotes, offline non-English warning banner, and Spanish test scenario)
+- [x] Multi-language clinical pipeline test suite (`src/__tests__/multiLanguagePipeline.test.tsx`)
+- [x] Prompt-injection remediation (delimit `patientInfo` and `transcript` with `<patient_demographics>` and `<clinical_transcript>` boundary tags in `server.ts` and enforce data-isolation system instruction)

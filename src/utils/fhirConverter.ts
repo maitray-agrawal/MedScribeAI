@@ -21,6 +21,9 @@ export interface FHIRBundle {
  * Converts MedScribe Lite PatientInfo and SOAPNote into a standard HL7 FHIR R4 JSON Bundle.
  */
 export function exportToFHIRBundle(patientInfo: PatientInfo, soapNote: SOAPNote): FHIRBundle {
+  const safePatient = patientInfo || ({} as PatientInfo);
+  const safeNote = soapNote || ({} as SOAPNote);
+
   const timestamp = new Date().toISOString();
   const bundleId = `bundle-medscribe-${Date.now()}`;
   const patientId = `patient-${Date.now()}`;
@@ -35,14 +38,14 @@ export function exportToFHIRBundle(patientInfo: PatientInfo, soapNote: SOAPNote)
     name: [
       {
         use: 'official',
-        text: patientInfo.name || 'Anonymous Patient',
+        text: safePatient.name || 'Anonymous Patient',
       },
     ],
-    gender: (patientInfo.gender || patientInfo.sex) === 'Female' ? 'female' : (patientInfo.gender || patientInfo.sex) === 'Male' ? 'male' : 'other',
+    gender: (safePatient.gender || safePatient.sex) === 'Female' ? 'female' : (safePatient.gender || safePatient.sex) === 'Male' ? 'male' : 'other',
     extension: [
       {
         url: 'http://hl7.org/fhir/StructureDefinition/patient-age',
-        valueString: `${patientInfo.age || 'Unspecified'} years`,
+        valueString: `${safePatient.age || 'Unspecified'} years`,
       },
     ],
   };
@@ -58,12 +61,12 @@ export function exportToFHIRBundle(patientInfo: PatientInfo, soapNote: SOAPNote)
     status: 'finished',
     class: {
       system: 'http://terminology.hl7.org/CodeSystem/v3-ActCode',
-      code: patientInfo.encounterType === 'Telehealth' ? 'VR' : 'AMB',
-      display: patientInfo.encounterType || 'Ambulatory',
+      code: safePatient.encounterType === 'Telehealth' ? 'VR' : 'AMB',
+      display: safePatient.encounterType || 'Ambulatory',
     },
     subject: {
       reference: `Patient/${patientId}`,
-      display: patientInfo.name || 'Anonymous Patient',
+      display: safePatient.name || 'Anonymous Patient',
     },
     period: {
       start: timestamp,
@@ -72,7 +75,7 @@ export function exportToFHIRBundle(patientInfo: PatientInfo, soapNote: SOAPNote)
     location: [
       {
         location: {
-          display: patientInfo.clinicLocation || 'Community Health Clinic',
+          display: safePatient.clinicLocation || 'Community Health Clinic',
         },
       },
     ],
@@ -83,7 +86,7 @@ export function exportToFHIRBundle(patientInfo: PatientInfo, soapNote: SOAPNote)
   });
 
   // 3. FHIR Condition Resources (ICD-10 Diagnoses)
-  const icdCodes = soapNote.billing_suggestions?.icd_10_codes || [];
+  const icdCodes = safeNote.billing_suggestions?.icd_10_codes || [];
   if (icdCodes.length > 0) {
     icdCodes.forEach((icd, idx) => {
       const conditionId = `condition-${idx + 1}-${Date.now()}`;
@@ -139,7 +142,7 @@ export function exportToFHIRBundle(patientInfo: PatientInfo, soapNote: SOAPNote)
         resource: conditionResource,
       });
     });
-  } else if (soapNote.assessment?.primary_diagnosis) {
+  } else if (safeNote.assessment?.primary_diagnosis) {
     const conditionId = `condition-primary-${Date.now()}`;
     entries.push({
       fullUrl: `urn:uuid:${conditionId}`,
@@ -147,7 +150,7 @@ export function exportToFHIRBundle(patientInfo: PatientInfo, soapNote: SOAPNote)
         resourceType: 'Condition',
         id: conditionId,
         code: {
-          text: soapNote.assessment.primary_diagnosis,
+          text: safeNote.assessment.primary_diagnosis,
         },
         subject: {
           reference: `Patient/${patientId}`,
@@ -160,7 +163,7 @@ export function exportToFHIRBundle(patientInfo: PatientInfo, soapNote: SOAPNote)
   }
 
   // 4. FHIR MedicationRequest Resources (Prescriptions)
-  const prescriptions = soapNote.plan?.prescriptions || [];
+  const prescriptions = safeNote.plan?.prescriptions || [];
   prescriptions.forEach((rx, idx) => {
     const medRequestId = `medrequest-${idx + 1}-${Date.now()}`;
     const medRequestResource: FHIRResource = {
@@ -212,7 +215,7 @@ export function exportToFHIRBundle(patientInfo: PatientInfo, soapNote: SOAPNote)
     },
     subject: {
       reference: `Patient/${patientId}`,
-      display: patientInfo.name || 'Anonymous Patient',
+      display: safePatient.name || 'Anonymous Patient',
     },
     encounter: {
       reference: `Encounter/${encounterId}`,
@@ -227,7 +230,7 @@ export function exportToFHIRBundle(patientInfo: PatientInfo, soapNote: SOAPNote)
         },
         text: {
           status: 'generated',
-          div: `<div xmlns="http://www.w3.org/1999/xhtml"><p><strong>Chief Complaint:</strong> ${soapNote.subjective?.chief_complaint || ''}</p><p><strong>HPI:</strong> ${soapNote.subjective?.history_of_present_illness || ''}</p></div>`,
+          div: `<div xmlns="http://www.w3.org/1999/xhtml"><p><strong>Chief Complaint:</strong> ${safeNote.subjective?.chief_complaint || ''}</p><p><strong>HPI:</strong> ${safeNote.subjective?.history_of_present_illness || ''}</p></div>`,
         },
       },
       {
@@ -237,7 +240,7 @@ export function exportToFHIRBundle(patientInfo: PatientInfo, soapNote: SOAPNote)
         },
         text: {
           status: 'generated',
-          div: `<div xmlns="http://www.w3.org/1999/xhtml"><p><strong>Vitals:</strong> ${soapNote.objective?.vital_signs || ''}</p><p><strong>Exam:</strong> ${soapNote.objective?.physical_exam || ''}</p></div>`,
+          div: `<div xmlns="http://www.w3.org/1999/xhtml"><p><strong>Vitals:</strong> ${safeNote.objective?.vital_signs || ''}</p><p><strong>Exam:</strong> ${safeNote.objective?.physical_exam || ''}</p></div>`,
         },
       },
       {
@@ -247,7 +250,7 @@ export function exportToFHIRBundle(patientInfo: PatientInfo, soapNote: SOAPNote)
         },
         text: {
           status: 'generated',
-          div: `<div xmlns="http://www.w3.org/1999/xhtml"><p><strong>Diagnosis:</strong> ${soapNote.assessment?.primary_diagnosis || ''}</p><p><strong>Summary:</strong> ${soapNote.assessment?.clinical_summary || ''}</p></div>`,
+          div: `<div xmlns="http://www.w3.org/1999/xhtml"><p><strong>Diagnosis:</strong> ${safeNote.assessment?.primary_diagnosis || ''}</p><p><strong>Summary:</strong> ${safeNote.assessment?.clinical_summary || ''}</p></div>`,
         },
       },
       {
@@ -257,7 +260,7 @@ export function exportToFHIRBundle(patientInfo: PatientInfo, soapNote: SOAPNote)
         },
         text: {
           status: 'generated',
-          div: `<div xmlns="http://www.w3.org/1999/xhtml"><p><strong>Education:</strong> ${soapNote.plan?.patient_education || ''}</p><p><strong>Follow-up:</strong> ${soapNote.plan?.follow_up || ''}</p></div>`,
+          div: `<div xmlns="http://www.w3.org/1999/xhtml"><p><strong>Education:</strong> ${safeNote.plan?.patient_education || ''}</p><p><strong>Follow-up:</strong> ${safeNote.plan?.follow_up || ''}</p></div>`,
         },
       },
     ],

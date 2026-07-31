@@ -46,3 +46,12 @@
   - Integration of real-time drug-drug interaction database lookup API.
   - Granular AI confidence scoring per SOAP section and section-level uncertainty flags.
 - **Exit Criteria:** Clinicians can input multi-language consultations and export valid FHIR R4 JSON resources directly from the SOAP Note workspace.
+
+---
+
+## Phase 5: Hardening
+- **Scope:**
+  - Security review: Audit `npm audit` vulnerabilities, secret leakage risk, API error responses, CORS restriction, prompt injection vulnerabilities, and client storage handling.
+  - Edge-case and resilience testing: Ensure robust error boundaries, graceful API failure handling, and input edge case validation across all async workflows.
+  - Internationalization: Support multi-language end-to-end processing starting with Spanish-language transcript inputs.
+- **Exit Criteria:** Zero committed secrets, `npm audit` clean of high/critical vulnerabilities, error boundaries on every async flow, and at least Spanish-language transcript input supported end-to-end.

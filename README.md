@@ -1,6 +1,6 @@
 # MedScribe Lite — Primary Care AI Clinical Assistant & Safety Copilot
 
-> **Empowering rural health posts and low-resource primary care clinics with real-time consultation transcribing, AI clinical safety guardrails, drug interaction checking, documentation confidence scoring, HL7 FHIR R4 export, and zero-connectivity offline local operation.**
+> **Empowering rural health posts and low-resource primary care clinics with real-time consultation transcribing, AI clinical safety guardrails, drug interaction checking, documentation confidence scoring, and HL7 FHIR export.**
 
 ---
 
@@ -55,12 +55,31 @@
 
 ---
 
+## 📸 Application Screenshots
+
+### Patient Intake & Consultation Interface
+![Patient Intake Interface](Screenshots/Screenshot%202026-08-17%20211450.png)
+
+### Clinical Notes Generation & SOAP Formatting
+![Clinical Notes Generation](Screenshots/Screenshot%202026-08-17%20212058.png)
+
+### Safety Copilot & Drug Interaction Checking
+![Safety Copilot Interface](Screenshots/Screenshot%202026-08-17%20212110.png)
+
+### Documentation Confidence Scoring & Verification
+![Confidence Scoring](Screenshots/Screenshot%202026-08-17%20212124.png)
+
+### FHIR Export & Billing Code Suggestions
+![FHIR Export & Billing](Screenshots/Screenshot%202026-08-17%20212156.png)
+
+---
+
 ## 🔒 Security & Privacy
 
 MedScribe Lite is designed with strict data privacy principles for clinical settings:
 - No patient health information (PHI) is persisted on external servers.
 - Browser-local storage option for encounter records.
-- Zero-network offline local mode mode for air-gapped clinical operation.
+- Zero-network offline local mode for air-gapped clinical operation.
 
 ---
 

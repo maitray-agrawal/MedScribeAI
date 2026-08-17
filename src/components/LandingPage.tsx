@@ -187,7 +187,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchWorkstation })
         <section id="product" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="text-center space-y-2">
             <h2 className="text-xs font-bold text-blue-600 uppercase tracking-wider">Product Showcase</h2>
-            <p className="text-2xl font-bold text-slate-800 tracking-tight">Structured Bento-Grid Clinical Workstation</p>
+            <p className="text-2xl font-bold text-slate-800 tracking-tight">Clinical Workstation</p>
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4">
@@ -269,7 +269,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchWorkstation })
                 </div>
 
                 <div className="flex items-baseline space-x-1">
-                  <span className="text-3xl font-black text-slate-900">$0</span>
+                  <span className="text-3xl font-black text-slate-900">₹0</span>
                   <span className="text-xs text-slate-500 font-medium">/ month</span>
                 </div>
 
@@ -318,7 +318,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchWorkstation })
                 </div>
 
                 <div className="flex items-baseline space-x-1">
-                  <span className="text-3xl font-black text-slate-900">$19</span>
+                  <span className="text-3xl font-black text-slate-900">₹199</span>
                   <span className="text-xs text-slate-500 font-medium">/ clinic / month</span>
                 </div>
 
@@ -363,7 +363,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchWorkstation })
                 </div>
 
                 <div className="flex items-baseline space-x-1">
-                  <span className="text-3xl font-black text-slate-900">$49</span>
+                  <span className="text-3xl font-black text-slate-900">₹499</span>
                   <span className="text-xs text-slate-500 font-medium">/ center / month</span>
                 </div>
 

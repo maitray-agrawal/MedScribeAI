@@ -42,7 +42,7 @@
 
 ## Phase 3: Positioning & Launch Assets
 - [x] Lock target customer segment to Small Independent Clinics & Community Health Centers in `project-context.md`
-- [x] Define concrete 3-tier pricing structure ($0 Free / $19 Clinic / $49 Multi-Provider) in `prd.md`
+- [x] Define concrete 3-tier pricing structure (₹0 Free / ₹199 Clinic / ₹499 Multi-Provider) in `prd.md`
 - [x] Execute UI copy pass in `Header.tsx`, `App.tsx`, and `TranscriptInput.tsx` to highlight "Clinical Safety Copilot" positioning
 - [x] Design standalone product marketing landing page (`src/components/LandingPage.tsx`) with hero positioning, problem grid, Bento product preview, 3 pricing tiers, and request access CTA form
 - [ ] Generate high-impact product screenshots and visual assets

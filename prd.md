@@ -46,7 +46,7 @@
 
 | Tier Name | Target Customer Segment | Pricing | Key Capabilities & Limits |
 | :--- | :--- | :--- | :--- |
-| **Community Outreach (Free)** | Solo rural health workers, mobile clinics, open-source testers | **$0 / month** | Ambient dictation, 5 sample clinical scenarios, standard Gemini 3.6 SOAP generation, client-side LocalStorage history, basic drug safety alerts, printable prescription slips. |
+| **Community Outreach (Free)** | Solo rural health workers, mobile clinics, open-source testers | *$0* / month** | Ambient dictation, 5 sample clinical scenarios, standard Gemini 3.6 SOAP generation, client-side LocalStorage history, basic drug safety alerts, printable prescription slips. |
 | **Independent Clinic ($19/mo)** | Small independent clinics & community health centers (1-5 providers) | **$19 / clinic / mo** | Everything in Free + priority API throughput, custom clinic header on printable prescriptions, FHIR/EHR export options, unlimited encounter history export, automated Clinical Safety Copilot guardrails audit. |
 | **Multi-Provider Health Center ($49/mo)** | Regional primary care networks & multi-provider health facilities | **$49 / center / mo** | Everything in Clinic + multi-provider team workspaces, role-based access control, localized drug interaction overrides, regional ICD-10/CPT coding custom rules, priority SLA support. |
 

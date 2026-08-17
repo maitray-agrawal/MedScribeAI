@@ -65,9 +65,9 @@ Initial deep-dive audit of the existing MedScribe Lite codebase and setup of the
 ### Summary of Work
 - **Target Customer Segment Locked**: Formally locked primary target segment in `project-context.md` to **Small Independent Clinics & Community Health Centers (CHCs)**. This establishes our primary go-to-market focus on low-resource outpatient facilities and independent primary care practices needing lightweight clinical documentation and safety auditing without heavy enterprise EHR overhead.
 - **Three-Tier Pricing Structure Defined**: Updated `prd.md` with a concrete monetization strategy:
-  1. **Community Outreach (Free - $0/mo)**: Solo rural health workers, mobile clinics, basic SOAP generation & drug safety alerts.
-  2. **Independent Clinic ($19/clinic/mo)**: Small independent clinics (1-5 providers), priority API throughput, custom clinic prescription headers, FHIR export.
-  3. **Multi-Provider Health Center ($49/center/mo)**: Regional primary care networks, team workspace, role-based access, custom drug/billing rule overrides.
+  1. **Community Outreach (Free - ₹0/mo)**: Solo rural health workers, mobile clinics, basic SOAP generation & drug safety alerts.
+  2. **Independent Clinic (₹199/clinic/mo)**: Small independent clinics (1-5 providers), priority API throughput, custom clinic prescription headers, FHIR export.
+  3. **Multi-Provider Health Center (₹499/center/mo)**: Regional primary care networks, team workspace, role-based access, custom drug/billing rule overrides.
 - **UI Copy & Brand Positioning Pass**: Refreshed UI text across `Header.tsx`, `App.tsx`, and `TranscriptInput.tsx` to explicitly communicate MedScribe Lite's core differentiator as a **"Primary Care Clinical Safety Copilot & Scribe"** with active safety guardrails rather than a generic dictation scribe tool.
 - **Validation**: Verified test suite (`npm test` — 9/9 passed) and TypeScript compilation (`npm run lint` — 0 errors).
 
@@ -83,7 +83,7 @@ Initial deep-dive audit of the existing MedScribe Lite codebase and setup of the
 1. **Hero Section**: Prominently features the locked positioning line (*"AI-Powered Clinical Documentation & Safety Assistant Built for Small Independent Clinics & Community Health Centers"*), sub-200ms motion badge, 100% fact accuracy guardrails highlight, and a "Launch Live Workstation" primary CTA.
 2. **Problem & Impact Grid**: 3-card layout highlighting rural clinic paper friction (40%+ consultation time lost), missed drug safety alerts, and uncaptured billing revenue.
 3. **Product Preview (Bento Grid Visual Mockup)**: Interactive dark-mode mockup demonstrating the live Bento layout (Demographics, Dictation Workspace, Structured 4-quadrant SOAP output).
-4. **Three-Tier Pricing Matrix**: Renders exact tiers from `prd.md` (Community Outreach $0/mo, Independent Clinic $19/mo highlighted card, and Multi-Provider Network $49/mo).
+4. **Three-Tier Pricing Matrix**: Renders exact tiers from `prd.md` (Community Outreach ₹0/mo, Independent Clinic ₹199/mo highlighted card, and Multi-Provider Network ₹499/mo).
 5. **Request Access CTA Form**: Front-end form collecting Name, Work Email, Clinic Name, Role, and Monthly Encounters with success state feedback. (Flagged backend API integration as a Phase 4 follow-up item).
 6. **Design Tokens**: Strictly adheres to `ui-dna.md` tokens (`slate` neutrals, `blue-600` primary, `rounded-3xl` containers, `.btn-primary`, `.btn-secondary`, `badge-brand`).
 7. **Verification**: Executed `npm test` (**10/10 passed**) and `npm run lint` (**0 TypeScript errors**).

@@ -12,13 +12,14 @@ import { EncounterHistoryModal } from './components/EncounterHistoryModal';
 import { ClinicAnalyticsModal } from './components/ClinicAnalyticsModal';
 import { SAMPLE_SCENARIOS } from './data/sampleScenarios';
 import { PatientInfo, SOAPNote, EncounterRecord } from './types';
-import { Sparkles, AlertCircle, FileText, CheckCircle2, RotateCcw, HeartPulse } from 'lucide-react';
+import { Sparkles, AlertCircle, FileText, CheckCircle2, RotateCcw, HeartPulse, Stethoscope, FileCode } from 'lucide-react';
 
 import { checkDrugInteractions } from './utils/drugInteractionChecker';
 import { generateOfflineSOAPNote } from './utils/offlineLocalEngine';
 import { FHIRExportModal } from './components/soap-note';
-import { KioskShell } from './components/kiosk';
+import { KioskShell, KioskHandoffData } from './components/kiosk';
 import { TriageQueue } from './components/triage';
+import { ABDMPushReceipt } from './utils/fhirConverter';
 import { Radio } from 'lucide-react';
 
 const STORAGE_KEY = 'medscribe_lite_encounters_v1';
@@ -32,6 +33,9 @@ export default function App() {
 
   // Offline local model mode state
   const [isOfflineMode, setIsOfflineMode] = useState<boolean>(false);
+
+  // Kiosk Handoff Data for Physician Confirmation Screen
+  const [kioskHandoffData, setKioskHandoffData] = useState<KioskHandoffData | null>(null);
 
   // Default patient info
   const defaultPatientInfo: PatientInfo = {
@@ -145,6 +149,7 @@ export default function App() {
     setSelectedScenarioId('');
     setSoapNote(null);
     setErrorMessage(null);
+    setKioskHandoffData(null);
   };
 
   // Generate SOAP Note via Gemini API or Offline Local Engine
@@ -286,6 +291,15 @@ export default function App() {
         onExit={() => setCurrentView('landing')}
         onSwitchToWorkstation={() => setCurrentView('workstation')}
         onOpenTriageQueue={() => setCurrentView('triage')}
+        onCompleteIntakeHandoff={(handoff) => {
+          setPatientInfo(handoff.patientInfo);
+          setSoapNote(handoff.soapNote);
+          if (handoff.formattedStandardHistoryText) {
+            setTranscript(handoff.formattedStandardHistoryText);
+          }
+          setKioskHandoffData(handoff);
+          setCurrentView('workstation');
+        }}
       />
     );
   }
@@ -434,6 +448,82 @@ Action Directives: ${alert.actionDirectives.join('; ')}.`);
         {/* SOAP Note Output & Safety Panels */}
         {soapNote || isGenerating ? (
           <div className="space-y-6 pt-2">
+            {/* Physician Confirmation Screen (reusing standard SOAP presentation for incoming kiosk patient) */}
+            {kioskHandoffData && soapNote && (
+              <div
+                id="physician-confirmation-screen"
+                className="bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 border-2 border-teal-500/50 rounded-2xl p-5 text-white shadow-xl space-y-4"
+              >
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-indigo-800/80">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-400/40 flex items-center justify-center text-teal-300">
+                      <Stethoscope className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-base sm:text-lg font-black tracking-tight text-white">
+                          Physician Confirmation Screen
+                        </h2>
+                        <span className="bg-teal-400 text-slate-950 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full">
+                          Patient In Consultation Room
+                        </span>
+                      </div>
+                      <p className="text-xs text-indigo-200 font-medium">
+                        Standard 8-part sequence pre-intake briefing automatically compiled & pushed to ABDM/HIS gateway
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-stretch sm:self-auto">
+                    <button
+                      id="view-fhir-bundle-btn"
+                      onClick={() => setActiveModal('fhir')}
+                      className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-teal-500/20 hover:bg-teal-500/30 border border-teal-400/40 text-teal-200 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <FileCode className="w-3.5 h-3.5" />
+                      <span>ABDM FHIR Bundle</span>
+                    </button>
+                    <button
+                      id="accept-and-sign-note-btn"
+                      onClick={() => {
+                        handleSaveEncounter();
+                        setKioskHandoffData(null);
+                      }}
+                      className="flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md active:scale-95"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Accept & Sign</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Status Badges: Standard Sequence + Auto-Push Receipt + Zero Retention */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                  <div className="p-2.5 rounded-xl bg-slate-950/60 border border-indigo-900/60">
+                    <span className="text-[10px] uppercase font-bold text-indigo-300 block">ABDM Push Gateway</span>
+                    <span className="text-emerald-400 font-semibold flex items-center gap-1 mt-0.5 text-[11px]">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">TX: {kioskHandoffData.abdmReceipt.transactionId}</span>
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-950/60 border border-indigo-900/60">
+                    <span className="text-[10px] uppercase font-bold text-indigo-300 block">Standard Format</span>
+                    <span className="text-slate-200 font-medium truncate block mt-0.5 text-[11px]">
+                      Chief Complaint → HPI → Past Med → Allergies → ROS → Labs
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-950/60 border border-indigo-900/60">
+                    <span className="text-[10px] uppercase font-bold text-indigo-300 block">Kiosk Terminal Memory</span>
+                    <span className="text-teal-300 font-medium flex items-center gap-1 mt-0.5 text-[11px]">
+                      <span>✓</span> Wiped immediately on submission
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Safety Alerts Panel */}
             {soapNote && (() => {
               const dbAlerts = checkDrugInteractions(

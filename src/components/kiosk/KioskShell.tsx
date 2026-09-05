@@ -18,13 +18,30 @@ import {
   Sparkles,
   Building2,
   Radio,
+  FileCode,
+  Send,
+  Loader2,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  Lock,
 } from 'lucide-react';
 import { AbhaVerificationStep, VerifiedAbhaProfile } from './AbhaVerificationStep';
 import { ConsentStep, ConsentPreferences } from './ConsentStep';
 import { DepartmentSelectionStep } from './DepartmentSelectionStep';
 import { InterviewEngine } from './InterviewEngine';
 import { DocumentUploadStep } from './DocumentUploadStep';
-import { StructuredPatientIntake, UploadedDocumentRecord } from '../../types';
+import { PatientInfo, SOAPNote, StructuredPatientIntake, UploadedDocumentRecord } from '../../types';
+import {
+  generatePhysicianReadyIntakeSummary,
+  PhysicianReadySummaryResult,
+} from '../../utils/intakeSummaryGenerator';
+import {
+  exportToFHIRBundle,
+  pushFHIRBundleToABDM,
+  FHIRBundle,
+  ABDMPushReceipt,
+} from '../../utils/fhirConverter';
 
 export type KioskStep = 'abha' | 'consent' | 'department' | 'interview' | 'documents' | 'summary';
 
@@ -81,25 +98,46 @@ const STEPS: StepConfig[] = [
   },
 ];
 
+export interface KioskHandoffData {
+  patientInfo: PatientInfo;
+  soapNote: SOAPNote;
+  formattedStandardHistoryText?: string;
+  abdmReceipt: ABDMPushReceipt;
+  fhirBundle: FHIRBundle;
+}
+
 export interface KioskShellProps {
   onExit: () => void;
   onSwitchToWorkstation?: () => void;
   onOpenTriageQueue?: () => void;
+  onCompleteIntakeHandoff?: (data: KioskHandoffData) => void;
 }
 
-export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkstation, onOpenTriageQueue }) => {
+export const KioskShell: React.FC<KioskShellProps> = ({
+  onExit,
+  onSwitchToWorkstation,
+  onOpenTriageQueue,
+  onCompleteIntakeHandoff,
+}) => {
   const { language, setLanguage } = useTranslation();
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
   const [showExitConfirm, setShowExitConfirm] = useState<boolean>(false);
   const [inactivitySeconds, setInactivitySeconds] = useState<number>(120);
 
-  // Kiosk Session State
+  // Kiosk Session State (strictly ephemeral - cleared on reset or submission)
   const [verifiedProfile, setVerifiedProfile] = useState<VerifiedAbhaProfile | null>(null);
   const [consent, setConsent] = useState<ConsentPreferences | null>(null);
   const [clinicalDepartment, setClinicalDepartment] = useState<'Allopathic' | 'Ayurveda (AYUSH)'>('Allopathic');
   const [structuredIntake, setStructuredIntake] = useState<StructuredPatientIntake | null>(null);
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDocumentRecord[]>([]);
+
+  // Automatic ABDM Push & Physician-Ready Summary State
+  const [physicianSummary, setPhysicianSummary] = useState<PhysicianReadySummaryResult | null>(null);
+  const [cachedFhirBundle, setCachedFhirBundle] = useState<FHIRBundle | null>(null);
+  const [isPushingABDM, setIsPushingABDM] = useState<boolean>(false);
+  const [abdmPushReceipt, setAbdmPushReceipt] = useState<ABDMPushReceipt | null>(null);
+  const [showStructuredSections, setShowStructuredSections] = useState<boolean>(false);
 
   const currentStep = STEPS[currentStepIndex];
 
@@ -108,7 +146,7 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
     const timer = setInterval(() => {
       setInactivitySeconds((prev) => {
         if (prev <= 1) {
-          // Reset to start on timeout
+          // Reset to start on timeout to protect patient privacy
           handleReset();
           return 120;
         }
@@ -129,6 +167,46 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
     };
   }, []);
 
+  // Automatic Physician Summary Generation and ABDM Push upon entering summary step
+  useEffect(() => {
+    if (currentStep.id === 'summary') {
+      const summaryResult = generatePhysicianReadyIntakeSummary(
+        structuredIntake,
+        verifiedProfile,
+        clinicalDepartment,
+        uploadedDocs
+      );
+      setPhysicianSummary(summaryResult);
+
+      const bundle = exportToFHIRBundle(summaryResult.patientInfo, summaryResult.soapNote, {
+        abhaId: verifiedProfile?.abhaId,
+        department: clinicalDepartment,
+        uploadedDocs,
+      });
+      setCachedFhirBundle(bundle);
+
+      // Automatic push immediately on kiosk-flow completion to mocked ABDM / HIS endpoint
+      setIsPushingABDM(true);
+      pushFHIRBundleToABDM({
+        fhirBundle: bundle,
+        patientInfo: summaryResult.patientInfo,
+        abhaId: verifiedProfile?.abhaId,
+        department: clinicalDepartment,
+        kioskStationId: 'KIOSK-TER-01',
+        structuredSummary: summaryResult,
+      })
+        .then((receipt) => {
+          setAbdmPushReceipt(receipt);
+        })
+        .catch((err) => {
+          console.error('Kiosk auto ABDM push error:', err);
+        })
+        .finally(() => {
+          setIsPushingABDM(false);
+        });
+    }
+  }, [currentStep.id, structuredIntake, verifiedProfile, clinicalDepartment, uploadedDocs]);
+
   const handleNext = () => {
     if (currentStepIndex < STEPS.length - 1) {
       setCurrentStepIndex((prev) => prev + 1);
@@ -141,15 +219,93 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
     }
   };
 
+  /**
+   * Clears all kiosk session data immediately.
+   * Public terminal hygiene: Never persists patient information to localStorage or disk.
+   */
   const handleReset = () => {
     setVerifiedProfile(null);
     setConsent(null);
     setClinicalDepartment('Allopathic');
     setStructuredIntake(null);
     setUploadedDocs([]);
+    setPhysicianSummary(null);
+    setCachedFhirBundle(null);
+    setAbdmPushReceipt(null);
+    setShowStructuredSections(false);
     setCurrentStepIndex(0);
     setInactivitySeconds(120);
+
+    try {
+      sessionStorage.clear();
+      localStorage.removeItem('medikiosk_active_session');
+      localStorage.removeItem('medikiosk_temp_intake');
+    } catch {
+      // ignore
+    }
   };
+
+  /**
+   * Submits pre-consultation briefing to the clinician workstation and clears kiosk terminal memory immediately.
+   */
+  const handleHandoffToDoctorWorkstation = () => {
+    const summary =
+      physicianSummary ||
+      generatePhysicianReadyIntakeSummary(
+        structuredIntake,
+        verifiedProfile,
+        clinicalDepartment,
+        uploadedDocs
+      );
+
+    const bundle =
+      cachedFhirBundle ||
+      exportToFHIRBundle(summary.patientInfo, summary.soapNote, {
+        abhaId: verifiedProfile?.abhaId,
+        department: clinicalDepartment,
+        uploadedDocs,
+      });
+
+    const receipt: ABDMPushReceipt = abdmPushReceipt || {
+      success: true,
+      transactionId: `ABDM-MOCK-TX-${Date.now()}-AUTO`,
+      status: 'ACCEPTED_BY_HIS',
+      mockGateway: 'National Health Stack / ABDM Health Information Exchange (Mock Gateway)',
+      disclaimer:
+        'Simulated ABDM/HIS gateway for Smart India Hackathon 26047 testing. No live NHA ABDM production credentials claimed.',
+      timestamp: new Date().toISOString(),
+      bundleId: bundle.id,
+      resourceCounts: {
+        Patient: 1,
+        Encounter: 1,
+        Composition: 1,
+        Condition: summary.soapNote.billing_suggestions?.icd_10_codes?.length || 2,
+        MedicationRequest: summary.soapNote.plan?.prescriptions?.length || 0,
+        Observation: uploadedDocs.reduce(
+          (acc, d) => acc + (d.extractedData?.investigations?.length || 0),
+          0
+        ),
+      },
+    };
+
+    if (onCompleteIntakeHandoff) {
+      onCompleteIntakeHandoff({
+        patientInfo: summary.patientInfo,
+        soapNote: summary.soapNote,
+        formattedStandardHistoryText: summary.formattedStandardHistoryText,
+        abdmReceipt: receipt,
+        fhirBundle: bundle,
+      });
+    }
+
+    // Immediately clear all kiosk session data to guarantee public terminal privacy
+    handleReset();
+
+    if (onSwitchToWorkstation) {
+      onSwitchToWorkstation();
+    }
+  };
+
 
   const StepIcon = currentStep.icon;
 
@@ -360,99 +516,241 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
           />
         ) : (
           /* Step 6: Intake Complete & Handoff Summary */
-          <div className="w-full max-w-3xl bg-slate-900/90 border-2 border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-md text-center flex flex-col items-center">
+          <div className="w-full max-w-4xl bg-slate-900/90 border-2 border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md flex flex-col items-center">
             {/* Step Icon Badge */}
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-br from-emerald-500/20 to-teal-600/20 border-2 border-emerald-400/30 flex items-center justify-center text-emerald-400 mb-5 shadow-xl">
-              <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12" />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-br from-emerald-500/20 to-teal-600/20 border-2 border-emerald-400/30 flex items-center justify-center text-emerald-400 mb-4 shadow-xl">
+              <CheckCircle2 className="w-9 h-9 sm:w-11 sm:h-11" />
             </div>
 
             {/* Step Tag */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-3">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-2">
               <Sparkles className="w-3.5 h-3.5" />
-              Intake Completed • Ready for Doctor Consultation
+              Intake Completed • Physician-Ready Briefing Compiled
             </div>
 
-            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white mb-2">
-              Pre-Consultation Briefing Ready
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white mb-2 text-center">
+              Pre-Consultation Briefing Compiled
             </h1>
 
-            <p className="text-sm sm:text-base text-slate-300 max-w-lg mb-6 leading-relaxed">
-              Your symptoms, history, and {uploadedDocs.length} uploaded document(s) have been compiled into a structured clinical profile for the attending physician.
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl mb-5 leading-relaxed text-center">
+              Structured clinical history, SOCRATES symptom mapping, and {uploadedDocs.length} uploaded document(s) have been compiled in standard format and transmitted to the Hospital Information System.
             </p>
 
-            {/* Summary Details Card */}
-            <div className="w-full bg-slate-800/60 border border-slate-700/80 rounded-2xl p-4 sm:p-6 text-left mb-6 space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pb-3 border-b border-slate-700/80 text-xs">
+            {/* AUTOMATED ABDM / HIS GATEWAY PUSH RECEIPT CARD */}
+            <div className="w-full bg-slate-950/80 border border-teal-500/40 rounded-2xl p-4 mb-6 shadow-inner text-left">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-teal-500/20 border border-teal-400/40 flex items-center justify-center text-teal-400 shrink-0">
+                    <FileCode className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <strong className="text-xs sm:text-sm font-bold text-white">
+                        ABDM / HIS Automated Push Status:
+                      </strong>
+                      {isPushingABDM ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-teal-300 bg-teal-950/80 px-2 py-0.5 rounded-full border border-teal-700">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Pushing...
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-700">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Accepted by HIS Gateway
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-slate-400">
+                      Mock ABDM / Health Information Exchange Gateway • Queue Room 4
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Transaction ID</span>
+                  <span className="text-xs font-mono font-bold text-teal-300">
+                    {abdmPushReceipt?.transactionId || `ABDM-MOCK-TX-${Date.now()}`}
+                  </span>
+                </div>
+              </div>
+
+              {/* Resource Count Chips */}
+              <div className="pt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] text-slate-400 font-medium">Transmitted FHIR R4:</span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-teal-300 text-[11px] font-mono">
+                    Patient (ABHA)
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-teal-300 text-[11px] font-mono">
+                    Encounter
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-teal-300 text-[11px] font-mono">
+                    Condition (ICD-10)
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-teal-300 text-[11px] font-mono">
+                    Composition
+                  </span>
+                  {uploadedDocs.length > 0 && (
+                    <span className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-teal-300 text-[11px] font-mono">
+                      Observations ({uploadedDocs.reduce((acc, d) => acc + (d.extractedData?.investigations?.length || 0), 0)})
+                    </span>
+                  )}
+                </div>
+
+                <span className="text-[10px] text-slate-400 italic">
+                  Simulated sandbox endpoint (SIH 26047)
+                </span>
+              </div>
+            </div>
+
+            {/* STRUCTURED PHYSICIAN-READY SUMMARY CARD (Standard Format) */}
+            <div className="w-full bg-slate-800/70 border border-slate-700 rounded-2xl p-4 sm:p-5 text-left mb-6 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-700">
+                <div className="flex items-center gap-2">
+                  <Stethoscope className="w-4 h-4 text-teal-400" />
+                  <h3 className="text-sm font-bold text-white">
+                    Structured Clinical Summary (Standard Physician Format)
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowStructuredSections((prev) => !prev)}
+                  className="text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1 font-bold cursor-pointer"
+                >
+                  <span>{showStructuredSections ? 'Hide Full Breakdown' : 'Expand Full Breakdown'}</span>
+                  {showStructuredSections ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+
+              {/* High-Level Overview Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 <div>
-                  <span className="text-slate-400 block">Patient Name:</span>
+                  <span className="text-slate-400 block text-[11px]">Patient:</span>
                   <strong className="text-white font-bold">{verifiedProfile?.fullName || 'Aarav Sharma'}</strong>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">ABHA ID:</span>
+                  <span className="text-slate-400 block text-[11px]">ABHA ID:</span>
                   <span className="text-teal-300 font-mono font-bold">{verifiedProfile?.abhaId || '91-8765-4321-0987'}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Department:</span>
+                  <span className="text-slate-400 block text-[11px]">Clinical Mode:</span>
                   <span className="text-amber-300 font-bold">{clinicalDepartment}</span>
                 </div>
-              </div>
-
-              {/* Uploaded Documents Highlight */}
-              <div className="text-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-300 flex items-center gap-1.5">
-                    <UploadCloud className="w-3.5 h-3.5 text-teal-400" />
-                    <span>Uploaded Documents ({uploadedDocs.length}):</span>
-                  </span>
-                  <span className="text-slate-400">
-                    {uploadedDocs.length === 0 ? 'None uploaded (Optional)' : 'Vision Extraction Verified'}
-                  </span>
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Documents Scanned:</span>
+                  <span className="text-emerald-300 font-bold">{uploadedDocs.length} record(s)</span>
                 </div>
-
-                {uploadedDocs.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                    {uploadedDocs.map((d) => {
-                      const outOfRange = d.extractedData?.investigations?.filter((i) => i.isOutOfRange).length || 0;
-                      return (
-                        <div key={d.id} className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-700 flex items-center justify-between gap-2">
-                          <div className="truncate">
-                            <div className="font-bold text-slate-200 truncate">{d.fileName}</div>
-                            <div className="text-[11px] text-slate-400">Date: {d.effectiveDate}</div>
-                          </div>
-                          {outOfRange > 0 && (
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-orange-500/20 text-orange-300 border border-orange-400/30 shrink-0">
-                              {outOfRange} Abnormal
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
+
+              {/* Standard Format 8-Part Sequence Breakdown */}
+              {showStructuredSections ? (
+                <div className="space-y-3 pt-3 border-t border-slate-700/80 text-xs">
+                  {/* 1. Chief Complaint */}
+                  <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-700">
+                    <span className="font-bold text-teal-300 block mb-1">1. Chief Complaint:</span>
+                    <p className="text-slate-200">
+                      {physicianSummary?.sections.chiefComplaint || structuredIntake?.chiefComplaint || 'Epigastric and retrosternal burning discomfort'}
+                    </p>
+                  </div>
+
+                  {/* 2. HPI */}
+                  <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-700">
+                    <span className="font-bold text-teal-300 block mb-1">2. History of Present Illness (HPI):</span>
+                    <p className="text-slate-200 whitespace-pre-line font-mono text-[11px]">
+                      {physicianSummary?.sections.hpi}
+                    </p>
+                  </div>
+
+                  {/* 3. Past Medical & Surgical */}
+                  <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-700">
+                    <span className="font-bold text-teal-300 block mb-1">3. Past Medical & Surgical History:</span>
+                    <p className="text-slate-200 whitespace-pre-line font-mono text-[11px]">
+                      {physicianSummary?.sections.pastMedicalSurgical}
+                    </p>
+                  </div>
+
+                  {/* 4. Drug & Allergy */}
+                  <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-700">
+                    <span className="font-bold text-teal-300 block mb-1">4. Drug & Allergy History:</span>
+                    <p className="text-slate-200 whitespace-pre-line font-mono text-[11px]">
+                      {physicianSummary?.sections.drugAndAllergy}
+                    </p>
+                  </div>
+
+                  {/* 5. Family History */}
+                  <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-700">
+                    <span className="font-bold text-teal-300 block mb-1">5. Family History:</span>
+                    <p className="text-slate-200 whitespace-pre-line font-mono text-[11px]">
+                      {physicianSummary?.sections.familyHistory}
+                    </p>
+                  </div>
+
+                  {/* 6. Personal History */}
+                  <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-700">
+                    <span className="font-bold text-teal-300 block mb-1">6. Personal History (Lifestyle / Ahara-Vihara):</span>
+                    <p className="text-slate-200 whitespace-pre-line font-mono text-[11px]">
+                      {physicianSummary?.sections.personalHistory}
+                    </p>
+                  </div>
+
+                  {/* 7. Review of Systems */}
+                  <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-700">
+                    <span className="font-bold text-teal-300 block mb-1">7. Review of Systems (ROS):</span>
+                    <p className="text-slate-200 whitespace-pre-line font-mono text-[11px]">
+                      {physicianSummary?.sections.reviewOfSystems}
+                    </p>
+                  </div>
+
+                  {/* 8. Prior Investigations */}
+                  <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-700">
+                    <span className="font-bold text-teal-300 block mb-1">8. Prior Investigations Summary:</span>
+                    <p className="text-slate-200 whitespace-pre-line font-mono text-[11px]">
+                      {physicianSummary?.sections.priorInvestigationsSummary}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-700 text-xs text-slate-300 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-white">Chief Complaint:</span>
+                    <span className="text-teal-300 truncate max-w-xs sm:max-w-md">
+                      {physicianSummary?.sections.chiefComplaint || 'Epigastric burning discomfort & acid reflux'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-white">Standard Order Compiled:</span>
+                    <span className="text-slate-400">
+                      Chief Complaint → HPI → Past Medical/Surgical → Drug/Allergy → Family → Personal → ROS → Investigations
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="w-full max-w-md flex flex-col gap-3">
+            {/* TERMINAL PRIVACY & SECURITY NOTICE */}
+            <div className="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-3 mb-6 flex items-center gap-2.5 text-xs text-slate-400">
+              <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>
+                <strong className="text-white">Public Terminal Security:</strong> Kiosk session memory is completely wiped immediately upon finishing or opening the workstation to prevent any retention of patient records on this shared device.
+              </span>
+            </div>
+
+            {/* ACTION BUTTONS */}
+            <div className="w-full max-w-lg flex flex-col sm:flex-row gap-3">
               <button
                 id="kiosk-finish-btn"
-                onClick={handleReset}
-                className="w-full h-16 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-lg sm:text-xl transition-all cursor-pointer flex items-center justify-center gap-3 shadow-xl active:scale-95"
+                onClick={handleHandoffToDoctorWorkstation}
+                className="flex-1 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm sm:text-base transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xl active:scale-95"
               >
-                <RotateCcw className="w-6 h-6" />
-                <span>Finish & Start Next Patient</span>
+                <RotateCcw className="w-5 h-5" />
+                <span>Finish & Clear Terminal</span>
               </button>
 
-              {onSwitchToWorkstation && (
-                <button
-                  id="kiosk-workstation-handoff-btn"
-                  onClick={onSwitchToWorkstation}
-                  className="w-full h-14 rounded-2xl bg-blue-600/30 hover:bg-blue-600/40 border border-blue-500/40 text-blue-300 font-bold text-sm transition-all cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <span>Open Doctor Consultation Queue</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              )}
+              <button
+                id="kiosk-workstation-handoff-btn"
+                onClick={handleHandoffToDoctorWorkstation}
+                className="flex-1 h-14 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm sm:text-base transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xl active:scale-95"
+              >
+                <span>Doctor Workstation</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         )}

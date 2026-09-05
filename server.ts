@@ -1276,6 +1276,104 @@ app.delete('/api/triage/alerts', (req, res) => {
   res.json({ success: true, message: 'All triage alerts cleared' });
 });
 
+// ==========================================
+// MOCKED ABDM / HOSPITAL INFORMATION SYSTEM (HIS) FHIR PUSH ENDPOINT
+// SIH 26047 Evaluation Sandbox (Simulated Gateway)
+// ==========================================
+interface ABDMPushRecord {
+  transactionId: string;
+  timestamp: string;
+  status: 'ACCEPTED_BY_HIS' | 'QUEUED_FOR_CONSULTATION';
+  mockGateway: string;
+  disclaimer: string;
+  kioskStationId: string;
+  patientName: string;
+  abhaId?: string;
+  age?: number | string;
+  gender?: string;
+  department: string;
+  chiefComplaint: string;
+  bundleId: string;
+  resourceCounts: {
+    Patient: number;
+    Encounter: number;
+    Condition: number;
+    MedicationRequest: number;
+    Composition: number;
+    DiagnosticReport?: number;
+    Observation?: number;
+  };
+  fhirBundle: any;
+  structuredSummary?: any;
+}
+
+let abdmConsultationQueue: ABDMPushRecord[] = [];
+
+// POST /api/abdm/push
+app.post('/api/abdm/push', (req, res) => {
+  const { fhirBundle, patientInfo, abhaId, department, kioskStationId = 'KIOSK-TER-01', structuredSummary } = req.body;
+
+  if (!fhirBundle || !fhirBundle.entry) {
+    return res.status(400).json({ error: 'Valid HL7 FHIR R4 Bundle required.' });
+  }
+
+  const txId = `ABDM-MOCK-TX-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  const counts: Record<string, number> = {};
+  (fhirBundle.entry || []).forEach((e: any) => {
+    const rt = e.resource?.resourceType || 'Resource';
+    counts[rt] = (counts[rt] || 0) + 1;
+  });
+
+  const record: ABDMPushRecord = {
+    transactionId: txId,
+    timestamp: new Date().toISOString(),
+    status: 'ACCEPTED_BY_HIS',
+    mockGateway: 'National Health Stack / ABDM Health Information Exchange (Mock Sandbox Gateway)',
+    disclaimer: 'Simulated ABDM/HIS gateway for Smart India Hackathon 26047 testing. No live NHA ABDM production credentials claimed.',
+    kioskStationId,
+    patientName: patientInfo?.name || 'Anonymous Patient',
+    abhaId: abhaId || patientInfo?.id || '91-8765-4321-0987',
+    age: patientInfo?.age,
+    gender: patientInfo?.gender || patientInfo?.sex,
+    department: department || 'General Medicine (OPD)',
+    chiefComplaint: structuredSummary?.sections?.chiefComplaint || patientInfo?.medicalHistory || 'Outpatient Consultation',
+    bundleId: fhirBundle.id || `bundle-${Date.now()}`,
+    resourceCounts: {
+      Patient: counts['Patient'] || 1,
+      Encounter: counts['Encounter'] || 1,
+      Condition: counts['Condition'] || 0,
+      MedicationRequest: counts['MedicationRequest'] || 0,
+      Composition: counts['Composition'] || 1,
+      DiagnosticReport: counts['DiagnosticReport'] || 0,
+      Observation: counts['Observation'] || 0,
+    },
+    fhirBundle,
+    structuredSummary,
+  };
+
+  abdmConsultationQueue.unshift(record);
+  if (abdmConsultationQueue.length > 50) {
+    abdmConsultationQueue = abdmConsultationQueue.slice(0, 50);
+  }
+
+  res.status(201).json({
+    success: true,
+    record,
+    transactionId: txId,
+    message: 'FHIR R4 Bundle pushed successfully to Mock ABDM / Hospital Information System gateway.',
+  });
+});
+
+// GET /api/abdm/queue
+app.get('/api/abdm/queue', (req, res) => {
+  res.json({
+    success: true,
+    totalQueued: abdmConsultationQueue.length,
+    records: abdmConsultationQueue,
+  });
+});
+
+
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

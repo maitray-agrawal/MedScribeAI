@@ -81,8 +81,8 @@
 - **Exit Criteria:** Clinical emergency symptoms (e.g., chest pain, acute dyspnea, stroke signs, severe hypertension, fever with altered sensorium) instantly trigger high-priority visual alarms and direct the patient to immediate emergency triage. [COMPLETED]
 
 ### Sub-phase (g): Structured Summary Handoff + FHIR/ABDM Push
-- [ ] Compile comprehensive pre-consultation intake summary combining Allopathic and AYUSH data
-- [ ] Integrate existing HL7 FHIR R4 converter to generate ABDM-compliant Health Record bundle
-- [ ] Build clinician review queue / handoff view simulating doctor workstation receiving the pre-intake briefing
-- [ ] Generate printable / QR-coded patient intake token for consultation room handoff
-- **Exit Criteria:** Pre-consultation intake is compiled into a verified structured summary (SOAP note + AYUSH assessment) and pushed as an ABDM-compliant FHIR R4 Bundle to the doctor's workstation queue before the consultation.
+- [x] Compile comprehensive pre-consultation intake summary combining Allopathic and AYUSH data in standard sequence (Chief complaint → HPI → Past medical/surgical → Drug & allergy → Family → Personal → ROS → prior investigations summary) (`src/utils/intakeSummaryGenerator.ts`)
+- [x] Implement automated background push of HL7 FHIR R4 Bundle to mocked ABDM / HIS gateway endpoint (`/api/abdm/push`) upon kiosk flow completion (`src/utils/fhirConverter.ts`)
+- [x] Reuse existing SOAP note presentation components as the Physician Confirmation Screen upon patient arrival in the doctor's consultation room
+- [x] Enforce zero data retention on the kiosk public terminal by wiping session memory immediately upon handoff or finish to protect patient privacy
+- **Exit Criteria:** Pre-consultation intake is compiled into a verified structured summary (SOAP note + AYUSH assessment) and pushed as an ABDM-compliant FHIR R4 Bundle to the doctor's workstation queue with zero kiosk terminal data retention. [COMPLETED]

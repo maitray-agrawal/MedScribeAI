@@ -309,6 +309,7 @@ export interface StructuredPatientIntake {
   currentMedications: DiscreteMedication[];
   knownAllergies: DiscreteAllergy[];
   ayushHistory?: AYUSHHistory;
+  uploadedDocuments?: UploadedDocumentRecord[];
   conversationTurns: InterviewTurn[];
   triageClassification?: 'Green (Routine)' | 'Yellow (Priority)' | 'Red (Immediate Emergency)';
   redFlagsDetected: string[];
@@ -515,5 +516,55 @@ export interface AdaptiveInterviewTurnResponse {
   triagePriority?: 'routine' | 'urgent' | 'emergency';
   isComplete: boolean;
   clinicalSummarySoFar?: string;
+}
+
+/**
+ * ==========================================
+ * DOCUMENT UPLOAD & MULTIMODAL EXTRACTION TYPES
+ * Phase 6 Sub-phase (e) - Prescriptions, Lab Reports, Discharge Summaries
+ * ==========================================
+ */
+
+export interface ExtractedLabResult {
+  testName: string;
+  value: string;
+  unit?: string;
+  referenceRange?: string;
+  isOutOfRange: boolean;
+  flagSeverity?: 'high' | 'medium' | 'low' | 'normal';
+  interpretation?: string;
+}
+
+export interface ExtractedMedication {
+  name: string;
+  dosage: string;
+  frequency?: string;
+  duration?: string;
+  instructions?: string;
+}
+
+export interface ExtractedDocumentData {
+  documentType: 'prescription' | 'lab_report' | 'discharge_summary' | 'other';
+  documentDate?: string;
+  extractedDateConfidence?: 'high' | 'medium' | 'low' | 'inferred';
+  facilityOrDoctor?: string;
+  diagnoses: string[];
+  medications: ExtractedMedication[];
+  investigations: ExtractedLabResult[];
+  clinicalSummary?: string;
+  criticalFlags?: string[];
+}
+
+export interface UploadedDocumentRecord {
+  id: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  previewUrl?: string;
+  uploadedAt: string;
+  effectiveDate: string; // ISO or YYYY-MM-DD string used for chronological sorting
+  status: 'uploading' | 'analyzing' | 'completed' | 'error';
+  errorMessage?: string;
+  extractedData?: ExtractedDocumentData;
 }
 

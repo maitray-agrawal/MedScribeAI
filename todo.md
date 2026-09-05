@@ -68,11 +68,11 @@
 - **Exit Criteria:** Patient can select or be routed to an AYUSH/Ayurveda intake flow capturing Prakriti traits, Agni (digestive fire), Kostha, Ahara/Vihara (diet/lifestyle), and Dhatu/Dosha-oriented symptom chronologies aligned with AIIA guidelines. [COMPLETED]
 
 ### Sub-phase (e): Document Upload + Digitization
-- [ ] Implement kiosk document capture / file upload interface (past prescriptions, lab reports, discharge summaries)
-- [ ] Build OCR / multimodal Gemini extraction pipeline for physical prescription photos
-- [ ] Parse extracted medications, dosages, and historical diagnoses into active patient record
-- [ ] Display digitized record verification card for patient review
-- **Exit Criteria:** Patient can scan/upload past physical prescriptions, lab reports, or discharge summaries at the kiosk with OCR/Gemini extraction into structured medication and diagnostic history.
+- [x] Implement kiosk document capture / file upload interface (past prescriptions, lab reports, discharge summaries)
+- [x] Build OCR / multimodal Gemini extraction pipeline for physical prescription photos
+- [x] Parse extracted medications, dosages, and historical diagnoses into active patient record
+- [x] Display digitized record verification card for patient review with SafetyAlertsPanel out-of-range visual highlights and chronological sorting
+- **Exit Criteria:** Patient can scan/upload past physical prescriptions, lab reports, or discharge summaries at the kiosk with OCR/Gemini extraction into structured medication and diagnostic history. [COMPLETED]
 
 ### Sub-phase (f): Real-Time Red-Flag Triage Escalation
 - [ ] Implement real-time clinical red-flag detector during symptom intake (e.g., acute chest pain, breathlessness, stroke signs, vitals crisis)

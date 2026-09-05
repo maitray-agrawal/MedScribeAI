@@ -22,7 +22,8 @@ import { AbhaVerificationStep, VerifiedAbhaProfile } from './AbhaVerificationSte
 import { ConsentStep, ConsentPreferences } from './ConsentStep';
 import { DepartmentSelectionStep } from './DepartmentSelectionStep';
 import { InterviewEngine } from './InterviewEngine';
-import { StructuredPatientIntake } from '../../types';
+import { DocumentUploadStep } from './DocumentUploadStep';
+import { StructuredPatientIntake, UploadedDocumentRecord } from '../../types';
 
 export type KioskStep = 'abha' | 'consent' | 'department' | 'interview' | 'documents' | 'summary';
 
@@ -96,6 +97,7 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
   const [consent, setConsent] = useState<ConsentPreferences | null>(null);
   const [clinicalDepartment, setClinicalDepartment] = useState<'Allopathic' | 'Ayurveda (AYUSH)'>('Allopathic');
   const [structuredIntake, setStructuredIntake] = useState<StructuredPatientIntake | null>(null);
+  const [uploadedDocs, setUploadedDocs] = useState<UploadedDocumentRecord[]>([]);
 
   const currentStep = STEPS[currentStepIndex];
 
@@ -142,6 +144,7 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
     setConsent(null);
     setClinicalDepartment('Allopathic');
     setStructuredIntake(null);
+    setUploadedDocs([]);
     setCurrentStepIndex(0);
     setInactivitySeconds(120);
   };
@@ -320,82 +323,120 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
             }}
             onBackToConsent={handleBack}
           />
+        ) : currentStep.id === 'documents' ? (
+          <DocumentUploadStep
+            documents={uploadedDocs}
+            onUpdateDocuments={(docs) => {
+              setUploadedDocs(docs);
+              if (structuredIntake) {
+                setStructuredIntake({
+                  ...structuredIntake,
+                  uploadedDocuments: docs,
+                });
+              }
+            }}
+            onNext={handleNext}
+            onBack={handleBack}
+            patientContext={{
+              name: verifiedProfile?.fullName || 'Aarav Sharma',
+              age: verifiedProfile?.age || 38,
+              gender: verifiedProfile?.gender || 'Male',
+            }}
+          />
         ) : (
-          /* Placeholder Screens for subsequent sub-phases (documents, summary) */
-          <div className="w-full bg-slate-900/80 border-2 border-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl backdrop-blur-sm text-center flex flex-col items-center">
+          /* Step 6: Intake Complete & Handoff Summary */
+          <div className="w-full max-w-3xl bg-slate-900/90 border-2 border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-md text-center flex flex-col items-center">
             {/* Step Icon Badge */}
-            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br from-teal-500/20 to-blue-600/20 border-2 border-teal-400/30 flex items-center justify-center text-teal-300 mb-6 shadow-xl">
-              <StepIcon className="w-12 h-12 sm:w-14 sm:h-14" />
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-br from-emerald-500/20 to-teal-600/20 border-2 border-emerald-400/30 flex items-center justify-center text-emerald-400 mb-5 shadow-xl">
+              <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12" />
             </div>
 
             {/* Step Tag */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-400/30 text-teal-300 text-xs sm:text-sm font-bold uppercase tracking-wider mb-4">
-              <Sparkles className="w-4 h-4" />
-              Step {currentStep.stepNumber} of {STEPS.length}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-3">
+              <Sparkles className="w-3.5 h-3.5" />
+              Intake Completed • Ready for Doctor Consultation
             </div>
 
-            {/* Step Title (Minimal, High-Contrast) */}
-            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white mb-3">
-              {currentStep.title}
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white mb-2">
+              Pre-Consultation Briefing Ready
             </h1>
 
-            {/* Minimal Body Text */}
-            <p className="text-base sm:text-xl text-slate-300 max-w-xl mb-10 leading-relaxed">
-              {currentStep.subtitle}
+            <p className="text-sm sm:text-base text-slate-300 max-w-lg mb-6 leading-relaxed">
+              Your symptoms, history, and {uploadedDocs.length} uploaded document(s) have been compiled into a structured clinical profile for the attending physician.
             </p>
 
-            {/* Placeholder Notice Badge */}
-            <div className="mb-10 px-5 py-3 rounded-2xl bg-slate-800/60 border border-slate-700 text-slate-400 text-sm max-w-md">
-              <p className="font-semibold text-slate-300">Phase 6: Planned Module</p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Interactive logic for this step will be connected in subsequent sub-phases.
-              </p>
+            {/* Summary Details Card */}
+            <div className="w-full bg-slate-800/60 border border-slate-700/80 rounded-2xl p-4 sm:p-6 text-left mb-6 space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pb-3 border-b border-slate-700/80 text-xs">
+                <div>
+                  <span className="text-slate-400 block">Patient Name:</span>
+                  <strong className="text-white font-bold">{verifiedProfile?.fullName || 'Aarav Sharma'}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">ABHA ID:</span>
+                  <span className="text-teal-300 font-mono font-bold">{verifiedProfile?.abhaId || '91-8765-4321-0987'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Department:</span>
+                  <span className="text-amber-300 font-bold">{clinicalDepartment}</span>
+                </div>
+              </div>
+
+              {/* Uploaded Documents Highlight */}
+              <div className="text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                    <UploadCloud className="w-3.5 h-3.5 text-teal-400" />
+                    <span>Uploaded Documents ({uploadedDocs.length}):</span>
+                  </span>
+                  <span className="text-slate-400">
+                    {uploadedDocs.length === 0 ? 'None uploaded (Optional)' : 'Vision Extraction Verified'}
+                  </span>
+                </div>
+
+                {uploadedDocs.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {uploadedDocs.map((d) => {
+                      const outOfRange = d.extractedData?.investigations?.filter((i) => i.isOutOfRange).length || 0;
+                      return (
+                        <div key={d.id} className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-700 flex items-center justify-between gap-2">
+                          <div className="truncate">
+                            <div className="font-bold text-slate-200 truncate">{d.fileName}</div>
+                            <div className="text-[11px] text-slate-400">Date: {d.effectiveDate}</div>
+                          </div>
+                          {outOfRange > 0 && (
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-orange-500/20 text-orange-300 border border-orange-400/30 shrink-0">
+                              {outOfRange} Abnormal
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Primary Big Touch Controls */}
-            <div className="w-full max-w-md flex flex-col sm:flex-row items-center justify-center gap-4">
-              {currentStepIndex > 0 && (
-                <button
-                  id="kiosk-back-btn"
-                  onClick={handleBack}
-                  className="w-full sm:w-1/3 h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-base sm:text-lg border-2 border-slate-700 transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                  <span>Back</span>
-                </button>
-              )}
+            {/* Action Buttons */}
+            <div className="w-full max-w-md flex flex-col gap-3">
+              <button
+                id="kiosk-finish-btn"
+                onClick={handleReset}
+                className="w-full h-16 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-lg sm:text-xl transition-all cursor-pointer flex items-center justify-center gap-3 shadow-xl active:scale-95"
+              >
+                <RotateCcw className="w-6 h-6" />
+                <span>Finish & Start Next Patient</span>
+              </button>
 
-              {currentStepIndex < STEPS.length - 1 ? (
+              {onSwitchToWorkstation && (
                 <button
-                  id="kiosk-continue-btn"
-                  onClick={handleNext}
-                  className="w-full sm:flex-1 h-16 rounded-2xl bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-slate-950 font-black text-lg sm:text-xl transition-all cursor-pointer flex items-center justify-center gap-3 shadow-xl shadow-teal-950/60 active:scale-95"
+                  id="kiosk-workstation-handoff-btn"
+                  onClick={onSwitchToWorkstation}
+                  className="w-full h-14 rounded-2xl bg-blue-600/30 hover:bg-blue-600/40 border border-blue-500/40 text-blue-300 font-bold text-sm transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
-                  <span>Continue</span>
-                  <ArrowRight className="w-6 h-6" />
+                  <span>Open Doctor Consultation Queue</span>
+                  <ArrowRight className="w-4 h-4" />
                 </button>
-              ) : (
-                <div className="w-full flex flex-col gap-3">
-                  <button
-                    id="kiosk-finish-btn"
-                    onClick={handleReset}
-                    className="w-full h-16 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-lg sm:text-xl transition-all cursor-pointer flex items-center justify-center gap-3 shadow-xl active:scale-95"
-                  >
-                    <RotateCcw className="w-6 h-6" />
-                    <span>Start New Intake</span>
-                  </button>
-
-                  {onSwitchToWorkstation && (
-                    <button
-                      id="kiosk-workstation-handoff-btn"
-                      onClick={onSwitchToWorkstation}
-                      className="w-full h-14 rounded-2xl bg-blue-600/30 hover:bg-blue-600/40 border border-blue-500/40 text-blue-300 font-bold text-sm transition-all cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      <span>View in Doctor Workstation</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
               )}
             </div>
           </div>

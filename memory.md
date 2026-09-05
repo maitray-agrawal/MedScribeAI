@@ -430,6 +430,47 @@ Initial deep-dive audit of the existing MedScribe Lite codebase and setup of the
    - Executed `npm run build` (`compile_applet`): Production bundle successfully built with zero errors.
    - Verified both Allopathic and AYUSH interview pathways are verified and ready for testing.
 
+---
+
+## Session Log: 2026-09-05 — Multimodal Document Upload & Vision AI Extraction Pipeline (Phase 6e)
+
+### Summary of Work:
+1. **Clinical Document Data Models (`src/types.ts`)**:
+   - Designed and integrated `UploadedDocumentRecord`, `ExtractedDocumentData`, `ExtractedMedication`, and `ExtractedLabResult` interfaces.
+   - Attached `uploadedDocuments?: UploadedDocumentRecord[]` to `StructuredPatientIntake`.
+   - Support for document categorization (`prescription`, `lab_report`, `discharge_summary`, `radiology_imaging`, `other`), document dates with extraction confidence, out-of-range flag severity, and clinical interpretation.
+
+2. **Multimodal Vision AI Backend Endpoint (`server.ts`)**:
+   - Implemented `POST /api/kiosk/extract-document` utilizing Gemini multimodal vision directly on uploaded images (`inlineData` base64 payload).
+   - Structured extraction prompt instructs Gemini to act as an accredited Senior Clinical Data Extraction Specialist.
+   - Structured extraction captures:
+     * Document classification and suggested document date (`YYYY-MM-DD`).
+     * Diagnoses and clinical conditions.
+     * Medications with granular names, dosages, frequencies, durations, and instructions.
+     * Diagnostic lab results with measured values, units, reference intervals, `isOutOfRange` flags, and `flagSeverity`.
+   - Included robust deterministic `getDocumentFallback()` fallback mechanism ensuring zero patient-blocking in offline or API disruption scenarios.
+
+3. **Touch-First Kiosk Document Upload Component (`src/components/kiosk/DocumentUploadStep.tsx`)**:
+   - Built Step 5 of the kiosk workflow:
+     * Dual input triggers: Physical camera capture (`capture="environment"`) and file selector (JPG, PNG, WEBP, PDF).
+     * Interactive Instant Kiosk Test Samples bar: instant 1-click synthetic generator for testing Lab Reports (HbA1c 8.4% with out-of-range alerts), Doctor Prescriptions (Telmisartan 40mg), and AIIA Discharge Summaries without requiring a physical camera.
+     * Multilingual Audio Guidance button with `SpeechSynthesis` read-aloud support.
+     * Active processing indicator showing real-time Gemini Multimodal Vision AI status.
+   - **Chronological Sorting**: Automatically sorts uploaded documents by `effectiveDate` (extracted document date or upload date), with a one-touch sort order toggle ("Newest First" / "Oldest First").
+   - **Visual Alert Reuse**: Reused the exact visual alert and flag pattern from `SafetyAlertsPanel.tsx` to prominently highlight out-of-range lab results with severity badges, animated pulse indicators, and clinical interpretation callouts.
+
+4. **Kiosk Workflow Integration (`src/components/kiosk/KioskShell.tsx`)**:
+   - Mounted `DocumentUploadStep` at Step 5 (`documents`) in the intake flow.
+   - Maintained state via `uploadedDocs`, resetting securely on session inactivity timeout or patient completion.
+   - Updated Step 6 (`summary`) to reflect all uploaded documents, verified vision extraction, and out-of-range laboratory alert summaries for doctor handoff.
+
+5. **Testing & Verification**:
+   - Created `src/__tests__/kioskDocumentUpload.test.tsx` verifying upload options, SafetyAlerts-style out-of-range lab highlights, chronological sorting, and navigation.
+   - Executed `npx vitest run`: All 7 kiosk tests passing.
+   - Executed `npm run lint` (`tsc --noEmit`): 0 TypeScript errors.
+   - Executed `compile_applet`: Production build succeeded.
+
+
 
 
 

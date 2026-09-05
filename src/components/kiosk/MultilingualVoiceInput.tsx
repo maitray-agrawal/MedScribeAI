@@ -22,17 +22,16 @@ import {
   SpeechSessionRecord,
   LanguageDetectionResult,
 } from '../../speech/speechTypes';
-import { extractMultilingualConcepts } from '../../nlp/codeSwitchingExtractor';
-import { evaluateRedFlags } from '../../clinical/redFlagRules';
-import { calculateClinicalConfidence } from '../../clinical/confidenceScorer';
-import { ExtractedConcept, RedFlagAlert } from '../../clinical/interviewPolicies';
+import { extractMultilingualConcepts, ExtractedClinicalConcept } from '../../nlp/codeSwitchingExtractor';
+import { evaluateRedFlags, RedFlagAlert } from '../../clinical/redFlagRules';
+import { computeConfidenceMetrics } from '../../clinical/confidenceScorer';
 import { EmergencyTriageAlert } from '../../types';
 
 export interface MultilingualVoiceInputProps {
   onTranscriptSubmitted: (
     transcript: string,
     locale: SupportedLocale,
-    extractedConcepts?: ExtractedConcept[]
+    extractedConcepts?: ExtractedClinicalConcept[]
   ) => void;
   currentLocale: SupportedLocale;
   onLocaleChange: (locale: SupportedLocale) => void;
@@ -60,7 +59,7 @@ export const MultilingualVoiceInput: React.FC<MultilingualVoiceInputProps> = ({
   const [interimText, setInterimText] = useState<string>('');
   const [finalTranscript, setFinalTranscript] = useState<string>('');
   const [activeSession, setActiveSession] = useState<SpeechSessionRecord | null>(null);
-  const [extractedConcepts, setExtractedConcepts] = useState<ExtractedConcept[]>([]);
+  const [extractedConcepts, setExtractedConcepts] = useState<ExtractedClinicalConcept[]>([]);
   const [triggeredRedFlags, setTriggeredRedFlags] = useState<RedFlagAlert[]>([]);
   const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -72,7 +71,7 @@ export const MultilingualVoiceInput: React.FC<MultilingualVoiceInputProps> = ({
   // Initialize SpeechManager instance
   useEffect(() => {
     const manager = new SpeechManager({
-      onStateChange: (state, message) => {
+      onStatusChange: (state, message) => {
         setSpeechState(state);
         if (message) setStatusMessage(message);
         if (state === 'listening') {
@@ -89,7 +88,7 @@ export const MultilingualVoiceInput: React.FC<MultilingualVoiceInputProps> = ({
         setFinalTranscript(text);
         setInterimText('');
         setActiveSession(session);
-        analyzeText(text, session.detectedLanguage?.language || currentLocale);
+        analyzeText(text, session.language || currentLocale);
       },
       onError: (err, fatal) => {
         console.error('SpeechManager error:', err);
@@ -352,13 +351,13 @@ export const MultilingualVoiceInput: React.FC<MultilingualVoiceInputProps> = ({
             </div>
 
             {/* Detected Language & Confidence Badges */}
-            {activeSession?.detectedLanguage && (
+            {activeSession && (
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-800 text-teal-300 border border-teal-500/30">
-                  {activeSession.detectedLanguage.language.toUpperCase()} (
-                  {Math.round(activeSession.detectedLanguage.confidence * 100)}%)
+                  {activeSession.language.toUpperCase()} (
+                  {Math.round(activeSession.languageConfidence * 100)}%)
                 </span>
-                {activeSession.detectedLanguage.codeSwitching && (
+                {activeSession.codeSwitching && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                     Code-Switched
                   </span>
@@ -415,7 +414,7 @@ export const MultilingualVoiceInput: React.FC<MultilingualVoiceInputProps> = ({
                       }`}
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>{concept.conceptName}</span>
+                      <span>{concept.surfaceText || concept.conceptId}</span>
                       {isNegated && (
                         <span className="text-[10px] uppercase font-black text-rose-400">
                           (Negated)
@@ -436,7 +435,7 @@ export const MultilingualVoiceInput: React.FC<MultilingualVoiceInputProps> = ({
                 <span className="font-black uppercase tracking-wide">
                   Clinical Safety Red Flag Identified:{' '}
                 </span>
-                <span>{triggeredRedFlags.map((r) => r.ruleDescription).join('; ')}</span>
+                <span>{triggeredRedFlags.map((r) => r.title).join('; ')}</span>
               </div>
             </div>
           )}

@@ -303,7 +303,9 @@ export function exportToFHIRBundle(
           display: 'Progress Note',
         },
       ],
-      text: 'Pre-Consultation Intake Progress Note (MediKiosk)',
+      text: options?.department
+        ? 'Pre-Consultation Intake Progress Note (MediKiosk)'
+        : 'Clinical SOAP Note (MedScribe Lite)',
     },
     subject: {
       reference: `Patient/${patientId}`,
@@ -313,7 +315,9 @@ export function exportToFHIRBundle(
       reference: `Encounter/${encounterId}`,
     },
     date: timestamp,
-    title: 'MediKiosk Pre-Consultation Clinical Intake Briefing',
+    title: options?.department
+      ? 'MediKiosk Pre-Consultation Clinical Intake Briefing'
+      : 'MedScribe Lite Clinical SOAP Note',
     section: [
       {
         title: 'Subjective (Chief Complaint & HPI)',

@@ -23,4 +23,19 @@ if (typeof window !== 'undefined') {
 
   // Mock Element.prototype.scrollIntoView
   Element.prototype.scrollIntoView = () => {};
+
+  // Mock Element.prototype.animate for motion / happy-dom
+  Element.prototype.animate = () => ({
+    finished: Promise.resolve(),
+    cancel: () => {},
+    play: () => {},
+    pause: () => {},
+    reverse: () => {},
+    finish: () => {},
+    currentTime: 0,
+    playbackRate: 1,
+    playState: 'finished',
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  } as any);
 }

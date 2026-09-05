@@ -59,4 +59,71 @@ describe('Offline Local Model NLP Engine', () => {
     expect(note.documentation_confidence?.subjective.score).toBeGreaterThanOrEqual(60);
     expect(note.meta.uncertainty_flagged).toBe(false);
   });
+
+  describe('Hindi Offline Clinical NLP Integration', () => {
+    it('correctly extracts positive findings and temporal duration from Romanized Hindi', () => {
+      const transcript = 'Mujhe do din se bahut tez bukhar aur sirdard hai.';
+      const note = generateOfflineSOAPNote(samplePatient, transcript, 'hi');
+
+      expect(note.subjective.chief_complaint).toContain('fever');
+      expect(note.subjective.history_of_present_illness).toContain('Fever [PRESENT]');
+      expect(note.subjective.history_of_present_illness).toContain('Headache [PRESENT]');
+      expect(note.subjective.history_of_present_illness).toContain('2 days');
+      expect(note.assessment.primary_diagnosis).toBe('Unspecified Acute Febrile Illness');
+      expect(note.billing_suggestions.icd_10_codes.some((c) => c.code === 'R50.9')).toBe(true);
+      expect(note.documentation_confidence?.overall_score).toBeGreaterThanOrEqual(80);
+    });
+
+    it('safety check: NEVER documents negated symptoms as positive conditions or billing codes', () => {
+      // Patient has fever and headache, but explicitly denies chest pain and hypertension
+      const transcript = 'Do din se bukhar hai aur sirdard hai. Seene me koi dard nahi hai aur BP ki bimari nahi hai.';
+      const note = generateOfflineSOAPNote(samplePatient, transcript, 'hi');
+
+      // 1. Primary diagnosis MUST NOT be chest pain or hypertension
+      expect(note.assessment.primary_diagnosis).not.toContain('Chest Pain');
+      expect(note.assessment.primary_diagnosis).not.toContain('Hypertension');
+      expect(note.assessment.primary_diagnosis).toBe('Unspecified Acute Febrile Illness');
+
+      // 2. Billing ICD-10 codes MUST NOT contain R07.9 (chest pain) or I10 (hypertension)
+      const icdCodes = note.billing_suggestions.icd_10_codes.map((c) => c.code);
+      expect(icdCodes).not.toContain('R07.9');
+      expect(icdCodes).not.toContain('I10');
+      expect(icdCodes).toContain('R50.9'); // Fever should be present
+
+      // 3. Negated items must be explicitly marked as NEGATED in HPI with evidence and confidence
+      expect(note.subjective.history_of_present_illness).toContain('[NEGATED]');
+      expect(note.subjective.history_of_present_illness).toMatch(/Chest Pain|Hypertension/);
+
+      // 4. ROS must document cardiovascular as denying chest pain
+      expect(note.subjective.review_of_systems).toContain('Cardiovascular: Explicitly denies chest pain / hypertension');
+
+      // 5. Prescriptions MUST NOT contain Lisinopril (antihypertensive) or Aspirin (STAT chest pain protocol)
+      expect(note.plan.prescriptions.some((p) => p.medication.includes('Lisinopril'))).toBe(false);
+      expect(note.plan.prescriptions.some((p) => p.medication.includes('Aspirin'))).toBe(false);
+    });
+
+    it('triggers Red Flag safety alert when emergency symptoms are affirmed in Hindi', () => {
+      const transcript = 'Seene me bahut tez dard ho raha hai aur saans lene me takleef hai.';
+      const note = generateOfflineSOAPNote(samplePatient, transcript, 'hi');
+
+      const redFlags = note.safety_alerts.filter((a) => a.type === 'Red Flag');
+      expect(redFlags.length).toBeGreaterThan(0);
+      expect(redFlags[0].message).toContain('Chest Pain');
+      expect(note.assessment.primary_diagnosis).toContain('Chest Pain');
+      expect(note.billing_suggestions.icd_10_codes.some((c) => c.code === 'R07.9')).toBe(true);
+    });
+
+    it('preserves verbatim patient evidence and confidence in HPI and clinical summary', () => {
+      const transcript = 'मुझे तीन दिन से खांसी और हल्का बुखार है। उल्टी नहीं हुई है।';
+      const note = generateOfflineSOAPNote(samplePatient, transcript, 'hi');
+
+      expect(note.subjective.history_of_present_illness).toContain('Evidence: "');
+      expect(note.subjective.history_of_present_illness).toContain('Confidence:');
+      expect(note.assessment.clinical_summary).toContain('Verbatim patient phrases and confidence scores preserved');
+
+      // Spanish language limitation alert should NOT be present for Hindi
+      const languageAlerts = note.safety_alerts.filter((a) => a.type === 'Language Limitation Alert');
+      expect(languageAlerts.length).toBe(0);
+    });
+  });
 });

@@ -17,6 +17,8 @@ import {
   HeartPulse,
   Sparkles,
 } from 'lucide-react';
+import { AbhaVerificationStep, VerifiedAbhaProfile } from './AbhaVerificationStep';
+import { ConsentStep, ConsentPreferences } from './ConsentStep';
 
 export type KioskStep = 'abha' | 'consent' | 'interview' | 'documents' | 'summary';
 
@@ -78,6 +80,10 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
   const [showExitConfirm, setShowExitConfirm] = useState<boolean>(false);
   const [inactivitySeconds, setInactivitySeconds] = useState<number>(120);
 
+  // Kiosk Session State
+  const [verifiedProfile, setVerifiedProfile] = useState<VerifiedAbhaProfile | null>(null);
+  const [consent, setConsent] = useState<ConsentPreferences | null>(null);
+
   const currentStep = STEPS[currentStepIndex];
 
   // Inactivity countdown simulation for patient privacy
@@ -86,7 +92,7 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
       setInactivitySeconds((prev) => {
         if (prev <= 1) {
           // Reset to start on timeout
-          setCurrentStepIndex(0);
+          handleReset();
           return 120;
         }
         return prev - 1;
@@ -119,6 +125,8 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
   };
 
   const handleReset = () => {
+    setVerifiedProfile(null);
+    setConsent(null);
     setCurrentStepIndex(0);
     setInactivitySeconds(120);
   };
@@ -253,85 +261,105 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
         </div>
       </header>
 
-      {/* KIOSK MAIN STAGE: Placeholder Screens */}
+      {/* KIOSK MAIN STAGE */}
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-8 py-8 flex flex-col justify-center items-center">
-        <div className="w-full bg-slate-900/80 border-2 border-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl backdrop-blur-sm text-center flex flex-col items-center">
-          {/* Step Icon Badge */}
-          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br from-teal-500/20 to-blue-600/20 border-2 border-teal-400/30 flex items-center justify-center text-teal-300 mb-6 shadow-xl">
-            <StepIcon className="w-12 h-12 sm:w-14 sm:h-14" />
-          </div>
+        {currentStep.id === 'abha' ? (
+          <AbhaVerificationStep
+            initialProfile={verifiedProfile}
+            onVerified={(profile) => {
+              setVerifiedProfile(profile);
+              handleNext();
+            }}
+          />
+        ) : currentStep.id === 'consent' ? (
+          <ConsentStep
+            initialConsent={consent || undefined}
+            onConsentGiven={(prefs) => {
+              setConsent(prefs);
+              handleNext();
+            }}
+            onBack={handleBack}
+          />
+        ) : (
+          /* Placeholder Screens for subsequent sub-phases (interview, documents, summary) */
+          <div className="w-full bg-slate-900/80 border-2 border-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl backdrop-blur-sm text-center flex flex-col items-center">
+            {/* Step Icon Badge */}
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br from-teal-500/20 to-blue-600/20 border-2 border-teal-400/30 flex items-center justify-center text-teal-300 mb-6 shadow-xl">
+              <StepIcon className="w-12 h-12 sm:w-14 sm:h-14" />
+            </div>
 
-          {/* Step Tag */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-400/30 text-teal-300 text-xs sm:text-sm font-bold uppercase tracking-wider mb-4">
-            <Sparkles className="w-4 h-4" />
-            Step {currentStep.stepNumber} of {STEPS.length}
-          </div>
+            {/* Step Tag */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-400/30 text-teal-300 text-xs sm:text-sm font-bold uppercase tracking-wider mb-4">
+              <Sparkles className="w-4 h-4" />
+              Step {currentStep.stepNumber} of {STEPS.length}
+            </div>
 
-          {/* Step Title (Minimal, High-Contrast) */}
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white mb-3">
-            {currentStep.title}
-          </h1>
+            {/* Step Title (Minimal, High-Contrast) */}
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white mb-3">
+              {currentStep.title}
+            </h1>
 
-          {/* Minimal Body Text */}
-          <p className="text-base sm:text-xl text-slate-300 max-w-xl mb-10 leading-relaxed">
-            {currentStep.subtitle}
-          </p>
-
-          {/* Placeholder Notice Badge */}
-          <div className="mb-10 px-5 py-3 rounded-2xl bg-slate-800/60 border border-slate-700 text-slate-400 text-sm max-w-md">
-            <p className="font-semibold text-slate-300">Phase 6 (a): Kiosk Shell Skeleton</p>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Interactive logic for this step will be connected in subsequent sub-phases.
+            {/* Minimal Body Text */}
+            <p className="text-base sm:text-xl text-slate-300 max-w-xl mb-10 leading-relaxed">
+              {currentStep.subtitle}
             </p>
-          </div>
 
-          {/* Primary Big Touch Controls */}
-          <div className="w-full max-w-md flex flex-col sm:flex-row items-center justify-center gap-4">
-            {currentStepIndex > 0 && (
-              <button
-                id="kiosk-back-btn"
-                onClick={handleBack}
-                className="w-full sm:w-1/3 h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-base sm:text-lg border-2 border-slate-700 transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Back</span>
-              </button>
-            )}
+            {/* Placeholder Notice Badge */}
+            <div className="mb-10 px-5 py-3 rounded-2xl bg-slate-800/60 border border-slate-700 text-slate-400 text-sm max-w-md">
+              <p className="font-semibold text-slate-300">Phase 6: Planned Module</p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Interactive logic for this step will be connected in subsequent sub-phases.
+              </p>
+            </div>
 
-            {currentStepIndex < STEPS.length - 1 ? (
-              <button
-                id="kiosk-continue-btn"
-                onClick={handleNext}
-                className="w-full sm:flex-1 h-16 rounded-2xl bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-slate-950 font-black text-lg sm:text-xl transition-all cursor-pointer flex items-center justify-center gap-3 shadow-xl shadow-teal-950/60 active:scale-95"
-              >
-                <span>Continue</span>
-                <ArrowRight className="w-6 h-6" />
-              </button>
-            ) : (
-              <div className="w-full flex flex-col gap-3">
+            {/* Primary Big Touch Controls */}
+            <div className="w-full max-w-md flex flex-col sm:flex-row items-center justify-center gap-4">
+              {currentStepIndex > 0 && (
                 <button
-                  id="kiosk-finish-btn"
-                  onClick={handleReset}
-                  className="w-full h-16 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-lg sm:text-xl transition-all cursor-pointer flex items-center justify-center gap-3 shadow-xl active:scale-95"
+                  id="kiosk-back-btn"
+                  onClick={handleBack}
+                  className="w-full sm:w-1/3 h-16 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-base sm:text-lg border-2 border-slate-700 transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                 >
-                  <RotateCcw className="w-6 h-6" />
-                  <span>Start New Intake</span>
+                  <ArrowLeft className="w-5 h-5" />
+                  <span>Back</span>
                 </button>
+              )}
 
-                {onSwitchToWorkstation && (
+              {currentStepIndex < STEPS.length - 1 ? (
+                <button
+                  id="kiosk-continue-btn"
+                  onClick={handleNext}
+                  className="w-full sm:flex-1 h-16 rounded-2xl bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-slate-950 font-black text-lg sm:text-xl transition-all cursor-pointer flex items-center justify-center gap-3 shadow-xl shadow-teal-950/60 active:scale-95"
+                >
+                  <span>Continue</span>
+                  <ArrowRight className="w-6 h-6" />
+                </button>
+              ) : (
+                <div className="w-full flex flex-col gap-3">
                   <button
-                    id="kiosk-workstation-handoff-btn"
-                    onClick={onSwitchToWorkstation}
-                    className="w-full h-14 rounded-2xl bg-blue-600/30 hover:bg-blue-600/40 border border-blue-500/40 text-blue-300 font-bold text-sm transition-all cursor-pointer flex items-center justify-center gap-2"
+                    id="kiosk-finish-btn"
+                    onClick={handleReset}
+                    className="w-full h-16 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-lg sm:text-xl transition-all cursor-pointer flex items-center justify-center gap-3 shadow-xl active:scale-95"
                   >
-                    <span>View in Doctor Workstation</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <RotateCcw className="w-6 h-6" />
+                    <span>Start New Intake</span>
                   </button>
-                )}
-              </div>
-            )}
+
+                  {onSwitchToWorkstation && (
+                    <button
+                      id="kiosk-workstation-handoff-btn"
+                      onClick={onSwitchToWorkstation}
+                      className="w-full h-14 rounded-2xl bg-blue-600/30 hover:bg-blue-600/40 border border-blue-500/40 text-blue-300 font-bold text-sm transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <span>View in Doctor Workstation</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </main>
 
       {/* KIOSK FOOTER: Privacy Inactivity Reset & Emergency Help */}

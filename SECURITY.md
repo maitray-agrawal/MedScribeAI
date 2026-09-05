@@ -32,6 +32,15 @@ Security is paramount for clinical software. If you discover a security vulnerab
   - System instructions enforce strict factual extraction from provided clinical transcripts.
   - Temperature set to `0.1` for factual precision and structured JSON schema enforcement (`responseMimeType: 'application/json'`).
   - **Implemented Remediation**: Prompt inputs in `server.ts` are wrapped in explicit boundary delimiter tags (`<patient_demographics>` and `<clinical_transcript>`), with system instructions explicitly dictating that all content within these tags must strictly be treated as raw data to extract from, never as system commands or instructions.
+- **Data Governance & Statutory Compliance**:
+  - **Digital Personal Data Protection (DPDP) Act 2023 Compliance**:
+    - Patient consent is collected through an explicit, granular, and purpose-specific consent gate prior to intake initiation (covering voice processing, document digitization, and hospital record transmission).
+    - In compliance with the DPDP Act 2023 notice requirements, all consent clauses feature accessible auditory read-aloud functionality via browser speech synthesis to ensure informed consent for low-literacy patients and regional language speakers.
+    - Patient intake data collected during self-service kiosk sessions is held transiently in active application memory and automatically purged upon session completion or an inactivity countdown timeout (120s).
+  - **Ayushman Bharat Digital Mission (ABDM) Consent Architecture**:
+    - Aligned with National Health Authority (NHA) ABDM Milestone standards (M1: ABHA issuance & verification; M2: Health Information Provider document creation; M3: Consent-managed health data exchange).
+    - **Simulated ABDM Gateway Notice**: ABHA verification and ABDM network connectivity are **simulated** in this SIH 26047 build and evaluation environment. Mock lookup and tokenization simulate real-world ABDM Gateway OTP/biometric flows without transmitting live citizen identifiers to external third-party servers.
+    - **Stated Production Integration Next Step**: Transition to production ABDM Sandbox M1/M2/M3 gateway certification, National Health Claims Exchange (NHCX) readiness, and integration with hospital Electronic Medical Record (EMR) / Hospital Information Management Systems (HIMS) via certified Health Information Provider (HIP) and Health Information User (HIU) bridges.
 - **Data Persistence & LocalStorage**:
-  - Browser `localStorage` key `medscribe_lite_encounters_v1` is used strictly for synthetic clinical encounter history demonstration and offline playback.
-  - **Synthetic Data Disclaimer**: MedScribe Lite is designed for synthetic/demonstration clinical scenarios. No real Patient Health Information (PHI) or personally identifiable information (PII) should be persisted in browser local storage or transmitted in non-HIPAA compliant deployment environments.
+  - Browser `localStorage` is restricted to demonstration presets and synthetic mock encounters.
+  - **Public Terminal Data Privacy**: The MediKiosk terminal does not persist citizen ABHA tokens, national identity numbers, or raw patient audio recordings in unencrypted browser storage. Session state is wiped immediately upon kiosk timeout or new patient intake trigger.

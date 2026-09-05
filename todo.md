@@ -45,11 +45,12 @@
 - **Exit Criteria:** Touch-first, high-contrast, distraction-free kiosk interface with oversized touch targets, multilingual navigation, session timeouts, and privacy-shielded kiosk mode is operational. [COMPLETED]
 
 ### Sub-phase (b): ABHA Identity + Consent Screen
-- [ ] Build Ayushman Bharat Health Account (ABHA) check-in screen (ABHA Number / ABHA Address)
-- [ ] Add simulated/mock ABHA QR code scanner scanner interface for rapid check-in
-- [ ] Design patient informed consent modal explaining data collection in patient's selected language
-- [ ] Store session ABHA profile tokens securely in transient session memory
-- **Exit Criteria:** Patient can verify/input ABHA ID or scan an ABHA QR code, view explicit data processing consent in their preferred language, and authenticate session.
+- [x] Build Ayushman Bharat Health Account (ABHA) check-in screen (ABHA Number / ABHA Address)
+- [x] Add simulated/mock ABHA QR code scanner scanner interface for rapid check-in
+- [x] Design patient informed consent modal explaining data collection in patient's selected language
+- [x] Store session ABHA profile tokens securely in transient session memory
+- [x] Integrate native SpeechSynthesis audio read-aloud controls for accessible consent playback
+- **Exit Criteria:** Patient can verify/input ABHA ID or scan an ABHA QR code, view explicit data processing consent in their preferred language, and authenticate session. [COMPLETED]
 
 ### Sub-phase (c): Adaptive Voice+Touch Interview Engine (Allopathic)
 - [ ] Build conversational intake step-by-step wizard (Chief Complaint -> Onset -> Severity -> Associated Symptoms)

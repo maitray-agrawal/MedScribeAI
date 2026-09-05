@@ -14,6 +14,8 @@ import {
   publishEmergencyAlert,
 } from '../../utils/emergencyTriageDetector';
 import { EmergencyInterruptOverlay } from './EmergencyInterruptOverlay';
+import { MultilingualVoiceInput } from './MultilingualVoiceInput';
+import { SupportedLocale } from '../../speech/speechTypes';
 import {
   Mic,
   MicOff,
@@ -67,6 +69,9 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
   const { language } = useTranslation();
   const isSpanish = language === 'es';
   const isAyurveda = clinicalDepartment === 'Ayurveda (AYUSH)';
+
+  // Multilingual Indian Voice Locale
+  const [activeVoiceLocale, setActiveVoiceLocale] = useState<SupportedLocale>('hi-IN');
 
   // Accumulated Clinical Intake State
   const [turns, setTurns] = useState<InterviewTurn[]>(initialIntake?.conversationTurns || []);
@@ -214,7 +219,14 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(questionToSpeak);
     utterance.rate = 0.95;
-    utterance.lang = isSpanish ? 'es-ES' : 'en-IN';
+    const LOCALE_TTS_LANG_MAP: Record<SupportedLocale, string> = {
+      'en-IN': 'en-IN',
+      'hi-IN': 'hi-IN',
+      'mr-IN': 'mr-IN',
+      'ta-IN': 'ta-IN',
+      'gu-IN': 'gu-IN',
+    };
+    utterance.lang = isSpanish ? 'es-ES' : (LOCALE_TTS_LANG_MAP[activeVoiceLocale] || 'en-IN');
 
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
@@ -866,76 +878,24 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
                 </div>
               )}
 
-            {/* Input Modality 3: Web Speech API Microphone (Voice Spoken Answer) */}
-            <div className="w-full p-4 sm:p-5 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className={`p-2 rounded-xl ${isRecording ? 'bg-red-500/20 text-red-400 animate-pulse' : 'bg-teal-500/20 text-teal-300'}`}>
-                    <Mic className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white">Prefer to Speak Your Answer?</h4>
-                    <p className="text-xs text-slate-400">
-                      Tap the microphone and describe your symptoms in your own words.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  id="kiosk-mic-toggle-btn"
-                  type="button"
-                  onClick={toggleSpeechRecognition}
-                  className={`h-12 px-5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border ${
-                    isRecording
-                      ? 'bg-red-600 hover:bg-red-500 text-white border-red-400 animate-pulse'
-                      : 'bg-slate-800 hover:bg-slate-700 text-teal-300 border-slate-700 hover:text-white'
-                  }`}
-                >
-                  {isRecording ? (
-                    <>
-                      <MicOff className="w-4 h-4" />
-                      <span>Stop Listening</span>
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="w-4 h-4" />
-                      <span>Start Speaking</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Real-time speech transcript feedback */}
-              {isRecording && (
-                <div className="w-full p-3 rounded-xl bg-slate-900 border border-red-500/50 text-slate-200 text-sm flex items-center gap-3">
-                  <span className="w-3 h-3 rounded-full bg-red-500 animate-ping shrink-0" />
-                  <span className="italic flex-1">
-                    {voiceInterimText || 'Listening to your voice... speak clearly into the kiosk microphone.'}
-                  </span>
-                </div>
-              )}
-
-              {/* Submitting voice transcript */}
-              {!isRecording && typedInput && (
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    type="text"
-                    value={typedInput}
-                    onChange={(e) => handleTypedInputChange(e.target.value)}
-                    placeholder="Review or edit your spoken answer..."
-                    className="flex-1 h-12 px-4 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-teal-400"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleAnswerSubmit(typedInput, 'voice')}
-                    className="h-12 px-5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-black text-sm flex items-center gap-1.5 shrink-0 cursor-pointer shadow-md"
-                  >
-                    <span>Send</span>
-                    <Send className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Input Modality 3: Multilingual Indian Clinical Voice Pipeline */}
+            <MultilingualVoiceInput
+              currentLocale={activeVoiceLocale}
+              onLocaleChange={setActiveVoiceLocale}
+              disabled={isLoadingNextQuestion}
+              onTranscriptSubmitted={(transcript, locale, concepts) => {
+                checkForEmergencyRedFlags(transcript);
+                handleAnswerSubmit(transcript, 'voice');
+              }}
+              onEmergencyDetected={(alert) => {
+                setActiveEmergencyAlert(alert);
+                setRedFlags((prev) => Array.from(new Set([...prev, alert.detectedPattern])));
+                publishEmergencyAlert(alert);
+                if (onEmergencyAlertTriggered) {
+                  onEmergencyAlertTriggered(alert);
+                }
+              }}
+            />
 
             {/* Fallback Custom Typing Toggle */}
             <div className="flex items-center justify-between pt-1">

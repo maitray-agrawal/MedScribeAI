@@ -1,0 +1,416 @@
+{
+  "meta": {
+    "language": "hi",
+    "locale": "hi-IN",
+    "version": "0.1.0-hackathon-scope",
+    "note": "Hackathon-scoped starter set. Each concept carries the full schema (native script, romanized forms, colloquial phrases, negation/severity hooks) so the SAME structure scales to the full 1000+/language target later — you just add rows, you never change the engine.",
+    "targetVsHackathon": {
+      "symptoms": { "target": "1000+", "hereCount": 20 },
+      "conditions": { "target": "1000+", "hereCount": 12 },
+      "medications": { "target": "1000+", "hereCount": 18 }
+    }
+  },
+
+  "negationTriggers": [
+    "nahi", "nahin", "nai", "na", "koi nahi", "bilkul nahi", "nahi hai",
+    "nahi hua", "nahi hui", "kabhi nahi", "abhi tak nahi"
+  ],
+
+  "temporalPatterns": [
+    { "id": "days_since", "regex": "(\\d+)\\s*(din|dino|dinon)\\s*se", "unit": "days" },
+    { "id": "weeks_since", "regex": "(\\d+)\\s*(hafte|hafton)\\s*se", "unit": "weeks" },
+    { "id": "months_since", "regex": "(\\d+)\\s*(mahine|mahino|mahinon)\\s*se", "unit": "months" },
+    { "id": "since_today", "regex": "aaj\\s*se", "unit": "days", "value": 0 },
+    { "id": "since_yesterday", "regex": "kal\\s*se", "unit": "days", "value": 1 },
+    { "id": "since_last_night", "regex": "raat\\s*se", "unit": "hours", "value": 12 },
+    { "id": "since_last_week", "regex": "pichhle\\s*hafte\\s*se", "unit": "weeks", "value": 1 }
+  ],
+
+  "severityModifiers": [
+    { "term": "halka", "level": "mild" },
+    { "term": "thoda", "level": "mild" },
+    { "term": "हल्का", "level": "mild" },
+    { "term": "zyada", "level": "moderate" },
+    { "term": "bahut", "level": "severe" },
+    { "term": "bahut zyada", "level": "severe" },
+    { "term": "bahut tez", "level": "severe" },
+    { "term": "tez", "level": "moderate" },
+    { "term": "asahniya", "level": "severe" },
+    { "term": "bardasht nahi ho raha", "level": "severe" }
+  ],
+
+  "symptoms": [
+    {
+      "id": "sym_fever",
+      "canonicalEn": "fever",
+      "nativeScript": "बुखार",
+      "romanized": ["bukhar", "bukhaar", "bukhr"],
+      "colloquial": [
+        { "romanized": "bahut tez bukhar", "meaning": "high fever" },
+        { "romanized": "halka bukhar", "meaning": "low-grade fever" },
+        { "romanized": "badan garam hai", "meaning": "body feels hot (lay description of fever)" }
+      ],
+      "redFlag": false,
+      "snomedCode": "386661006"
+    },
+    {
+      "id": "sym_headache",
+      "canonicalEn": "headache",
+      "nativeScript": "सिरदर्द",
+      "romanized": ["sirdard", "sar dard", "sar mein dard"],
+      "colloquial": [
+        { "romanized": "sar phat raha hai", "meaning": "severe headache (idiomatic: head splitting)" },
+        { "romanized": "sar bhari lag raha hai", "meaning": "head feels heavy" }
+      ],
+      "redFlag": false,
+      "snomedCode": "25064002"
+    },
+    {
+      "id": "sym_cough",
+      "canonicalEn": "cough",
+      "nativeScript": "खांसी",
+      "romanized": ["khansi", "khaansi"],
+      "colloquial": [
+        { "romanized": "sookhi khansi", "meaning": "dry cough" },
+        { "romanized": "balgam wali khansi", "meaning": "productive/wet cough" },
+        { "romanized": "khansi mein khoon", "meaning": "coughing blood" }
+      ],
+      "redFlag": false,
+      "snomedCode": "49727002"
+    },
+    {
+      "id": "sym_breathlessness",
+      "canonicalEn": "breathlessness",
+      "nativeScript": "सांस फूलना",
+      "romanized": ["saans phoolna", "saans phulna", "saans lene mein takleef"],
+      "colloquial": [
+        { "romanized": "saans nahi aa raha", "meaning": "cannot breathe / severe breathlessness" },
+        { "romanized": "dam ghut raha hai", "meaning": "feeling of suffocation" }
+      ],
+      "redFlag": true,
+      "snomedCode": "267036007"
+    },
+    {
+      "id": "sym_chest_pain",
+      "canonicalEn": "chest pain",
+      "nativeScript": "सीने में दर्द",
+      "romanized": ["seene mein dard", "chaati mein dard"],
+      "colloquial": [
+        { "romanized": "seena bhari lag raha hai", "meaning": "chest heaviness" },
+        { "romanized": "seena jal raha hai", "meaning": "burning chest sensation" }
+      ],
+      "redFlag": true,
+      "snomedCode": "29857009"
+    },
+    {
+      "id": "sym_abdominal_pain",
+      "canonicalEn": "abdominal pain",
+      "nativeScript": "पेट दर्द",
+      "romanized": ["pet dard", "pet mein dard"],
+      "colloquial": [
+        { "romanized": "pet mein marod", "meaning": "cramping abdominal pain" },
+        { "romanized": "pet mein jalan", "meaning": "burning stomach pain" }
+      ],
+      "redFlag": false,
+      "snomedCode": "21522001"
+    },
+    {
+      "id": "sym_vomiting",
+      "canonicalEn": "vomiting",
+      "nativeScript": "उल्टी",
+      "romanized": ["ulti", "ulty", "vomiting"],
+      "colloquial": [
+        { "romanized": "baar baar ulti", "meaning": "repeated vomiting" },
+        { "romanized": "khoon ki ulti", "meaning": "vomiting blood" }
+      ],
+      "redFlag": false,
+      "snomedCode": "422400008"
+    },
+    {
+      "id": "sym_diarrhea",
+      "canonicalEn": "diarrhea",
+      "nativeScript": "दस्त",
+      "romanized": ["dast", "loose motion", "loose motions"],
+      "colloquial": [
+        { "romanized": "pani jaisa dast", "meaning": "watery diarrhea" },
+        { "romanized": "khooni dast", "meaning": "bloody diarrhea" }
+      ],
+      "redFlag": false,
+      "snomedCode": "62315008"
+    },
+    {
+      "id": "sym_dizziness",
+      "canonicalEn": "dizziness",
+      "nativeScript": "चक्कर",
+      "romanized": ["chakkar", "chakkar aana"],
+      "colloquial": [
+        { "romanized": "sar ghoom raha hai", "meaning": "head spinning" },
+        { "romanized": "aankhon ke aage andhera", "meaning": "blacking out sensation" }
+      ],
+      "redFlag": false,
+      "snomedCode": "404640003"
+    },
+    {
+      "id": "sym_weakness",
+      "canonicalEn": "generalized weakness",
+      "nativeScript": "कमजोरी",
+      "romanized": ["kamzori", "kamjori"],
+      "colloquial": [
+        { "romanized": "haath pair mein taakat nahi", "meaning": "no strength in limbs" },
+        { "romanized": "thakan bahut lagti hai", "meaning": "excessive fatigue" }
+      ],
+      "redFlag": false,
+      "snomedCode": "13791008"
+    },
+    {
+      "id": "sym_body_ache",
+      "canonicalEn": "body ache",
+      "nativeScript": "बदन दर्द",
+      "romanized": ["badan dard", "badan mein dard", "jism dard"],
+      "colloquial": [
+        { "romanized": "poore badan mein dard", "meaning": "whole body ache" }
+      ],
+      "redFlag": false,
+      "snomedCode": "162058007"
+    },
+    {
+      "id": "sym_sore_throat",
+      "canonicalEn": "sore throat",
+      "nativeScript": "गले में खराश",
+      "romanized": ["gale mein kharash", "gala kharab"],
+      "colloquial": [
+        { "romanized": "gala chhil raha hai", "meaning": "throat feels raw" }
+      ],
+      "redFlag": false,
+      "snomedCode": "162397003"
+    },
+    {
+      "id": "sym_skin_rash",
+      "canonicalEn": "skin rash",
+      "nativeScript": "त्वचा पर चकत्ते",
+      "romanized": ["shareer par daane", "twacha par chakatte", "khujli wale daane"],
+      "colloquial": [
+        { "romanized": "lal lal daane", "meaning": "red spots/rash" }
+      ],
+      "redFlag": false,
+      "snomedCode": "271807003"
+    },
+    {
+      "id": "sym_joint_pain",
+      "canonicalEn": "joint pain",
+      "nativeScript": "जोड़ों में दर्द",
+      "romanized": ["jodo mein dard", "jodon me dard"],
+      "colloquial": [
+        { "romanized": "ghutno mein dard", "meaning": "knee joint pain (common regional phrasing)" }
+      ],
+      "redFlag": false,
+      "snomedCode": "57676002"
+    },
+    {
+      "id": "sym_burning_urination",
+      "canonicalEn": "burning micturition",
+      "nativeScript": "पेशाब में जलन",
+      "romanized": ["peshab mein jalan", "peshaab me jalan"],
+      "colloquial": [],
+      "redFlag": false,
+      "snomedCode": "162117005"
+    },
+    {
+      "id": "sym_loss_of_appetite",
+      "canonicalEn": "loss of appetite",
+      "nativeScript": "भूख न लगना",
+      "romanized": ["bhookh nahi lagti", "bhook na lagna"],
+      "colloquial": [],
+      "redFlag": false,
+      "snomedCode": "79890006"
+    },
+    {
+      "id": "sym_swelling",
+      "canonicalEn": "swelling",
+      "nativeScript": "सूजन",
+      "romanized": ["sujan", "soojan"],
+      "colloquial": [
+        { "romanized": "pair mein sujan", "meaning": "leg/foot swelling" },
+        { "romanized": "chehre par sujan", "meaning": "facial swelling" }
+      ],
+      "redFlag": false,
+      "snomedCode": "65124004"
+    },
+    {
+      "id": "sym_altered_consciousness",
+      "canonicalEn": "altered consciousness / confusion",
+      "nativeScript": "बेहोशी",
+      "romanized": ["behoshi", "behosh ho jana", "hosh mein nahi"],
+      "colloquial": [
+        { "romanized": "behosh ho gaya", "meaning": "lost consciousness" }
+      ],
+      "redFlag": true,
+      "snomedCode": "40917007"
+    },
+    {
+      "id": "sym_seizure",
+      "canonicalEn": "seizure/convulsion",
+      "nativeScript": "दौरा पड़ना",
+      "romanized": ["daura padna", "jhatke aana", "mirgi ka daura"],
+      "colloquial": [],
+      "redFlag": true,
+      "snomedCode": "91175000"
+    },
+    {
+      "id": "sym_blood_in_stool",
+      "canonicalEn": "blood in stool",
+      "nativeScript": "मल में खून",
+      "romanized": ["mal mein khoon", "potty mein khoon"],
+      "colloquial": [],
+      "redFlag": true,
+      "snomedCode": "34436003"
+    }
+  ],
+
+  "conditions": [
+    {
+      "id": "cond_diabetes",
+      "canonicalEn": "diabetes mellitus",
+      "nativeScript": "मधुमेह",
+      "romanized": ["madhumeh", "sugar ki bimari", "sugar"],
+      "colloquial": [{ "romanized": "sugar hai", "meaning": "has diabetes (colloquial)" }],
+      "redFlag": false
+    },
+    {
+      "id": "cond_hypertension",
+      "canonicalEn": "hypertension",
+      "nativeScript": "उच्च रक्तचाप",
+      "romanized": ["high blood pressure", "bp ki problem", "bp high"],
+      "colloquial": [{ "romanized": "bp ka marij", "meaning": "hypertension patient (colloquial)" }],
+      "redFlag": false
+    },
+    {
+      "id": "cond_asthma",
+      "canonicalEn": "asthma",
+      "nativeScript": "दमा",
+      "romanized": ["dama", "asthma"],
+      "colloquial": [{ "romanized": "sans ki bimari", "meaning": "breathing disease (lay term)" }],
+      "redFlag": false
+    },
+    {
+      "id": "cond_tuberculosis",
+      "canonicalEn": "tuberculosis",
+      "nativeScript": "क्षय रोग",
+      "romanized": ["tb", "kshay rog", "tapedik"],
+      "colloquial": [],
+      "redFlag": true
+    },
+    {
+      "id": "cond_heart_disease",
+      "canonicalEn": "cardiac disease",
+      "nativeScript": "दिल की बीमारी",
+      "romanized": ["dil ki bimari", "heart ki problem"],
+      "colloquial": [],
+      "redFlag": true
+    },
+    {
+      "id": "cond_kidney_disease",
+      "canonicalEn": "chronic kidney disease",
+      "nativeScript": "गुर्दे की बीमारी",
+      "romanized": ["gurde ki bimari", "kidney ki problem"],
+      "colloquial": [],
+      "redFlag": true
+    },
+    {
+      "id": "cond_thyroid",
+      "canonicalEn": "thyroid disorder",
+      "nativeScript": "थायराइड",
+      "romanized": ["thyroid"],
+      "colloquial": [],
+      "redFlag": false
+    },
+    {
+      "id": "cond_pregnancy",
+      "canonicalEn": "pregnancy",
+      "nativeScript": "गर्भावस्था",
+      "romanized": ["garbhavastha", "pregnant", "pet se"],
+      "colloquial": [],
+      "redFlag": false
+    },
+    {
+      "id": "cond_anemia",
+      "canonicalEn": "anemia",
+      "nativeScript": "खून की कमी",
+      "romanized": ["khoon ki kami", "anemia"],
+      "colloquial": [],
+      "redFlag": false
+    },
+    {
+      "id": "cond_jaundice",
+      "canonicalEn": "jaundice",
+      "nativeScript": "पीलिया",
+      "romanized": ["peeliya", "piliya"],
+      "colloquial": [{ "romanized": "aankhen peeli ho gayi", "meaning": "eyes turned yellow" }],
+      "redFlag": true
+    },
+    {
+      "id": "cond_dengue",
+      "canonicalEn": "dengue",
+      "nativeScript": "डेंगू",
+      "romanized": ["dengu", "dengue"],
+      "colloquial": [],
+      "redFlag": true
+    },
+    {
+      "id": "cond_typhoid",
+      "canonicalEn": "typhoid",
+      "nativeScript": "टाइफाइड",
+      "romanized": ["typhoid", "mote jhaade wala bukhar"],
+      "colloquial": [],
+      "redFlag": false
+    }
+  ],
+
+  "medications": [
+    { "id": "med_paracetamol", "canonicalEn": "paracetamol", "nativeScript": "पैरासिटामोल", "romanized": ["paracetamol", "crocin", "dolo"], "colloquial": [], "redFlag": false },
+    { "id": "med_ibuprofen", "canonicalEn": "ibuprofen", "nativeScript": "इबुप्रोफेन", "romanized": ["ibuprofen", "brufen"], "colloquial": [], "redFlag": false },
+    { "id": "med_aspirin", "canonicalEn": "aspirin", "nativeScript": "एस्पिरिन", "romanized": ["aspirin", "disprin"], "colloquial": [], "redFlag": false },
+    { "id": "med_metformin", "canonicalEn": "metformin", "nativeScript": "मेटफॉर्मिन", "romanized": ["metformin", "sugar ki goli"], "colloquial": [], "redFlag": false },
+    { "id": "med_insulin", "canonicalEn": "insulin", "nativeScript": "इंसुलिन", "romanized": ["insulin", "sugar ka injection"], "colloquial": [], "redFlag": false },
+    { "id": "med_amlodipine", "canonicalEn": "amlodipine", "nativeScript": "एम्लोडिपिन", "romanized": ["amlodipine", "bp ki goli"], "colloquial": [], "redFlag": false },
+    { "id": "med_atorvastatin", "canonicalEn": "atorvastatin", "nativeScript": "एटोरवास्टेटिन", "romanized": ["atorvastatin", "cholesterol ki goli"], "colloquial": [], "redFlag": false },
+    { "id": "med_omeprazole", "canonicalEn": "omeprazole", "nativeScript": "ओमेप्राज़ोल", "romanized": ["omeprazole", "acidity ki goli"], "colloquial": [], "redFlag": false },
+    { "id": "med_amoxicillin", "canonicalEn": "amoxicillin", "nativeScript": "एमोक्सिसिलिन", "romanized": ["amoxicillin", "amoxyclav"], "colloquial": [], "redFlag": false },
+    { "id": "med_azithromycin", "canonicalEn": "azithromycin", "nativeScript": "एज़िथ्रोमाइसिन", "romanized": ["azithromycin", "azithral", "azee"], "colloquial": [], "redFlag": false },
+    { "id": "med_cetirizine", "canonicalEn": "cetirizine", "nativeScript": "सेटिरिज़िन", "romanized": ["cetirizine", "cetzine"], "colloquial": [], "redFlag": false },
+    { "id": "med_salbutamol", "canonicalEn": "salbutamol", "nativeScript": "सैल्बुटामोल", "romanized": ["salbutamol", "asthalin", "inhaler"], "colloquial": [], "redFlag": false },
+    { "id": "med_warfarin", "canonicalEn": "warfarin", "nativeScript": "वारफारिन", "romanized": ["warfarin", "khoon patla karne ki goli"], "colloquial": [], "redFlag": true },
+    { "id": "med_levothyroxine", "canonicalEn": "levothyroxine", "nativeScript": "लेवोथायरोक्सिन", "romanized": ["levothyroxine", "thyronorm", "eltroxin"], "colloquial": [], "redFlag": false },
+    { "id": "med_ors", "canonicalEn": "oral rehydration salts", "nativeScript": "ओआरएस", "romanized": ["ors", "electral"], "colloquial": [], "redFlag": false },
+    { "id": "med_domperidone", "canonicalEn": "domperidone", "nativeScript": "डॉम्पेरिडोन", "romanized": ["domperidone", "domstal"], "colloquial": [], "redFlag": false },
+    { "id": "med_prednisolone", "canonicalEn": "prednisolone", "nativeScript": "प्रेडनिसोलोन", "romanized": ["prednisolone", "steroid ki goli"], "colloquial": [], "redFlag": true },
+    { "id": "med_insulin_glargine", "canonicalEn": "insulin glargine", "nativeScript": "इंसुलिन ग्लार्जीन", "romanized": ["lantus", "glargine"], "colloquial": [], "redFlag": false }
+  ],
+
+  "redFlagRules": [
+    {
+      "id": "rf_chest_pain_breathlessness",
+      "description": "Chest pain co-occurring with breathlessness — possible cardiac/respiratory emergency",
+      "requiresAll": ["sym_chest_pain", "sym_breathlessness"],
+      "action": "escalate_immediate"
+    },
+    {
+      "id": "rf_severe_symptom_with_altered_consciousness",
+      "description": "Any severe symptom plus altered consciousness/seizure — neurological emergency",
+      "requiresAny": ["sym_altered_consciousness", "sym_seizure"],
+      "action": "escalate_immediate"
+    },
+    {
+      "id": "rf_gi_bleed",
+      "description": "Blood in stool or vomit — possible GI bleed",
+      "requiresAny": ["sym_blood_in_stool"],
+      "action": "escalate_priority"
+    },
+    {
+      "id": "rf_jaundice_with_vomiting",
+      "description": "Jaundice with vomiting — possible acute hepatic issue",
+      "requiresAll": ["cond_jaundice", "sym_vomiting"],
+      "action": "escalate_priority"
+    }
+  ]
+}

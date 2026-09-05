@@ -250,6 +250,59 @@ Initial deep-dive audit of the existing MedScribe Lite codebase and setup of the
   - `npm test` (`vitest run`): **Passed all 46 tests across 7 test suites**.
   - `npm run build` (`vite build` + `esbuild`): **Production build succeeded cleanly**.
 
+---
+
+## Session Log: 2026-09-04 — Strategic Project Pivot to MediKiosk (SIH Problem Statement 26047)
+
+### Summary of Pivot & Rationale
+- **Strategic Direction Pivot**: Formally pivoted project scope from **"MedScribe Lite"** (a clinician-facing, post-consultation documentation copilot) to **"MediKiosk"** (a patient-facing, pre-consultation self-service history-taking kiosk).
+- **Driver & Context**: Executed per Smart India Hackathon (SIH) Problem Statement 26047 issued by the **Ministry of AYUSH / All India Institute of Ayurveda (AIIA)**.
+- **Problem Addressed**: Directly targets India's critical 2–5 minute OPD consultation bottleneck, where clinicians see 80–100+ patients per shift and spend up to 80% of their limited consultation time on repetitive preliminary history-taking. MediKiosk moves history gathering to an accessible self-service kiosk in the waiting area.
+- **New Target Persona**: The patient (and accompanying caregiver/Asha worker), operating the kiosk independently in the hospital OPD waiting hall or registration line before seeing the doctor. Requires touch-first, oversized UI controls, high-contrast visual cues, multilingual voice guidance, and universal accessibility.
+- **Preserved Core Assets**: Fully preserved and repurposed MedScribe Lite's core engines—including clinical NLP extraction, drug interaction safety guardrails, browser-local offline engine, multi-language context dictionary, and HL7 FHIR R4 Bundle conversion.
+- **Phase 6: SIH Pivot Roadmapped**: Formally added Phase 6 across seven sub-phases with strict exit criteria:
+  - *(a) Kiosk UI Shell*
+  - *(b) ABHA Identity + Consent Screen*
+  - *(c) Adaptive Voice+Touch Interview Engine (Allopathic)*
+  - *(d) AYUSH / Ayurveda History Mode*
+  - *(e) Document Upload + Digitization*
+  - *(f) Real-Time Red-Flag Triage Escalation*
+  - *(g) Structured Summary Handoff + FHIR/ABDM Push*
+- **Documentation Updated**: Rewrote `project-context.md`, updated `phases.md` and `prd.md`, created `todo.md`, and appended this record to `memory.md`.
+- **Zero Code Changes**: Strictly adhered to non-code prompt constraints. No application or source code was modified.
+
+---
+
+## Session Log: 2026-09-04 — Phase 6 Sub-phase (a): MediKiosk UI Shell Implemented
+
+### Deliverables & Architecture Completed:
+- **Third Top-Level View State (`kiosk`)**:
+  - Expanded `App.tsx` state to include `'landing' | 'workstation' | 'kiosk'`.
+  - Added entry triggers from both the Landing page (floating prominent action pill) and the Clinician Workstation (top notification banner) to seamlessly enter Kiosk terminal mode.
+- **Dedicated Public Terminal Shell (`src/components/kiosk/KioskShell.tsx`)**:
+  - Full-screen, high-contrast, distraction-free kiosk interface (`bg-slate-950`).
+  - Distinct from dense clinician UI: oversized touch targets (56px–64px height), minimal body copy, clear visual hierarchy.
+  - Institutional branding lockup: Ministry of AYUSH & All India Institute of Ayurveda (AIIA) with SIH 26047 accreditation badge.
+  - Large icon-driven step progress bar across all 5 intake stages:
+    1. *ABHA Identity Verification* (`CreditCard`)
+    2. *Patient Informed Consent* (`ShieldCheck`)
+    3. *Adaptive Clinical Interview* (`Stethoscope`)
+    4. *Document & Prescription Upload* (`UploadCloud`)
+    5. *Intake Complete & Handoff* (`CheckCircle2`)
+  - Step-to-step navigation skeleton: Each placeholder screen displays its icon, title, subtitle, and large "Continue" touch target.
+- **Multilingual Integration**:
+  - Integrated with existing `LanguageContext` (`useTranslation`).
+  - Prominent dual-button toggle (English / Español) directly in the kiosk top bar.
+- **Terminal Reliability & Privacy Guards**:
+  - Audio guidance toggle button for voice-assisted accessibility.
+  - Inactivity privacy countdown (auto-resets state after 120s of inactivity to protect patient data).
+  - Staff exit button with confirmation modal preventing unauthorized or accidental kiosk dismissal by patients.
+- **Verification**:
+  - `npm run lint` (`tsc --noEmit`): Passed with 0 errors.
+  - `npm test` (`vitest run`): All 46 tests across 7 test suites passed.
+
+
+
 
 
 

@@ -55,3 +55,27 @@
   - Edge-case and resilience testing: Ensure robust error boundaries, graceful API failure handling, and input edge case validation across all async workflows.
   - Internationalization: Support multi-language end-to-end processing starting with Spanish-language transcript inputs.
 - **Exit Criteria:** Zero committed secrets, `npm audit` clean of high/critical vulnerabilities, error boundaries on every async flow, and at least Spanish-language transcript input supported end-to-end.
+
+---
+
+## Phase 6: SIH Pivot (MediKiosk — SIH Problem Statement 26047)
+
+- **Scope:**
+  - Pivot from doctor-facing MedScribe Lite to patient-facing MediKiosk for outpatient pre-consultation intake under Ministry of AYUSH / All India Institute of Ayurveda (AIIA) guidelines.
+  - **Sub-phase (a): Kiosk UI Shell** — Patient-facing, high-contrast, touch-optimized kiosk wrapper with oversized touch targets, multilingual navigation, inactivity timers, and privacy safeguards.
+  - **Sub-phase (b): ABHA Identity + Consent Screen** — Ayushman Bharat Health Account (ABHA) address/number input, QR code scanning, and patient informed consent flow.
+  - **Sub-phase (c): Adaptive Voice+Touch Interview Engine (Allopathic)** — Conversational, symptom-directed clinical intake agent presenting dynamic follow-up questions with bilingual voice input and one-tap responses.
+  - **Sub-phase (d): AYUSH/Ayurveda History Mode** — Dedicated intake capturing Prakriti (constitutional traits), Agni (digestive fire), Kostha, Ahara/Vihara (dietary & lifestyle habits), and Dosha-specific symptom characteristics.
+  - **Sub-phase (e): Document Upload + Digitization** — Physical prescription and lab report camera scan/upload with OCR and structured clinical data extraction.
+  - **Sub-phase (f): Real-Time Red-Flag Triage Escalation** — Continuous monitoring for high-risk clinical emergencies (e.g., chest pain, acute dyspnea, neurological deficits, severe hypertension) triggering instant visual escalation banners and emergency routing.
+  - **Sub-phase (g): Structured Summary Handoff + FHIR/ABDM Push** — Automated compilation of pre-consultation intake into structured clinical summary and ABDM-compliant FHIR R4 Bundle pushed to doctor's workstation queue.
+
+- **Exit Criteria by Sub-Phase:**
+  - **(a) Kiosk UI Shell:** Touch-first, high-contrast, distraction-free kiosk interface with oversized touch targets, multilingual navigation, session timeouts, and privacy-shielded kiosk mode is operational.
+  - **(b) ABHA Identity + Consent Screen:** Patient can verify/input ABHA ID or scan an ABHA QR code, view explicit data processing consent in their preferred language, and authenticate session.
+  - **(c) Adaptive Voice+Touch Interview Engine (Allopathic):** Multilingual conversational intake agent guides the patient through dynamic, symptom-specific follow-up questions using voice and large on-screen touch options.
+  - **(d) AYUSH/Ayurveda History Mode:** Patient can select or be routed to an AYUSH/Ayurveda intake flow capturing Prakriti traits, Agni (digestive fire), Kostha, Ahara/Vihara (diet/lifestyle), and Dhatu/Dosha-oriented symptom chronologies aligned with AIIA guidelines.
+  - **(e) Document Upload + Digitization:** Patient can scan/upload past physical prescriptions, lab reports, or discharge summaries at the kiosk with OCR/Gemini extraction into structured medication and diagnostic history.
+  - **(f) Real-Time Red-Flag Triage Escalation:** Clinical emergency symptoms (e.g., chest pain, acute dyspnea, stroke signs, severe hypertension, fever with altered sensorium) instantly trigger high-priority visual alarms and direct the patient to immediate emergency triage.
+  - **(g) Structured Summary Handoff + FHIR/ABDM Push:** Pre-consultation intake is compiled into a verified structured summary (SOAP note + AYUSH assessment) and pushed as an ABDM-compliant FHIR R4 Bundle to the doctor's workstation queue before the consultation.
+

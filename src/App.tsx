@@ -17,12 +17,13 @@ import { Sparkles, AlertCircle, FileText, CheckCircle2, RotateCcw, HeartPulse } 
 import { checkDrugInteractions } from './utils/drugInteractionChecker';
 import { generateOfflineSOAPNote } from './utils/offlineLocalEngine';
 import { FHIRExportModal } from './components/soap-note';
+import { KioskShell } from './components/kiosk';
 
 const STORAGE_KEY = 'medscribe_lite_encounters_v1';
 
 export default function App() {
-  // Navigation view state: 'landing' | 'workstation'
-  const [currentView, setCurrentView] = useState<'landing' | 'workstation'>('landing');
+  // Navigation view state: 'landing' | 'workstation' | 'kiosk'
+  const [currentView, setCurrentView] = useState<'landing' | 'workstation' | 'kiosk'>('landing');
 
   // Offline local model mode state
   const [isOfflineMode, setIsOfflineMode] = useState<boolean>(false);
@@ -195,11 +196,53 @@ export default function App() {
   };
 
   if (currentView === 'landing') {
-    return <LandingPage onLaunchWorkstation={() => setCurrentView('workstation')} />;
+    return (
+      <div className="relative">
+        <LandingPage onLaunchWorkstation={() => setCurrentView('workstation')} />
+        {/* Floating Quick Action to Launch Kiosk View */}
+        <div className="fixed bottom-5 right-5 z-50">
+          <button
+            id="launch-kiosk-from-landing"
+            onClick={() => setCurrentView('kiosk')}
+            className="flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-black shadow-2xl border-2 border-teal-300 hover:scale-105 transition-all text-sm cursor-pointer"
+          >
+            <span className="w-3 h-3 rounded-full bg-emerald-950 animate-ping" />
+            <span>Launch MediKiosk (Public Terminal)</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentView === 'kiosk') {
+    return (
+      <KioskShell
+        onExit={() => setCurrentView('landing')}
+        onSwitchToWorkstation={() => setCurrentView('workstation')}
+      />
+    );
   }
 
   return (
     <div id="app-root" className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
+      {/* Top Banner for Kiosk Terminal Switcher */}
+      <div className="bg-gradient-to-r from-teal-900/90 to-blue-900/90 text-white px-4 sm:px-8 py-2 text-xs sm:text-sm flex items-center justify-between border-b border-teal-700/50">
+        <div className="flex items-center gap-2">
+          <span className="bg-teal-400 text-slate-950 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-black uppercase tracking-wide">
+            SIH 26047
+          </span>
+          <span className="font-semibold text-teal-100">Patient Self-Service MediKiosk Terminal Available</span>
+        </div>
+        <button
+          id="switch-to-kiosk-from-workstation"
+          onClick={() => setCurrentView('kiosk')}
+          className="bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold px-3 py-1 rounded-lg text-xs transition-all cursor-pointer flex items-center gap-1.5"
+        >
+          <span>Open Kiosk Terminal</span>
+          <span>→</span>
+        </button>
+      </div>
+
       {/* Top Navigation Bar */}
       <Header
         onOpenHistory={() => setActiveModal('history')}

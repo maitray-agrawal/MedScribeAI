@@ -568,3 +568,30 @@ export interface UploadedDocumentRecord {
   extractedData?: ExtractedDocumentData;
 }
 
+/**
+ * ==========================================
+ * REAL-TIME EMERGENCY TRIAGE ALERT TYPES
+ * Phase 6 Sub-phase (f) - Real-time Red Flag Interrupt & Triage Queue
+ * ==========================================
+ */
+
+export interface EmergencyTriageAlert {
+  id: string;
+  timestamp: string;
+  patientName: string;
+  age: number | string;
+  gender: string;
+  abhaId?: string;
+  kioskStationId: string;
+  emergencyCategory: string;
+  detectedPattern: string;
+  matchedKeywords: string[];
+  severity: 'CRITICAL_EMERGENCY' | 'HIGH_PRIORITY';
+  triageColor: 'Red' | 'Yellow';
+  triggerInputText: string;
+  status: 'active' | 'staff_en_route' | 'attended' | 'resolved';
+  staffNotes?: string;
+  actionDirectives: string[];
+  acknowledgedAt?: string;
+}
+

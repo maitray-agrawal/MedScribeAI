@@ -1182,6 +1182,99 @@ Patient Context: Name=${patientContext?.name || 'Unknown'}, Age=${patientContext
   }
 });
 
+// ==========================================
+// EMERGENCY TRIAGE QUEUE ENDPOINTS (Phase 6f)
+// Real-time server-side tracking of critical kiosk red flags
+// ==========================================
+
+interface ServerTriageAlert {
+  id: string;
+  timestamp: string;
+  patientName: string;
+  age: number | string;
+  gender: string;
+  abhaId?: string;
+  kioskStationId: string;
+  emergencyCategory: string;
+  detectedPattern: string;
+  matchedKeywords: string[];
+  severity: 'CRITICAL_EMERGENCY' | 'HIGH_PRIORITY';
+  triageColor: 'Red' | 'Yellow';
+  triggerInputText: string;
+  status: 'active' | 'staff_en_route' | 'attended' | 'resolved';
+  staffNotes?: string;
+  actionDirectives: string[];
+  acknowledgedAt?: string;
+}
+
+let activeTriageAlerts: ServerTriageAlert[] = [];
+
+app.get('/api/triage/alerts', (req, res) => {
+  res.json({
+    alerts: activeTriageAlerts,
+    total: activeTriageAlerts.length,
+    activeCount: activeTriageAlerts.filter((a) => a.status === 'active').length,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.post('/api/triage/alerts', (req, res) => {
+  const alert: ServerTriageAlert = req.body;
+  if (!alert || !alert.id) {
+    return res.status(400).json({ error: 'Valid alert payload required' });
+  }
+
+  // Deduplicate if alert from same kiosk/patient with same pattern is already active
+  const existingIdx = activeTriageAlerts.findIndex(
+    (a) =>
+      a.id === alert.id ||
+      (a.kioskStationId === alert.kioskStationId &&
+        a.detectedPattern === alert.detectedPattern &&
+        a.status === 'active')
+  );
+
+  if (existingIdx >= 0) {
+    activeTriageAlerts[existingIdx] = {
+      ...activeTriageAlerts[existingIdx],
+      ...alert,
+      triggerInputText: alert.triggerInputText || activeTriageAlerts[existingIdx].triggerInputText,
+    };
+    return res.json({ success: true, alert: activeTriageAlerts[existingIdx], updated: true });
+  }
+
+  activeTriageAlerts.unshift(alert);
+  if (activeTriageAlerts.length > 100) {
+    activeTriageAlerts = activeTriageAlerts.slice(0, 100);
+  }
+
+  res.status(201).json({ success: true, alert, created: true });
+});
+
+app.patch('/api/triage/alerts/:id', (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+  const alertIndex = activeTriageAlerts.findIndex((a) => a.id === id);
+
+  if (alertIndex === -1) {
+    return res.status(404).json({ error: 'Alert not found' });
+  }
+
+  activeTriageAlerts[alertIndex] = {
+    ...activeTriageAlerts[alertIndex],
+    ...updates,
+    acknowledgedAt:
+      updates.status && updates.status !== 'active'
+        ? new Date().toISOString()
+        : activeTriageAlerts[alertIndex].acknowledgedAt,
+  };
+
+  res.json({ success: true, alert: activeTriageAlerts[alertIndex] });
+});
+
+app.delete('/api/triage/alerts', (req, res) => {
+  activeTriageAlerts = [];
+  res.json({ success: true, message: 'All triage alerts cleared' });
+});
 
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {

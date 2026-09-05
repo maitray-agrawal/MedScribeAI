@@ -470,6 +470,66 @@ Initial deep-dive audit of the existing MedScribe Lite codebase and setup of the
    - Executed `npm run lint` (`tsc --noEmit`): 0 TypeScript errors.
    - Executed `compile_applet`: Production build succeeded.
 
+---
+
+## Session Log: 2026-09-05 — Live Emergency Red-Flag Triage Interrupt & Staff TriageQueue Implementation (Phase 6f)
+
+### Summary of Work:
+1. **Clinical Emergency Red-Flag Detection Engine (`src/utils/emergencyTriageDetector.ts`)**:
+   - Built a deterministic, real-time emergency pattern detector modeled after standard triage protocols (AHA/ACLS, NIH Stroke Scale, WHO emergency guidelines).
+   - Evaluates combinations of high-acuity keywords during live data entry:
+     * **Acute Coronary Syndrome / Myocardial Infarction**: Chest pain combined with dyspnea, diaphoresis, left arm or jaw radiation, pressure, or tightness.
+     * **Acute Cerebrovascular Event / Stroke**: FAST signs (facial droop, unilateral arm/leg weakness, speech difficulty, aphasia, sudden confusion).
+     * **Thunderclap Headache / Subarachnoid Hemorrhage / Meningitis**: Sudden severe headache with visual changes, stiff neck, vomiting, or altered consciousness.
+     * **Severe Respiratory Distress / Anaphylaxis**: Inability to speak full sentences, cyanosis, stridor, wheezing with swollen lips or tongue.
+     * **Altered Mental Status / Severe Sepsis**: High fever with confusion, lethargy, or extreme unresponsiveness.
+   - Emits an audible 2-tone alert chime using the browser Web Audio API (`AudioContext`) and persists active alerts across both `localStorage` and the backend queue.
+
+2. **Full-Screen Kiosk Emergency Interrupt Overlay (`src/components/kiosk/EmergencyInterruptOverlay.tsx`)**:
+   - Immediate hard interrupt: intercepts the normal conversational questionnaire flow upon keyword or voice match.
+   - Halts speech recognition and cancels ongoing speech synthesis to prevent distracting chatter.
+   - Reassures the patient with high-contrast, calm, yet unmistakable emergency signaling:
+     * Prominent hospital emergency badge ("CODE RED — CLINICAL ESCALATION").
+     * Direct reassurance message: *"Hospital Emergency Staff have been notified and are on their way to this kiosk."*
+     * Immediate actionable patient directives (stay seated, breathe slowly, unbutton tight clothing).
+     * Automated bilingual verbal reassurance (`SpeechSynthesis`) in English or Spanish.
+     * Staff override security PIN (`9999`) or override button allowing clinical staff to clear the alarm after bedside evaluation.
+
+3. **Live Interrupt Hooking in `InterviewEngine.tsx`**:
+   - Hooked `checkForEmergencyRedFlags` directly into:
+     * Real-time voice interim transcript streaming (`recognition.onresult`).
+     * Live typed input changes (`onChange`).
+     * Final submission buttons (`handleAnswerSubmit`).
+   - Added instant 1-click testing chips for live verification:
+     * `+ Chest Pain + Dyspnea`
+     * `+ Stroke Signs (FAST)`
+     * `+ Thunderclap Headache`
+
+4. **Dedicated Staff-Facing Triage Queue (`src/components/triage/TriageQueue.tsx`)**:
+   - Implemented a dedicated monitoring route / view for triage nurses and casualty staff (`currentView === 'triage'`).
+   - Real-time polling of `/api/triage/alerts` with automatic fallback and local storage synchronization.
+   - Features:
+     * Priority metrics (Total, Active, Staff En Route, Attended, Resolved).
+     * Filterable cards by status (`all`, `active`, `en_route`, `resolved`).
+     * Real-time triage status updates (`staff_en_route`, `attended`, `resolved`).
+     * One-click "Hand Off to Doctor Workstation" button that pre-populates patient information and incident transcripts directly into the clinical workstation consultation queue.
+     * Quick simulated alert dispatching for mock testing.
+
+5. **Backend Endpoints (`server.ts`)**:
+   - `GET /api/triage/alerts`: Fetches all tracked emergency alerts with timestamps.
+   - `POST /api/triage/alerts`: Ingests real-time emergency events triggered by kiosk terminals.
+   - `PATCH /api/triage/alerts/:id`: Updates emergency alert handling status with staff notes.
+
+6. **System Navigation & App Wiring (`src/App.tsx`, `Header.tsx`, `KioskShell.tsx`)**:
+   - Exposed Triage Queue navigation in the main Workstation header with live flashing badge counter for unhandled alerts.
+   - Added a direct "Staff Triage Queue" button in `KioskShell` and the landing page floating launcher.
+   - URL hash routing support for `#triage` and `#kiosk`.
+
+7. **Verification**:
+   - `compile_applet`: Production build succeeded with zero errors.
+   - `lint_applet` (`tsc --noEmit`): Clean, zero TypeScript errors.
+
+
 
 
 

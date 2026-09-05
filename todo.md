@@ -75,10 +75,10 @@
 - **Exit Criteria:** Patient can scan/upload past physical prescriptions, lab reports, or discharge summaries at the kiosk with OCR/Gemini extraction into structured medication and diagnostic history. [COMPLETED]
 
 ### Sub-phase (f): Real-Time Red-Flag Triage Escalation
-- [ ] Implement real-time clinical red-flag detector during symptom intake (e.g., acute chest pain, breathlessness, stroke signs, vitals crisis)
-- [ ] Build full-screen emergency override banner directing patient to immediately alert hospital staff / proceed to casualty
-- [ ] Provide audible alert tone and immediate triage category badge (Red / Yellow / Green)
-- **Exit Criteria:** Clinical emergency symptoms (e.g., chest pain, acute dyspnea, stroke signs, severe hypertension, fever with altered sensorium) instantly trigger high-priority visual alarms and direct the patient to immediate emergency triage.
+- [x] Implement real-time clinical red-flag detector during symptom intake (e.g., acute chest pain, breathlessness, stroke signs, vitals crisis)
+- [x] Build full-screen emergency override banner directing patient to immediately alert hospital staff / proceed to casualty
+- [x] Provide audible alert tone and immediate triage category badge (Red / Yellow / Green)
+- **Exit Criteria:** Clinical emergency symptoms (e.g., chest pain, acute dyspnea, stroke signs, severe hypertension, fever with altered sensorium) instantly trigger high-priority visual alarms and direct the patient to immediate emergency triage. [COMPLETED]
 
 ### Sub-phase (g): Structured Summary Handoff + FHIR/ABDM Push
 - [ ] Compile comprehensive pre-consultation intake summary combining Allopathic and AYUSH data

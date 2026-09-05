@@ -1,5 +1,5 @@
 import React from 'react';
-import { Stethoscope, History, BarChart3, Wifi, Sparkles, Cpu, Globe } from 'lucide-react';
+import { Stethoscope, History, BarChart3, Wifi, Sparkles, Cpu, Globe, Radio } from 'lucide-react';
 import { useTranslation } from '../i18n';
 
 interface HeaderProps {
@@ -7,6 +7,8 @@ interface HeaderProps {
   onOpenAnalytics: () => void;
   onSelectSampleScenario: () => void;
   onNavigateToLanding?: () => void;
+  onNavigateToTriage?: () => void;
+  activeTriageAlertsCount?: number;
   totalEncountersCount: number;
   safetyAlertsCount: number;
   isOfflineMode?: boolean;
@@ -18,6 +20,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAnalytics,
   onSelectSampleScenario,
   onNavigateToLanding,
+  onNavigateToTriage,
+  activeTriageAlertsCount = 0,
   totalEncountersCount,
   isOfflineMode = false,
   onToggleOfflineMode,
@@ -114,6 +118,27 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <span className="hidden sm:inline">{t.header.productInfo}</span>
               <span className="sm:hidden">{t.header.infoShort}</span>
+            </button>
+          )}
+
+          {onNavigateToTriage && (
+            <button
+              id="btn-goto-triage-queue"
+              onClick={onNavigateToTriage}
+              className={`py-1.5 px-3 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeTriageAlertsCount > 0
+                  ? 'bg-red-600 text-white border-red-500 shadow-md animate-pulse'
+                  : 'bg-red-50 text-red-700 hover:bg-red-100 border-red-200'
+              }`}
+              title="Hospital Staff Emergency Triage Queue"
+            >
+              <Radio className={`w-3.5 h-3.5 ${activeTriageAlertsCount > 0 ? 'text-white' : 'text-red-600'}`} />
+              <span className="hidden sm:inline">Triage Queue</span>
+              {activeTriageAlertsCount > 0 && (
+                <span className="bg-white text-red-600 font-black px-1.5 py-0.2 text-[10px] rounded-full shadow-xs">
+                  {activeTriageAlertsCount}
+                </span>
+              )}
             </button>
           )}
 

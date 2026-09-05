@@ -17,6 +17,7 @@ import {
   HeartPulse,
   Sparkles,
   Building2,
+  Radio,
 } from 'lucide-react';
 import { AbhaVerificationStep, VerifiedAbhaProfile } from './AbhaVerificationStep';
 import { ConsentStep, ConsentPreferences } from './ConsentStep';
@@ -83,9 +84,10 @@ const STEPS: StepConfig[] = [
 export interface KioskShellProps {
   onExit: () => void;
   onSwitchToWorkstation?: () => void;
+  onOpenTriageQueue?: () => void;
 }
 
-export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkstation }) => {
+export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkstation, onOpenTriageQueue }) => {
   const { language, setLanguage } = useTranslation();
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
@@ -221,6 +223,19 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
                 <span>Español</span>
               </button>
             </div>
+
+            {/* Staff Triage Queue Shortcut */}
+            {onOpenTriageQueue && (
+              <button
+                id="kiosk-header-triage-btn"
+                onClick={onOpenTriageQueue}
+                className="px-3.5 py-2.5 rounded-2xl bg-red-950/60 hover:bg-red-900/80 border border-red-700/60 text-red-300 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                title="Open Hospital Staff Triage Queue"
+              >
+                <Radio className="w-3.5 h-3.5 text-red-400 animate-pulse" />
+                <span className="hidden sm:inline">Triage Queue</span>
+              </button>
+            )}
 
             {/* Exit to Clinician Mode Button */}
             <button

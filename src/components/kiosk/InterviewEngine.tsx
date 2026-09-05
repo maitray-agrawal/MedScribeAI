@@ -7,7 +7,13 @@ import {
   AdaptiveInterviewTurnResponse,
   AYUSHHistory,
   DoshaType,
+  EmergencyTriageAlert,
 } from '../../types';
+import {
+  detectEmergencySymptomPattern,
+  publishEmergencyAlert,
+} from '../../utils/emergencyTriageDetector';
+import { EmergencyInterruptOverlay } from './EmergencyInterruptOverlay';
 import {
   Mic,
   MicOff,
@@ -42,6 +48,7 @@ export interface InterviewEngineProps {
   initialIntake?: StructuredPatientIntake | null;
   onComplete: (intake: StructuredPatientIntake) => void;
   onBackToConsent?: () => void;
+  onEmergencyAlertTriggered?: (alert: EmergencyTriageAlert) => void;
 }
 
 export const InterviewEngine: React.FC<InterviewEngineProps> = ({
@@ -55,6 +62,7 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
   initialIntake,
   onComplete,
   onBackToConsent,
+  onEmergencyAlertTriggered,
 }) => {
   const { language } = useTranslation();
   const isSpanish = language === 'es';
@@ -93,6 +101,9 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
   );
   const [redFlags, setRedFlags] = useState<string[]>(initialIntake?.redFlagsDetected || []);
   const [triagePriority, setTriagePriority] = useState<'routine' | 'urgent' | 'emergency'>('routine');
+
+  // Real-Time Emergency Red-Flag Interrupt State
+  const [activeEmergencyAlert, setActiveEmergencyAlert] = useState<EmergencyTriageAlert | null>(null);
 
   // Current Turn Engine State
   const [currentQuestionData, setCurrentQuestionData] = useState<AdaptiveInterviewTurnResponse | null>(null);
@@ -247,6 +258,7 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
         }
         setVoiceInterimText(interim);
         setTypedInput(interim);
+        checkForEmergencyRedFlags(interim);
       };
 
       recognition.onerror = (event: any) => {
@@ -265,6 +277,52 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
       console.error('Failed to initialize speech recognition:', err);
       setIsRecording(false);
     }
+  };
+
+  // Live Emergency Red Flag Detector (Real-time Interrupt during data entry)
+  const checkForEmergencyRedFlags = (liveText: string): boolean => {
+    if (!liveText || liveText.trim().length < 3 || activeEmergencyAlert) return false;
+
+    const detected = detectEmergencySymptomPattern(liveText, {
+      patientName: patientDemographics.fullName,
+      age: patientDemographics.age,
+      gender: patientDemographics.gender,
+      abhaId: patientDemographics.abhaId,
+      kioskStationId: 'Kiosk #01 (OPD Lobby)',
+      priorHistoryText: chiefComplaint,
+    });
+
+    if (detected) {
+      // 1. Immediately abort active speech recognition
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {
+          // ignore
+        }
+        setIsRecording(false);
+      }
+      // 2. Cancel speech synthesis
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+      }
+      // 3. Immediately trigger high-priority interrupt
+      setActiveEmergencyAlert(detected);
+      setRedFlags((prev) => Array.from(new Set([...prev, detected.detectedPattern])));
+      // 4. Broadcast to server and local TriageQueue
+      publishEmergencyAlert(detected);
+      if (onEmergencyAlertTriggered) {
+        onEmergencyAlertTriggered(detected);
+      }
+      return true;
+    }
+    return false;
+  };
+
+  const handleTypedInputChange = (val: string) => {
+    setTypedInput(val);
+    checkForEmergencyRedFlags(val);
   };
 
   // Process & Advance to next turn
@@ -286,6 +344,12 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
     const finalAnswer = (chosenAnswer || typedInput || (currentQuestionData?.inputType === 'scale_1_to_10' ? `${severityRating}/10` : selectedOption) || '').trim();
 
     if (!finalAnswer) {
+      return;
+    }
+
+    // Real-Time Emergency Red-Flag detection during data entry
+    const isEmergency = checkForEmergencyRedFlags(finalAnswer);
+    if (isEmergency) {
       return;
     }
 
@@ -516,7 +580,18 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto flex flex-col items-center">
+    <div className="w-full max-w-3xl mx-auto flex flex-col items-center relative">
+      {/* Real-time Emergency Symptom Pattern Interrupt Overlay */}
+      {activeEmergencyAlert && (
+        <EmergencyInterruptOverlay
+          alert={activeEmergencyAlert}
+          isSpanish={isSpanish}
+          onStaffOverride={() => {
+            setActiveEmergencyAlert(null);
+          }}
+        />
+      )}
+
       {/* Emergency Red-Flag Banner */}
       {redFlags.length > 0 && (
         <div className="w-full mb-6 p-4 rounded-3xl bg-red-950/80 border-2 border-red-500 text-red-200 flex items-start gap-4 shadow-2xl animate-pulse">
@@ -661,6 +736,49 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
               </button>
             </div>
 
+            {/* Real-time Emergency Symptom Testing Chips (1-click trigger to test live interrupt) */}
+            <div className="w-full -mt-2 p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/90 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+              <span className="font-bold text-slate-400 flex items-center gap-1.5">
+                <AlertOctagon className="w-3.5 h-3.5 text-red-400" />
+                <span>Test Live Red-Flag Interrupt:</span>
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = 'I have crushing chest pain and shortness of breath radiating to my left arm';
+                    setTypedInput(text);
+                    checkForEmergencyRedFlags(text);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-red-950/80 hover:bg-red-900 border border-red-700/60 text-red-300 font-bold transition-all cursor-pointer"
+                >
+                  + Chest Pain + Dyspnea
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = 'Sudden facial droop and right arm weakness with slurred speech';
+                    setTypedInput(text);
+                    checkForEmergencyRedFlags(text);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-red-950/80 hover:bg-red-900 border border-red-700/60 text-red-300 font-bold transition-all cursor-pointer"
+                >
+                  + Stroke Signs (FAST)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = 'Sudden severe thunderclap headache with blurry double vision and stiff neck';
+                    setTypedInput(text);
+                    checkForEmergencyRedFlags(text);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-red-950/80 hover:bg-red-900 border border-red-700/60 text-red-300 font-bold transition-all cursor-pointer"
+                >
+                  + Thunderclap Headache
+                </button>
+              </div>
+            </div>
+
             {/* Input Modality 1: 1-10 Scale (if inputType is scale_1_to_10) */}
             {currentQuestionData?.inputType === 'scale_1_to_10' && (
               <div className="w-full flex flex-col gap-4 py-2">
@@ -803,7 +921,7 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
                   <input
                     type="text"
                     value={typedInput}
-                    onChange={(e) => setTypedInput(e.target.value)}
+                    onChange={(e) => handleTypedInputChange(e.target.value)}
                     placeholder="Review or edit your spoken answer..."
                     className="flex-1 h-12 px-4 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-teal-400"
                   />
@@ -845,7 +963,7 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
                 <input
                   type="text"
                   value={typedInput}
-                  onChange={(e) => setTypedInput(e.target.value)}
+                  onChange={(e) => handleTypedInputChange(e.target.value)}
                   placeholder="Enter your exact answer here..."
                   className="flex-1 h-12 px-4 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-teal-400"
                 />

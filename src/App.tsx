@@ -18,12 +18,17 @@ import { checkDrugInteractions } from './utils/drugInteractionChecker';
 import { generateOfflineSOAPNote } from './utils/offlineLocalEngine';
 import { FHIRExportModal } from './components/soap-note';
 import { KioskShell } from './components/kiosk';
+import { TriageQueue } from './components/triage';
+import { Radio } from 'lucide-react';
 
 const STORAGE_KEY = 'medscribe_lite_encounters_v1';
 
 export default function App() {
-  // Navigation view state: 'landing' | 'workstation' | 'kiosk'
-  const [currentView, setCurrentView] = useState<'landing' | 'workstation' | 'kiosk'>('landing');
+  // Navigation view state: 'landing' | 'workstation' | 'kiosk' | 'triage'
+  const [currentView, setCurrentView] = useState<'landing' | 'workstation' | 'kiosk' | 'triage'>('landing');
+
+  // Active Emergency Triage Alert Counter
+  const [activeTriageCount, setActiveTriageCount] = useState<number>(0);
 
   // Offline local model mode state
   const [isOfflineMode, setIsOfflineMode] = useState<boolean>(false);
@@ -69,6 +74,49 @@ export default function App() {
       console.error('Failed to save encounters to localStorage:', e);
     }
   }, [encounters]);
+
+  // Listen for route hash or query parameters (e.g. #triage, #kiosk)
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#triage' || window.location.search.includes('view=triage')) {
+        setCurrentView('triage');
+      } else if (window.location.hash === '#kiosk' || window.location.search.includes('view=kiosk')) {
+        setCurrentView('kiosk');
+      } else if (window.location.hash === '#workstation' || window.location.search.includes('view=workstation')) {
+        setCurrentView('workstation');
+      }
+    };
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Monitor active emergency triage alerts count for badges
+  useEffect(() => {
+    const checkActiveTriage = () => {
+      try {
+        const raw = localStorage.getItem('medscribe_triage_alerts_v1');
+        if (raw) {
+          const alerts = JSON.parse(raw);
+          const active = alerts.filter((a: any) => a.status === 'active' || a.status === 'staff_en_route').length;
+          setActiveTriageCount(active);
+        } else {
+          setActiveTriageCount(0);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    checkActiveTriage();
+    const interval = setInterval(checkActiveTriage, 2500);
+    window.addEventListener('storage', checkActiveTriage);
+    window.addEventListener('triage-alert-updated', checkActiveTriage);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', checkActiveTriage);
+      window.removeEventListener('triage-alert-updated', checkActiveTriage);
+    };
+  }, []);
 
   // Load a sample scenario
   const handleSelectScenario = (scenarioId: string) => {
@@ -199,8 +247,26 @@ export default function App() {
     return (
       <div className="relative">
         <LandingPage onLaunchWorkstation={() => setCurrentView('workstation')} />
-        {/* Floating Quick Action to Launch Kiosk View */}
-        <div className="fixed bottom-5 right-5 z-50">
+        {/* Floating Quick Action Buttons */}
+        <div className="fixed bottom-5 right-5 z-50 flex flex-col sm:flex-row items-end sm:items-center gap-2.5">
+          <button
+            id="launch-triage-from-landing"
+            onClick={() => setCurrentView('triage')}
+            className={`flex items-center gap-2 px-5 py-3.5 rounded-full font-black shadow-2xl border-2 transition-all text-xs sm:text-sm cursor-pointer ${
+              activeTriageCount > 0
+                ? 'bg-red-600 text-white border-red-400 animate-pulse'
+                : 'bg-slate-900 text-red-300 border-red-700/80 hover:bg-slate-800'
+            }`}
+          >
+            <Radio className="w-4 h-4 text-red-400" />
+            <span>Staff Triage Queue</span>
+            {activeTriageCount > 0 && (
+              <span className="bg-white text-red-600 px-1.5 py-0.2 rounded-full font-black text-xs">
+                {activeTriageCount}
+              </span>
+            )}
+          </button>
+
           <button
             id="launch-kiosk-from-landing"
             onClick={() => setCurrentView('kiosk')}
@@ -219,6 +285,34 @@ export default function App() {
       <KioskShell
         onExit={() => setCurrentView('landing')}
         onSwitchToWorkstation={() => setCurrentView('workstation')}
+        onOpenTriageQueue={() => setCurrentView('triage')}
+      />
+    );
+  }
+
+  if (currentView === 'triage') {
+    return (
+      <TriageQueue
+        onNavigateToWorkstation={() => setCurrentView('workstation')}
+        onNavigateToKiosk={() => setCurrentView('kiosk')}
+        onSelectPatientForConsultation={(alert) => {
+          setPatientInfo({
+            ...defaultPatientInfo,
+            name: alert.patientName,
+            age: alert.age,
+            sex: alert.gender as any,
+            medicalHistory: `Emergency Triage Alert at ${alert.kioskStationId}: ${alert.detectedPattern}`,
+            encounterType: 'Acute Emergency Triage Handoff',
+          });
+          setTranscript(`Patient: ${alert.patientName} (${alert.age}y, ${alert.gender}).
+ABHA ID: ${alert.abhaId || '91-8765-4321-0987'}.
+Location: ${alert.kioskStationId}.
+Emergency Category: ${alert.emergencyCategory}.
+Detected Pattern: ${alert.detectedPattern}.
+Patient's Exact Complaint: "${alert.triggerInputText}".
+Action Directives: ${alert.actionDirectives.join('; ')}.`);
+          setCurrentView('workstation');
+        }}
       />
     );
   }
@@ -226,21 +320,41 @@ export default function App() {
   return (
     <div id="app-root" className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
       {/* Top Banner for Kiosk Terminal Switcher */}
-      <div className="bg-gradient-to-r from-teal-900/90 to-blue-900/90 text-white px-4 sm:px-8 py-2 text-xs sm:text-sm flex items-center justify-between border-b border-teal-700/50">
+      <div className="bg-gradient-to-r from-teal-900/90 via-slate-900 to-blue-900/90 text-white px-4 sm:px-8 py-2 text-xs sm:text-sm flex flex-wrap items-center justify-between gap-2 border-b border-teal-700/50">
         <div className="flex items-center gap-2">
           <span className="bg-teal-400 text-slate-950 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-black uppercase tracking-wide">
             SIH 26047
           </span>
-          <span className="font-semibold text-teal-100">Patient Self-Service MediKiosk Terminal Available</span>
+          <span className="font-semibold text-teal-100">Patient Self-Service MediKiosk & Staff Triage Active</span>
         </div>
-        <button
-          id="switch-to-kiosk-from-workstation"
-          onClick={() => setCurrentView('kiosk')}
-          className="bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold px-3 py-1 rounded-lg text-xs transition-all cursor-pointer flex items-center gap-1.5"
-        >
-          <span>Open Kiosk Terminal</span>
-          <span>→</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            id="switch-to-triage-from-workstation"
+            onClick={() => setCurrentView('triage')}
+            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+              activeTriageCount > 0
+                ? 'bg-red-600 hover:bg-red-500 text-white border-red-400 animate-pulse'
+                : 'bg-red-950/70 hover:bg-red-900 border-red-700 text-red-200'
+            }`}
+          >
+            <Radio className="w-3.5 h-3.5 text-red-400" />
+            <span>Staff Triage Queue</span>
+            {activeTriageCount > 0 && (
+              <span className="bg-white text-red-700 px-1.5 py-0.2 rounded-full font-black text-[10px]">
+                {activeTriageCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            id="switch-to-kiosk-from-workstation"
+            onClick={() => setCurrentView('kiosk')}
+            className="bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold px-3 py-1 rounded-lg text-xs transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <span>Open Kiosk Terminal</span>
+            <span>→</span>
+          </button>
+        </div>
       </div>
 
       {/* Top Navigation Bar */}
@@ -252,6 +366,8 @@ export default function App() {
           handleSelectScenario(SAMPLE_SCENARIOS[0].id);
         }}
         onNavigateToLanding={() => setCurrentView('landing')}
+        onNavigateToTriage={() => setCurrentView('triage')}
+        activeTriageAlertsCount={activeTriageCount}
         totalEncountersCount={encounters.length}
         safetyAlertsCount={soapNote?.safety_alerts?.length || 0}
         isOfflineMode={isOfflineMode}

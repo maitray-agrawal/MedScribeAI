@@ -291,6 +291,7 @@ export interface StructuredPatientIntake {
   startedAt: string;
   completedAt?: string;
   abhaId?: string;
+  clinicalDepartment?: 'Allopathic' | 'Ayurveda (AYUSH)';
   patientDemographics: {
     fullName: string;
     age: number | string;
@@ -307,10 +308,168 @@ export interface StructuredPatientIntake {
   reviewOfSystems: ReviewOfSystemsChecklist;
   currentMedications: DiscreteMedication[];
   knownAllergies: DiscreteAllergy[];
+  ayushHistory?: AYUSHHistory;
   conversationTurns: InterviewTurn[];
   triageClassification?: 'Green (Routine)' | 'Yellow (Priority)' | 'Red (Immediate Emergency)';
   redFlagsDetected: string[];
   isComplete: boolean;
+}
+
+/**
+ * ==========================================
+ * AYUSH / AYURVEDA CLINICAL INTAKE (DASHAVIDHA PARIKSHA + AHARA-VIHARA + NIDANA/SAMPRAPTI)
+ * Aligned with Ministry of AYUSH & All India Institute of Ayurveda (AIIA) Guidelines
+ * ==========================================
+ */
+
+export type DoshaType =
+  | 'Vata'
+  | 'Pitta'
+  | 'Kapha'
+  | 'Vata-Pitta'
+  | 'Pitta-Kapha'
+  | 'Vata-Kapha'
+  | 'Tridoshaja / Samadosha';
+
+/**
+ * 1. Prakriti - Deha Prakriti (Physical & Mental Dosha Constitution)
+ */
+export interface PrakritiAssessment {
+  dominantPrakriti?: DoshaType;
+  vataTraits?: string[];
+  pittaTraits?: string[];
+  kaphaTraits?: string[];
+  observations?: string;
+}
+
+/**
+ * 2. Vikriti - Current Morbid Dosha Imbalance / Aggravation
+ */
+export interface VikritiAssessment {
+  aggravatedDosha?: ('Vata' | 'Pitta' | 'Kapha' | 'Vata-Pitta' | 'Pitta-Kapha' | 'Vata-Kapha' | 'Sannipata')[];
+  manifestations?: string[];
+  primaryDushyaAffected?: ('Rasa' | 'Rakta' | 'Mamsa' | 'Meda' | 'Asthi' | 'Majja' | 'Shukra')[];
+  severity?: 'Alpa (Mild)' | 'Madhya (Moderate)' | 'Teevra (Severe)';
+}
+
+/**
+ * Dashavidha Pariksha (Ten-Fold Ayurvedic Clinical Examination)
+ * Charaka Samhita Vimana Sthana Chapter 8 / AIIA Standard Protocol
+ */
+export interface DashavidhaPariksha {
+  // 1. Prakriti (Natural Constitution)
+  prakriti?: PrakritiAssessment;
+
+  // 2. Vikriti (Pathological Morbidity / Imbalance)
+  vikriti?: VikritiAssessment;
+
+  // 3. Sara (Quality & Tissue Essence / Dhatu Excellence)
+  sara?: {
+    tissueType?: 'Twak/Rasa' | 'Rakta' | 'Mamsa' | 'Meda' | 'Asthi' | 'Majja' | 'Shukra' | 'Satva';
+    grade?: 'Pravara (Superior/Excellent)' | 'Madhyama (Medium/Average)' | 'Avara (Inferior/Poor)';
+    observations?: string;
+  };
+
+  // 4. Samhanana (Body Compactness & Skeletal-Muscular Architecture)
+  samhanana?: {
+    status?: 'Susamhata (Well-compact / Robust)' | 'Madhyama (Moderate build)' | 'Asamhata (Loose / Frail / Asthenic)';
+    description?: string;
+  };
+
+  // 5. Pramana (Anthropometric Proportions & Stature)
+  pramana?: {
+    proportionStatus?: 'Sama (Normal / Well-proportioned)' | 'Heena (Undersized / Stunted)' | 'Ati-Dirgha (Overgrown / Very Tall)' | 'Ati-Hrasva (Dwarf / Short)';
+    heightCm?: number;
+    weightKg?: number;
+  };
+
+  // 6. Satmya (Habituation, Adaptability & Concordance)
+  satmya?: {
+    adaptationType?: 'Sarvarasa Satmya (Adapted to all 6 tastes / Versatile)' | 'Vyavayi Satmya (Moderate adaptation)' | 'Ekarasa Satmya (Limited adaptation / Habitual diet)';
+    tolerances?: string[];
+  };
+
+  // 7. Sattva (Mental Temperament & Psychic Resilience)
+  sattva?: {
+    resilienceLevel?: 'Pravara Sattva (High psychic endurance / Calm & Resilient)' | 'Madhyama Sattva (Moderate psychic endurance)' | 'Avara Sattva (Low endurance / Anxious & Vulnerable)';
+    manasikaDosha?: ('Rajas' | 'Tamas' | 'Satva Dominant')[];
+  };
+
+  // 8. Ahara Shakti (Digestive Capacity & Ingestion Power)
+  aharaShakti?: {
+    abhyavaharanaShakti?: 'Pravara (High intake capacity)' | 'Madhyama (Average intake)' | 'Avara (Poor intake)';
+    jaranaShakti?: 'Pravara (Fast / Strong digestion)' | 'Madhyama (Normal digestion)' | 'Avara (Slow / Sluggish digestion)';
+    agniType?: 'Samagni (Balanced digestive fire)' | 'Vishamagni (Variable / Irregular fire)' | 'Tikshnagni (Excessive / Intense fire)' | 'Mandagni (Low / Slow fire)';
+  };
+
+  // 9. Vyayama Shakti (Physical Work Capacity & Exercise Tolerance)
+  vyayamaShakti?: {
+    capacityLevel?: 'Pravara (High physical stamina)' | 'Madhyama (Moderate endurance)' | 'Avara (Poor / Quickly fatigued)';
+    dailyExertionLevel?: string;
+  };
+
+  // 10. Vaya (Chronological & Biological Age Phase)
+  vaya?: {
+    stage?: 'Bala (Childhood / Growth stage - Kapha dominant)' | 'Madhyama (Youth / Adulthood - Pitta dominant)' | 'Vriddha (Geriatric / Aging - Vata dominant)';
+    approximateYears?: number | string;
+  };
+}
+
+/**
+ * Ahara-Vihara (Dietary & Daily Lifestyle Habits in Ayurveda)
+ */
+export interface AharaViharaHistory {
+  dietPatterns?: {
+    aharaTiming?: 'Kala Bhojana (Fixed regular meals)' | 'Akala Bhojana (Irregular timings)' | 'Adhyashana (Eating before prior meal is digested)';
+    rasaPredominance?: ('Madhura (Sweet)' | 'Amla (Sour)' | 'Lavana (Salty)' | 'Katu (Pungent / Spicy)' | 'Tikta (Bitter)' | 'Kashaya (Astringent)')[];
+    foodNature?: 'Snigdha (Oily / Nourishing)' | 'Ruksha (Dry / Light)' | 'Ushna (Hot / Fresh)' | 'Sheeta (Cold / Refrigerated / Stale)' | 'Guru (Heavy)';
+    waterIntakePattern?: string;
+  };
+  kosthaNature?: 'Krura Kostha (Hard stools / Constipated tendency)' | 'Mridu Kostha (Loose stools / Rapid evacuation)' | 'Madhyama Kostha (Regular normal bowel movement)';
+  viharaHabits?: {
+    nidraPattern?: 'Sukha Nidra (Sound restful sleep)' | 'Alpanidra / Anidra (Disturbed / Insomnia)' | 'Atinidra (Excessive sleep / Drowsiness)';
+    ratriJagarana?: boolean;
+    divasvapna?: boolean;
+    vyayamaRoutine?: string;
+    manasikaStress?: 'Low' | 'Moderate' | 'High / Chinta';
+    environmentalExposure?: string;
+  };
+}
+
+/**
+ * Nidana & Samprapti (Etiological Factors & Disease Pathogenesis)
+ */
+export interface NidanaSampraptiHistory {
+  chiefComplaintAyush?: string;
+  durationAyush?: string;
+  identifiedNidana?: {
+    aharajaNidana?: string[];
+    viharajaNidana?: string[];
+    manasikaNidana?: string[];
+    kalaRituNidana?: string[];
+  };
+  sampraptiGhatakas?: {
+    doshaInvolved?: string[];
+    dushyaInvolved?: string[];
+    srotasInvolved?: ('Pranavaha' | 'Annavaha' | 'Rasavaha' | 'Raktavaha' | 'Mamsavaha' | 'Medovaha' | 'Asthivaha' | 'Majjavaha' | 'Shukravaha' | 'Purishavaha' | 'Mutravaha' | 'Swedavaha' | 'Manovaha')[];
+    srotoDushtiPrakara?: ('Sanga (Obstruction)' | 'Atipravritti (Excessive flow)' | 'Siragranthi (Nodular dilation)' | 'Vimargagamana (Extravasation / Wrong passage)')[];
+    amaPresence?: 'Nirama (No Ama / Toxin free)' | 'Saama (Associated with metabolic Ama / Endotoxins)';
+  };
+  prognosisObservation?: 'Sadhya (Easily curable)' | 'Krichhra-Sadhya (Curable with difficulty)' | 'Yapya (Manageable / Chronic)' | 'Asadhya (Incurable)';
+}
+
+/**
+ * Complete AYUSH / Ayurveda History Model
+ * Distinct interface that coexists with allopathic structure in StructuredPatientIntake
+ */
+export interface AYUSHHistory {
+  department: 'Ayurveda (AYUSH)';
+  facilityStandard: 'Ministry of AYUSH / AIIA Outpatient Guidelines';
+  recordedAt: string;
+  dashavidhaPariksha: DashavidhaPariksha;
+  aharaVihara: AharaViharaHistory;
+  nidanaSamprapti: NidanaSampraptiHistory;
+  additionalAyushNotes?: string;
 }
 
 /**
@@ -330,7 +489,17 @@ export interface AdaptiveInterviewTurnResponse {
     | 'past_history'
     | 'medications_allergies'
     | 'review_of_systems'
-    | 'conclusion';
+    | 'conclusion'
+    | 'ayush_chief_complaint'
+    | 'ayush_prakriti'
+    | 'ayush_vikriti'
+    | 'ayush_sara_samhanana'
+    | 'ayush_pramana_satmya'
+    | 'ayush_sattva_vyayama'
+    | 'ayush_ahara_shakti_agni'
+    | 'ayush_vaya'
+    | 'ayush_ahara_vihara'
+    | 'ayush_nidana_samprapti';
   suggestedOptions: string[];
   inputType: 'choice_or_voice' | 'scale_1_to_10' | 'yes_no';
   extractedData?: {
@@ -340,6 +509,7 @@ export interface AdaptiveInterviewTurnResponse {
     medications?: string[];
     allergies?: string[];
     rosFlags?: Record<string, boolean>;
+    ayushPatch?: Partial<AYUSHHistory>;
   };
   redFlags?: string[];
   triagePriority?: 'routine' | 'urgent' | 'emergency';

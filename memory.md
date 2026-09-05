@@ -379,6 +379,57 @@ Initial deep-dive audit of the existing MedScribe Lite codebase and setup of the
   - Executed `npm test` (`vitest run`): All 49 tests across 8 suites passing.
   - Checked off Sub-phase (c) in `todo.md`.
 
+---
+
+## Session Log: 2026-09-05 — Parallel AYUSH (Ayurveda) History-Taking Mode & Department Selection Implementation
+
+### Summary of Work:
+1. **Domain Data Architecture & Types (`src/types.ts`)**:
+   - Expanded type definitions with a comprehensive, discrete `AYUSHHistory` model aligned with All India Institute of Ayurveda (AIIA) and Charaka Samhita clinical intake frameworks.
+   - Preserved complete schema segregation between Allopathic and AYUSH models: `AYUSHHistory` coexists cleanly alongside `SocratesHPI` within `StructuredPatientIntake` without compromising or mutating either structure.
+   - Structured `DashavidhaPariksha` into 10 discrete constitutional metrics:
+     * `prakriti`: Devanagari/transliterated constitutional tendencies (`dominantPrakriti`, `secondaryPrakriti`, `phenotypicTraits`).
+     * `vikriti`: Current active dosha vitiation (`aggravatedDosha`, `dushya`, `activeManifestations`).
+     * `sara`: Tissue excellence (Dhatu Sara) rating (`Pravara`, `Madhyama`, `Avara`) across Rasa, Rakta, Mamsa, Meda, Asthi, Majja, Shukra, and Ojas.
+     * `samhanana`: Body build / compactness.
+     * `pramana`: Anthropometry and somatic proportions.
+     * `satmya`: Adaptability / homologation (e.g., Sarva Rasa, Eka Rasa Satmya).
+     * `sattva`: Mental stamina/temperament (`Pravara`, `Madhyama`, `Avara`).
+     * `aharaShakti`: Digestive capacity, encompassing `abhyavaharanaShakti` (ingestion capacity), `jaranaShakti` (digestion capacity), `agniType` (`Samagni`, `Vishamagni`, `Tikshnagni`, `Mandagni`), and `kosthaNature` (`Mridu`, `Madhyama`, `Krura`).
+     * `vyayamaShakti`: Physical endurance and physical exercise capacity.
+     * `vaya`: Age/life stage (`Balyavastha`, `Madhyamavastha`, `Vriddhavastha`).
+   - Added discrete structures for `AharaVihara` (dietary patterns, Rasa predominance, Viruddha Ahara, Nidra/sleep patterns, Ratri Jagarana, Divasvapna, Vega Dharana/suppression of natural urges) and `NidanaSamprapti` (aetiological triggers, Srotas affected, Ama presence, and Vyadhi name mapping).
+   - Added `clinicalDepartment: 'Allopathic' | 'Ayurveda (AYUSH)'` field to `StructuredPatientIntake`.
+
+2. **Kiosk Department Selection Screen (`src/components/kiosk/DepartmentSelectionStep.tsx`)**:
+   - Created a dedicated, accessible department selection step positioned immediately following the informed consent step (Step 3).
+   - Offers two prominent, oversized high-contrast cards:
+     * **Modern Allopathic OPD**: Targets modern evidence-based clinical medicine, SOCRATES symptom inquiry, acute emergency triage, and standard pharmaceutical review.
+     * **AIIA Ayurveda (AYUSH) OPD**: Targets holistic Ayurvedic clinical consultation, Dashavidha Pariksha, Dosha/Prakriti assessment, and Ahara-Vihara lifestyle analysis.
+   - Built-in `SpeechSynthesis` audio read-aloud button for department options to support low-literacy walk-up kiosk patients.
+   - Integrated seamlessly into `KioskShell.tsx` as a 6-step progress bar workflow with responsive multi-column layout and state persistence.
+
+3. **Backend Adaptive Gemini & Algorithmic Fallback Engine (`server.ts`)**:
+   - Updated `POST /api/kiosk/interview-turn` to accept `clinicalDepartment` and current `ayushHistory`.
+   - Engineered dual clinical persona prompts for Gemini:
+     * When `clinicalDepartment === 'Ayurveda (AYUSH)'`, Gemini adopts an AIIA Ayurvedic Physician persona, framing inquiries across Prakriti, Vikriti, Agni, Kostha, Ahara-Vihara, and Rogamarga while generating 4–6 high-contrast Sanskrit/English touch options.
+     * Preserved the acute emergency red-flag supervisor: regardless of department, acute cardiopulmonary distress, stroke signs, or vital collapse are immediately intercepted and flagged for emergency staff escalation.
+   - Implemented `getAyushFallback()` deterministic offline question engine: provides zero-connectivity fallback progression through chief complaint (Ayurvedic mapping), Prakriti evaluation, Vikriti/dosha assessment, Agni/digestive fire, Kostha/diet, and Vihara/Nidra.
+
+4. **Turn-Based Kiosk Interview Engine (`src/components/kiosk/InterviewEngine.tsx`)**:
+   - Added `clinicalDepartment` support and state tracking for `AYUSHHistory`.
+   - Dynamic department badge and question categorization indicator in the progress header.
+   - Maps patient voice/touch responses directly into `DashavidhaPariksha` (Prakriti, Vikriti, Agni, Kostha, Sattva, Vyayama) and `AharaVihara` intake fields upon turn submission.
+   - Exports the populated `ayushHistory` payload into `StructuredPatientIntake` on interview handoff.
+
+5. **Validation, Bugfix & Verification**:
+   - Resolved string interpolation and TypeScript type mismatch issues in `server.ts` and `InterviewEngine.tsx`.
+   - Built dedicated unit test suite `src/__tests__/kioskAYUSH.test.tsx` verifying interactive department selection and switching between Allopathic and Ayurveda (AYUSH) modes.
+   - Executed `npm run lint` (`tsc --noEmit`): 0 errors.
+   - Executed `npm test` (`vitest run`): All 52 tests passing across 9 test suites.
+   - Executed `npm run build` (`compile_applet`): Production bundle successfully built with zero errors.
+   - Verified both Allopathic and AYUSH interview pathways are verified and ready for testing.
+
 
 
 

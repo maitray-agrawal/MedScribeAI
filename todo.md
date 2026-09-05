@@ -60,12 +60,12 @@
 - **Exit Criteria:** Multilingual conversational intake agent guides the patient through dynamic, symptom-specific follow-up questions using voice and large on-screen touch options. [COMPLETED]
 
 ### Sub-phase (d): AYUSH / Ayurveda History Mode
-- [ ] Build AYUSH / Ayurveda intake toggle / tab aligned with AIIA guidelines
-- [ ] Create Prakriti assessment module (Vata, Pitta, Kapha constitutional tendencies)
-- [ ] Implement Agni (digestive capacity) and Kostha (bowel habit) quick-check selectors
-- [ ] Capture Ahara (dietary patterns) and Vihara (sleep, physical exertion, stress) questions
-- [ ] Map patient complaints to Ayurvedic symptom terminology (e.g., Jvara, Shwasa, Kasa)
-- **Exit Criteria:** Patient can select or be routed to an AYUSH/Ayurveda intake flow capturing Prakriti traits, Agni (digestive fire), Kostha, Ahara/Vihara (diet/lifestyle), and Dhatu/Dosha-oriented symptom chronologies aligned with AIIA guidelines.
+- [x] Build AYUSH / Ayurveda intake toggle / tab aligned with AIIA guidelines (DepartmentSelectionStep in Kiosk workflow)
+- [x] Create Prakriti assessment module (Vata, Pitta, Kapha constitutional tendencies)
+- [x] Implement Agni (digestive capacity) and Kostha (bowel habit) quick-check selectors
+- [x] Capture Ahara (dietary patterns) and Vihara (sleep, physical exertion, stress) questions
+- [x] Map patient complaints to Ayurvedic symptom terminology (e.g., Jvara, Shwasa, Kasa, Sandhivata, Amlapitta)
+- **Exit Criteria:** Patient can select or be routed to an AYUSH/Ayurveda intake flow capturing Prakriti traits, Agni (digestive fire), Kostha, Ahara/Vihara (diet/lifestyle), and Dhatu/Dosha-oriented symptom chronologies aligned with AIIA guidelines. [COMPLETED]
 
 ### Sub-phase (e): Document Upload + Digitization
 - [ ] Implement kiosk document capture / file upload interface (past prescriptions, lab reports, discharge summaries)

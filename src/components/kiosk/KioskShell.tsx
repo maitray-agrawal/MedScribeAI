@@ -16,13 +16,15 @@ import {
   X,
   HeartPulse,
   Sparkles,
+  Building2,
 } from 'lucide-react';
 import { AbhaVerificationStep, VerifiedAbhaProfile } from './AbhaVerificationStep';
 import { ConsentStep, ConsentPreferences } from './ConsentStep';
+import { DepartmentSelectionStep } from './DepartmentSelectionStep';
 import { InterviewEngine } from './InterviewEngine';
 import { StructuredPatientIntake } from '../../types';
 
-export type KioskStep = 'abha' | 'consent' | 'interview' | 'documents' | 'summary';
+export type KioskStep = 'abha' | 'consent' | 'department' | 'interview' | 'documents' | 'summary';
 
 interface StepConfig {
   id: KioskStep;
@@ -48,22 +50,29 @@ const STEPS: StepConfig[] = [
     icon: ShieldCheck,
   },
   {
-    id: 'interview',
+    id: 'department',
     stepNumber: 3,
+    title: 'Department & Clinical Mode',
+    subtitle: 'Select consultation type: Modern Allopathic OPD or AIIA Ayurveda (AYUSH) OPD',
+    icon: Building2,
+  },
+  {
+    id: 'interview',
+    stepNumber: 4,
     title: 'Adaptive Clinical Interview',
-    subtitle: 'Tell us about your main symptoms, duration, and health history',
+    subtitle: 'Interactive voice and touch-driven pre-consultation history collection',
     icon: Stethoscope,
   },
   {
     id: 'documents',
-    stepNumber: 4,
+    stepNumber: 5,
     title: 'Document & Prescription Upload',
     subtitle: 'Scan previous physical prescriptions, lab tests, or discharge summaries',
     icon: UploadCloud,
   },
   {
     id: 'summary',
-    stepNumber: 5,
+    stepNumber: 6,
     title: 'Intake Complete & Handoff',
     subtitle: 'Your intake briefing has been compiled and routed to the doctor',
     icon: CheckCircle2,
@@ -85,6 +94,7 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
   // Kiosk Session State
   const [verifiedProfile, setVerifiedProfile] = useState<VerifiedAbhaProfile | null>(null);
   const [consent, setConsent] = useState<ConsentPreferences | null>(null);
+  const [clinicalDepartment, setClinicalDepartment] = useState<'Allopathic' | 'Ayurveda (AYUSH)'>('Allopathic');
   const [structuredIntake, setStructuredIntake] = useState<StructuredPatientIntake | null>(null);
 
   const currentStep = STEPS[currentStepIndex];
@@ -130,6 +140,7 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
   const handleReset = () => {
     setVerifiedProfile(null);
     setConsent(null);
+    setClinicalDepartment('Allopathic');
     setStructuredIntake(null);
     setCurrentStepIndex(0);
     setInactivitySeconds(120);
@@ -222,7 +233,7 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
 
         {/* STEP PROGRESS BAR: Large Icon-Driven Navigation */}
         <div className="max-w-6xl mx-auto mt-5 pt-4 border-t border-slate-800/80">
-          <div className="grid grid-cols-5 gap-2 sm:gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
             {STEPS.map((step, idx) => {
               const Icon = step.icon;
               const isActive = idx === currentStepIndex;
@@ -233,7 +244,7 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
                   key={step.id}
                   id={`kiosk-step-${step.id}`}
                   onClick={() => setCurrentStepIndex(idx)}
-                  className={`flex flex-col sm:flex-row items-center justify-center gap-2 p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer text-center sm:text-left ${
+                  className={`flex flex-col sm:flex-row items-center justify-center gap-2 p-2 sm:p-2.5 rounded-2xl border transition-all cursor-pointer text-center sm:text-left ${
                     isActive
                       ? 'bg-teal-500/20 border-teal-400 text-teal-300 shadow-lg shadow-teal-950/40 ring-2 ring-teal-400/30'
                       : isPast
@@ -242,7 +253,7 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
                   }`}
                 >
                   <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm ${
+                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs sm:text-sm ${
                       isActive
                         ? 'bg-teal-400 text-slate-950'
                         : isPast
@@ -250,10 +261,10 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
                         : 'bg-slate-800 text-slate-400'
                     }`}
                   >
-                    {isPast ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+                    {isPast ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> : <Icon className="w-4 h-4 sm:w-5 sm:h-5" />}
                   </div>
-                  <div className="hidden md:block overflow-hidden">
-                    <div className="text-[11px] font-bold uppercase tracking-wider opacity-70">
+                  <div className="hidden lg:block overflow-hidden">
+                    <div className="text-[10px] font-bold uppercase tracking-wider opacity-70">
                       Step {step.stepNumber}
                     </div>
                     <div className="text-xs font-extrabold truncate">{step.title}</div>
@@ -284,6 +295,15 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
             }}
             onBack={handleBack}
           />
+        ) : currentStep.id === 'department' ? (
+          <DepartmentSelectionStep
+            selectedDepartment={clinicalDepartment}
+            onSelectDepartment={(dept) => {
+              setClinicalDepartment(dept);
+              handleNext();
+            }}
+            onBack={handleBack}
+          />
         ) : currentStep.id === 'interview' ? (
           <InterviewEngine
             patientDemographics={{
@@ -292,6 +312,7 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
               gender: verifiedProfile?.gender || 'Male',
               abhaId: verifiedProfile?.abhaId || '91-8765-4321-0987',
             }}
+            clinicalDepartment={clinicalDepartment}
             initialIntake={structuredIntake}
             onComplete={(intake) => {
               setStructuredIntake(intake);

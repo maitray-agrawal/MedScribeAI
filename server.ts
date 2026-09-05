@@ -472,16 +472,262 @@ function getSocratesFallback(
   };
 }
 
+// Helper for deterministic AYUSH / Ayurveda Dashavidha Pariksha fallback
+function getAyushFallback(
+  turnCount: number,
+  language: string = 'en',
+  previousAnswer: string = ''
+) {
+  const isSpanish = language === 'es';
+  const lowerAns = previousAnswer.toLowerCase();
+  const redFlags: string[] = [];
+  let triagePriority: 'routine' | 'urgent' | 'emergency' = 'routine';
+
+  if (
+    lowerAns.includes('chest pain') ||
+    lowerAns.includes('pecho') ||
+    lowerAns.includes('breathless') ||
+    lowerAns.includes('respirar') ||
+    lowerAns.includes('fainting') ||
+    lowerAns.includes('desmayo') ||
+    lowerAns.includes('severe bleeding') ||
+    lowerAns.includes('hemorragia')
+  ) {
+    redFlags.push('Urgent physiological red flag detected during Ayurvedic intake - Recommend immediate physician triage');
+    triagePriority = 'urgent';
+  }
+
+  switch (turnCount) {
+    case 0:
+      return {
+        question: isSpanish
+          ? '¿Cuál es su motivo principal de consulta o malestar que le trae a la consulta de Ayurveda hoy?'
+          : 'What is your primary health complaint or symptom bringing you to the Ayurveda (AYUSH) OPD today?',
+        category: 'ayush_chief_complaint',
+        suggestedOptions: isSpanish
+          ? [
+              'Dolor articular, rigidez o inflamación (Sandhivata / Amavata)',
+              'Acidez estomacal, ardor o reflujo (Amlapitta)',
+              'Dificultad digestiva, gases o distensión (Grahani / Ajirna)',
+              'Tos crónica, asma o catarro (Kasa / Shwasa)',
+              'Problemas de la piel, picazón o erupciones (Kushtha / Twak Roga)',
+              'Estrés, insomnio, fatiga o debilidad general (Anidra / Daurbalya)',
+              'Fiebre, dolor corporal o malestar (Jvara)',
+            ]
+          : [
+              'Joint Pain, Stiffness or Swelling (Sandhivata / Amavata)',
+              'Hyperacidity, Burning Sensation & Acid Reflux (Amlapitta)',
+              'Indigestion, Gas, Bloating & Constipation (Grahani / Ajirna)',
+              'Chronic Cough, Breathing Distress or Congestion (Kasa / Shwasa)',
+              'Skin Conditions, Itching, Rashes or Acne (Kushtha / Twak Roga)',
+              'Stress, Insomnia, Fatigue & General Weakness (Anidra / Daurbalya)',
+              'Fever, Body Aches & Chills (Jvara)',
+            ],
+        inputType: 'choice_or_voice',
+        redFlags,
+        triagePriority,
+        isComplete: false,
+      };
+
+    case 1:
+      return {
+        question: isSpanish
+          ? 'Evaluación de Prakriti (Constitución natural): ¿Cuál de estos rasgos describe mejor su tendencia corporal y mental habitual desde siempre?'
+          : 'Prakriti Assessment (Natural Constitution): Which of these descriptions best matches your lifelong bodily and mental tendencies?',
+        category: 'ayush_prakriti',
+        suggestedOptions: isSpanish
+          ? [
+              'Vata: Estructura delgada, piel seca, apetito variable, mente activa y rápida',
+              'Pitta: Estructura media, cuerpo cálido, apetito fuerte, intolerancia al calor',
+              'Kapha: Estructura ancha o robusta, piel suave, digestión lenta y regular, mente calmada',
+              'Vata-Pitta: Delgada a media, digestión variable con tendencia a acidez y piel mixta',
+              'Pitta-Kapha: Complexión fuerte, buen apetito con calor corporal y resistencia',
+            ]
+          : [
+              'Vata: Slender frame, dry skin, variable appetite, quick active mind, light sleep',
+              'Pitta: Medium frame, warm body, sharp appetite, heat intolerance, goal-oriented',
+              'Kapha: Broad/sturdy build, smooth skin, slow steady digestion, calm calm temperament',
+              'Vata-Pitta: Slender to medium build, variable digestion with acid tendency, warm yet sensitive',
+              'Pitta-Kapha: Strong solid frame, hearty appetite, oily skin, good physical stamina',
+            ],
+        inputType: 'choice_or_voice',
+        redFlags,
+        triagePriority,
+        isComplete: false,
+      };
+
+    case 2:
+      return {
+        question: isSpanish
+          ? 'Evaluación de Vikriti (Desbalance actual): ¿Qué molestias o síntomas predominan más en su cuerpo en este momento?'
+          : 'Vikriti Assessment (Current Morbidity / Imbalance): Which symptom pattern is most actively bothering you right now?',
+        category: 'ayush_vikriti',
+        suggestedOptions: isSpanish
+          ? [
+              'Agravación Vata: Dolores agudos, sequedad, gases, frialdad, ansiedad o insomnio',
+              'Agravación Pitta: Sensación de ardor, acidez, calor excesivo, enrojecimiento o irritabilidad',
+              'Agravación Kapha: Pesadez corporal, letargo, exceso de moco, congestión o retención',
+              'Vata-Pitta: Dolor combinado con ardor o inflamación caliente en articulaciones/estómago',
+              'Kapha-Vata: Rigidez matutina severa, pesadez con dolor frío y circulación lenta',
+            ]
+          : [
+              'Vata Aggravation: Sharp shooting pain, dryness, bloating, cold sensitivity, restlessness or poor sleep',
+              'Pitta Aggravation: Burning sensation, sour burping, excessive heat, inflammation, red rashes or irritability',
+              'Kapha Aggravation: Heaviness, sluggishness, excessive phlegm/mucus, water retention or drowsiness',
+              'Vata-Pitta: Throbbing pain accompanied by burning heat or joint inflammation',
+              'Kapha-Vata: Severe morning stiffness, heavy dull aching with cold joints and sluggish bowels',
+            ],
+        inputType: 'choice_or_voice',
+        redFlags,
+        triagePriority,
+        isComplete: false,
+      };
+
+    case 3:
+      return {
+        question: isSpanish
+          ? 'Ahara Shakti & Agni (Capacidad digestiva): ¿Cómo es su fuego digestivo (Agni) y apetito diario?'
+          : 'Ahara Shakti & Agni (Digestive Fire): How would you describe your daily appetite and digestive power?',
+        category: 'ayush_ahara_shakti_agni',
+        suggestedOptions: isSpanish
+          ? [
+              'Samagni: Apetito equilibrado y digestión suave a horas regulares',
+              'Vishamagni: Apetito muy variable (a veces come mucho, a veces sin hambre), gases frecuentes',
+              'Tikshnagni: Apetito feroz y voraz, no tolera retrasar comidas, acidez frecuente',
+              'Mandagni: Apetito bajo o nulo, digestión muy pesada que tarda horas, pesadez',
+            ]
+          : [
+              'Samagni: Balanced, predictable appetite with comfortable digestion at regular hours',
+              'Vishamagni: Irregular appetite (hungry at unpredictable times), frequent gas & bloating',
+              'Tikshnagni: Intense sharp hunger, cannot tolerate delayed meals, heartburn if empty stomach',
+              'Mandagni: Low/sluggish appetite, feels heavy for hours after small meals, slow digestion',
+            ],
+        inputType: 'choice_or_voice',
+        redFlags,
+        triagePriority,
+        isComplete: false,
+      };
+
+    case 4:
+      return {
+        question: isSpanish
+          ? 'Kostha (Evacuación intestinal) y Dieta: ¿Cómo son sus hábitos evacuatorios y qué tipo de comida consume habitualmente?'
+          : 'Kostha (Bowel Tendencies) & Ahara (Diet): How are your bowel movements and what dietary patterns do you follow?',
+        category: 'ayush_kostha_ahara',
+        suggestedOptions: isSpanish
+          ? [
+              'Krura Kostha: Estreñimiento frecuente, heces duras y secas, requiere laxantes',
+              'Mridu Kostha: Evacuación rápida y fácil, tendencia a heces sueltas o blandas',
+              'Madhyama Kostha: Evacuación normal regular 1-2 veces al día sin esfuerzo',
+              'Dieta picante / frita frecuente con horarios irregulares de comida',
+              'Dieta fría / refrigerada o comida rápida procesada con digestión pesada',
+            ]
+          : [
+              'Krura Kostha: Tendency to hard dry stools, chronic constipation or difficulty passing',
+              'Mridu Kostha: Loose or soft stools, rapid bowel evacuation (especially with milk/fruit)',
+              'Madhyama Kostha: Regular, comfortable bowel movement once or twice daily',
+              'Frequent spicy, fried, or sour foods with irregular meal timings',
+              'Frequent cold, refrigerated, or packaged foods causing heaviness',
+            ],
+        inputType: 'choice_or_voice',
+        redFlags,
+        triagePriority,
+        isComplete: false,
+      };
+
+    case 5:
+      return {
+        question: isSpanish
+          ? 'Vihara (Estilo de vida, sueño y estrés): ¿Cómo es su calidad de descanso nocturno y nivel de esfuerzo diario?'
+          : 'Vihara (Lifestyle, Sleep & Physical Habits): How is your night sleep (Nidra) and daily physical exertion routine?',
+        category: 'ayush_vihara_nidra',
+        suggestedOptions: isSpanish
+          ? [
+              'Sukha Nidra: Sueño reparador y profundo de 7-8 horas, despierta con energía',
+              'Alpanidra / Anidra: Dificultad para conciliar o despertares frecuentes en la noche',
+              'Ratri Jagarana: Suele acostarse muy tarde (pasada la medianoche) o turnos nocturnos',
+              'Sedentario: Poca actividad física, trabajo sentado la mayor parte del día',
+              'Estrés mental alto (Chinta / Shoka) con tensión en el trabajo o familia',
+            ]
+          : [
+              'Sukha Nidra: Sound, restful continuous sleep (7–8 hours), waking up refreshed',
+              'Alpanidra / Anidra: Disturbed sleep, difficulty falling asleep, or frequent night awakenings',
+              'Ratri Jagarana: Late night wakefulness (past midnight) or irregular shift routines',
+              'Sedentary lifestyle with minimal daily physical exercise or walking',
+              'High mental stress, worry or work anxiety (Chinta / Manasika Shrama)',
+            ],
+        inputType: 'choice_or_voice',
+        redFlags,
+        triagePriority,
+        isComplete: false,
+      };
+
+    case 6:
+      return {
+        question: isSpanish
+          ? 'Sattva y Vyayama Shakti: ¿Cómo califica su resistencia al esfuerzo físico y su fortaleza mental ante dificultades?'
+          : 'Sattva (Mental Resilience) & Vyayama Shakti (Stamina): How do you rate your physical endurance and psychic stamina?',
+        category: 'ayush_sattva_vyayama',
+        suggestedOptions: isSpanish
+          ? [
+              'Pravara: Alta resistencia física y mente tranquila, fuerte y resiliente ante el estrés',
+              'Madhyama: Resistencia y tolerancia moderadas, se fatiga tras esfuerzo prolongado',
+              'Avara: Se fatiga muy rápidamente, vulnerable a la ansiedad, baja tolerancia al dolor',
+              'Buena energía física pero agotamiento mental por sobrecarga',
+            ]
+          : [
+              'Pravara: High physical stamina and calm, resilient mental endurance under pressure',
+              'Madhyama: Moderate physical work capacity and average emotional resilience',
+              'Avara: Easily fatigued by light exertion, low pain threshold, prone to worry',
+              'Good physical stamina but high mental exhaustion / burnout',
+            ],
+        inputType: 'choice_or_voice',
+        redFlags,
+        triagePriority,
+        isComplete: false,
+      };
+
+    default:
+      return {
+        question: isSpanish
+          ? 'Examen Dashavidha Pariksha completado. Hemos registrado su Prakriti, Vikriti, Agni, Kostha y Ahara-Vihara para el médico de Ayurveda. ¿Desea confirmar y finalizar?'
+          : 'Dashavidha Pariksha intake completed. We have recorded your Prakriti, Vikriti, Agni, Kostha, Ahara-Vihara and symptom chronology for the Ayurvedic physician. Ready to complete?',
+        category: 'conclusion',
+        suggestedOptions: isSpanish
+          ? [
+              'Sí, confirmar y enviar historial al consultorio de Ayurveda',
+              'Revisar resumen antes de finalizar',
+            ]
+          : [
+              'Yes, confirm and submit intake to the Ayurveda OPD queue',
+              'Review clinical summary before finishing',
+            ],
+        inputType: 'choice_or_voice',
+        redFlags,
+        triagePriority,
+        isComplete: true,
+      };
+  }
+}
+
 // Adaptive Turn-Based Kiosk Interview API
 app.post('/api/kiosk/interview-turn', async (req, res) => {
   try {
     const {
       patientDemographics,
       language = 'en',
+      department = 'Allopathic',
+      clinicalDepartment,
       turns = [],
       chiefComplaint = '',
       socratesHpi = {},
+      ayushHistory = {},
     } = req.body;
+
+    const selectedDept = clinicalDepartment || department || 'Allopathic';
+    const isAyurveda =
+      selectedDept.toLowerCase().includes('ayurveda') ||
+      selectedDept.toLowerCase().includes('ayush');
 
     const turnCount = turns.length;
     const lastTurn = turnCount > 0 ? turns[turnCount - 1] : null;
@@ -492,6 +738,11 @@ app.post('/api/kiosk/interview-turn', async (req, res) => {
       ai = getGeminiClient();
     } catch {
       // Fallback if no key
+      if (isAyurveda) {
+        console.warn('Gemini API key missing, using deterministic AYUSH fallback.');
+        const fallbackResponse = getAyushFallback(turnCount, language, lastTurn?.answer || '');
+        return res.json(fallbackResponse);
+      }
       console.warn('Gemini API key missing, using deterministic SOCRATES fallback.');
       const fallbackResponse = getSocratesFallback(turnCount, language, lastTurn?.answer || '');
       return res.json(fallbackResponse);
@@ -499,7 +750,41 @@ app.post('/api/kiosk/interview-turn', async (req, res) => {
 
     const isSpanish = language === 'es';
 
-    const systemInstruction = `You are the adaptive clinical intake engine for MediKiosk, an outpatient pre-consultation terminal.
+    const baseDirectives = isAyurveda
+      ? `You are the adaptive clinical intake engine for the Ayurveda (AYUSH) OPD at MediKiosk, operating under All India Institute of Ayurveda (AIIA) and Ministry of AYUSH guidelines.
+Your objective is to guide the patient through a respectful, clinically thorough pre-consultation interview capturing the Dashavidha Pariksha, Ahara-Vihara, and Nidana/Samprapti before they consult the Ayurvedic Vaidya / physician.
+
+AYURVEDIC CLINICAL DIRECTIVES:
+1. EXAMINE DASHAVIDHA PARIKSHA (Ten-Fold Examination - Charaka Samhita Vimana 8):
+   - 1. Prakriti (Lifelong physical & psychological Tridosha constitution: Vata, Pitta, Kapha, dual-doshas)
+   - 2. Vikriti (Current morbid Dosha aggravation & Dushya involvement)
+   - 3. Sara (Tissue excellence / essence) & 4. Samhanana (Body compactness / physique)
+   - 5. Pramana (Anthropometric proportions) & 6. Satmya (Dietary/environmental adaptability)
+   - 7. Sattva (Psychic resilience & mental fortitude)
+   - 8. Ahara Shakti (Digestive fire / Agni: Samagni, Vishamagni, Tikshnagni, Mandagni; ingestion & digestion)
+   - 9. Vyayama Shakti (Work/exercise tolerance & physical endurance)
+   - 10. Vaya (Chronological age stage: Bala, Madhyama, Vriddha)
+2. AHARA-VIHARA (Diet & Daily Routine):
+   - Inquire about dietary habits (meal regularity, rasa preference, food nature - Snigdha vs Ruksha, Sheeta vs Ushna), Kostha (bowel tendency: Krura, Mridu, Madhyama), sleep (Nidra quality, Ratri Jagarana), and mental stress.
+3. NIDANA & SAMPRAPTI:
+   - Connect chief complaints (e.g. Sandhivata, Amlapitta, Kasa, Shwasa, Amavata) to possible causative triggers (dietary, lifestyle, or seasonal).
+4. TURN PROGRESSION:
+   - Turn 0: Chief complaint / symptom presentation in AYUSH OPD.
+   - Turn 1: Prakriti assessment.
+   - Turn 2: Vikriti assessment.
+   - Turn 3: Ahara Shakti & Agni (digestive fire).
+   - Turn 4: Kostha & Ahara (bowel movements & food habits).
+   - Turn 5: Vihara (sleep, routine & stress).
+   - Turn 6: Sattva & Vyayama Shakti.
+   - Turn 7+: Conclude and set "isComplete": true.
+5. TOUCH-OPTIMIZED MULTIPLE CHOICE:
+   - Provide 4 to 6 clear, patient-friendly answer choices in "suggestedOptions" explaining the Sanskrit concepts in simple words.
+   - Set "inputType": "choice_or_voice".
+6. RED-FLAG SAFETY:
+   - If severe red flags (crushing chest pain, severe acute breathlessness, sudden paralysis, high fever with confusion) are mentioned, note in "redFlags" and set "triagePriority" to "emergency" or "urgent".
+7. LANGUAGE:
+   - The user language is "${isSpanish ? 'es (Spanish)' : 'en (English)'}". Generate the question and options in ${isSpanish ? 'empathetic, clear Spanish' : 'clear, simple English'}.`
+      : `You are the adaptive clinical intake engine for MediKiosk, an outpatient pre-consultation terminal.
 Your task is to ask the SINGLE next best clinical follow-up question to construct a comprehensive structured medical intake before the patient sees the doctor.
 
 CLINICAL DIRECTIVES:
@@ -530,28 +815,18 @@ CLINICAL DIRECTIVES:
    - Identify any emergency red flags mentioned (e.g., crushing chest pain radiating to arm with diaphoresis, acute thunderclap headache, focal neurological deficit, hemoptysis, severe respiratory distress).
    - If detected, populate "redFlags" array and set "triagePriority" to "emergency" or "urgent".
 6. LANGUAGE:
-   - The user language is "${isSpanish ? 'es (Spanish)' : 'en (English)'}". Generate the question and options in ${isSpanish ? 'empathetic, clear Spanish' : 'clear, simple English'}.
-7. OUTPUT:
-   - Strictly valid JSON matching the required schema. Pure JSON only.
+   - The user language is "${isSpanish ? 'es (Spanish)' : 'en (English)'}". Generate the question and options in ${isSpanish ? 'empathetic, clear Spanish' : 'clear, simple English'}.`;
 
-JSON SCHEMA:
+    const systemInstruction = `${baseDirectives}
+
+OUTPUT SCHEMA:
+Output strictly valid JSON matching this schema:
 {
   "question": "The single next clinical question",
-  "category": "chief_complaint | socrates_onset | socrates_character | socrates_radiation | socrates_severity | socrates_associated | socrates_timing | socrates_exacerbating_relieving | past_history | medications_allergies | review_of_systems | conclusion",
+  "category": "chief_complaint | socrates_onset | socrates_character | socrates_radiation | socrates_severity | socrates_associated | socrates_timing | socrates_exacerbating_relieving | ayush_prakriti | ayush_vikriti | ayush_ahara_shakti_agni | ayush_kostha_ahara | ayush_vihara_nidra | ayush_sattva_vyayama | past_history | medications_allergies | conclusion",
   "suggestedOptions": ["Option 1", "Option 2", "Option 3", "Option 4", "Option 5"],
   "inputType": "choice_or_voice | scale_1_to_10 | yes_no",
   "extractedData": {
-    "socratesPatch": {
-      "site": "...",
-      "onset": "...",
-      "character": "...",
-      "radiation": "...",
-      "associatedSymptoms": ["..."],
-      "timing": "...",
-      "exacerbatingFactors": ["..."],
-      "relievingFactors": ["..."],
-      "severity": 0
-    },
     "chiefComplaint": "...",
     "pastConditions": ["..."],
     "medications": ["..."],
@@ -610,10 +885,16 @@ Based on the accumulated clinical history above, determine what clinical informa
     const parsed = JSON.parse(cleaned);
     res.json(parsed);
   } catch (err: any) {
-    console.error('Error in /api/kiosk/interview-turn, falling back to deterministic SOCRATES:', err);
+    const selectedDept = req.body.clinicalDepartment || req.body.department || 'Allopathic';
+    const isAyurveda =
+      selectedDept.toLowerCase().includes('ayurveda') ||
+      selectedDept.toLowerCase().includes('ayush');
+    console.error(`Error in /api/kiosk/interview-turn (${isAyurveda ? 'AYUSH' : 'SOCRATES'}), falling back to deterministic:`, err);
     const turns = req.body.turns || [];
     const lastTurn = turns.length > 0 ? turns[turns.length - 1] : null;
-    const fallback = getSocratesFallback(turns.length, req.body.language || 'en', lastTurn?.answer || '');
+    const fallback = isAyurveda
+      ? getAyushFallback(turns.length, req.body.language || 'en', lastTurn?.answer || '')
+      : getSocratesFallback(turns.length, req.body.language || 'en', lastTurn?.answer || '');
     res.json(fallback);
   }
 });

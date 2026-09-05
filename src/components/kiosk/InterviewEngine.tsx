@@ -5,6 +5,8 @@ import {
   InterviewTurn,
   StructuredPatientIntake,
   AdaptiveInterviewTurnResponse,
+  AYUSHHistory,
+  DoshaType,
 } from '../../types';
 import {
   Mic,
@@ -25,6 +27,8 @@ import {
   Sliders,
   ChevronDown,
   ChevronUp,
+  Leaf,
+  Building2,
 } from 'lucide-react';
 
 export interface InterviewEngineProps {
@@ -34,6 +38,7 @@ export interface InterviewEngineProps {
     gender: string;
     abhaId?: string;
   };
+  clinicalDepartment?: 'Allopathic' | 'Ayurveda (AYUSH)';
   initialIntake?: StructuredPatientIntake | null;
   onComplete: (intake: StructuredPatientIntake) => void;
   onBackToConsent?: () => void;
@@ -46,17 +51,46 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
     gender: 'Male',
     abhaId: '91-8765-4321-0987',
   },
+  clinicalDepartment = 'Allopathic',
   initialIntake,
   onComplete,
   onBackToConsent,
 }) => {
   const { language } = useTranslation();
   const isSpanish = language === 'es';
+  const isAyurveda = clinicalDepartment === 'Ayurveda (AYUSH)';
 
   // Accumulated Clinical Intake State
   const [turns, setTurns] = useState<InterviewTurn[]>(initialIntake?.conversationTurns || []);
   const [chiefComplaint, setChiefComplaint] = useState<string>(initialIntake?.chiefComplaint || '');
   const [socratesHpi, setSocratesHpi] = useState<SocratesHPI>(initialIntake?.socratesHpi || {});
+  const [ayushHistory, setAyushHistory] = useState<AYUSHHistory>(
+    initialIntake?.ayushHistory || {
+      department: 'Ayurveda (AYUSH)',
+      facilityStandard: 'Ministry of AYUSH / AIIA Outpatient Guidelines',
+      recordedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      dashavidhaPariksha: {
+        prakriti: {},
+        vikriti: {},
+        sara: {},
+        samhanana: {},
+        pramana: {},
+        satmya: {},
+        sattva: {},
+        aharaShakti: {},
+        vyayamaShakti: {},
+        vaya: {},
+      },
+      aharaVihara: {
+        dietPatterns: {},
+        viharaHabits: {},
+      },
+      nidanaSamprapti: {
+        identifiedNidana: {},
+        sampraptiGhatakas: {},
+      },
+    }
+  );
   const [redFlags, setRedFlags] = useState<string[]>(initialIntake?.redFlagsDetected || []);
   const [triagePriority, setTriagePriority] = useState<'routine' | 'urgent' | 'emergency'>('routine');
 
@@ -121,9 +155,12 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
         body: JSON.stringify({
           patientDemographics,
           language,
+          department: clinicalDepartment,
+          clinicalDepartment,
           turns: existingTurns,
           chiefComplaint,
           socratesHpi,
+          ayushHistory,
         }),
       });
 
@@ -254,9 +291,120 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
 
     const category = currentQuestionData?.category || 'general';
 
-    // Update internal SOCRATES state
+    // Update internal SOCRATES and AYUSH states
     const updatedSocrates: SocratesHPI = { ...socratesHpi };
+    const updatedAyush: AYUSHHistory = { ...ayushHistory };
     let updatedChiefComplaint = chiefComplaint;
+
+    if (isAyurveda) {
+      if (category === 'ayush_chief_complaint' || category === 'chief_complaint' || turns.length === 0) {
+        updatedChiefComplaint = finalAnswer;
+        setChiefComplaint(finalAnswer);
+        updatedAyush.nidanaSamprapti = {
+          ...updatedAyush.nidanaSamprapti,
+          chiefComplaintAyush: finalAnswer,
+        };
+        updatedSocrates.site = finalAnswer;
+      } else if (category === 'ayush_prakriti') {
+        const parts = finalAnswer.split(':');
+        const rawDominant = parts[0]?.trim() || '';
+        const dominant: DoshaType =
+          rawDominant.includes('Vata-Pitta') ? 'Vata-Pitta' :
+          rawDominant.includes('Pitta-Kapha') ? 'Pitta-Kapha' :
+          rawDominant.includes('Vata-Kapha') ? 'Vata-Kapha' :
+          rawDominant.includes('Vata') ? 'Vata' :
+          rawDominant.includes('Pitta') ? 'Pitta' :
+          rawDominant.includes('Kapha') ? 'Kapha' : 'Tridoshaja / Samadosha';
+
+        updatedAyush.dashavidhaPariksha = {
+          ...updatedAyush.dashavidhaPariksha,
+          prakriti: {
+            dominantPrakriti: dominant,
+            observations: finalAnswer,
+          },
+        };
+      } else if (category === 'ayush_vikriti') {
+        const parts = finalAnswer.split(':');
+        const rawDosha = parts[0]?.trim() || '';
+        const doshaVal: 'Vata' | 'Pitta' | 'Kapha' | 'Vata-Pitta' | 'Pitta-Kapha' | 'Vata-Kapha' | 'Sannipata' =
+          rawDosha.includes('Vata-Pitta') ? 'Vata-Pitta' :
+          rawDosha.includes('Pitta-Kapha') ? 'Pitta-Kapha' :
+          rawDosha.includes('Vata-Kapha') ? 'Vata-Kapha' :
+          rawDosha.includes('Vata') ? 'Vata' :
+          rawDosha.includes('Pitta') ? 'Pitta' :
+          rawDosha.includes('Kapha') ? 'Kapha' : 'Sannipata';
+
+        updatedAyush.dashavidhaPariksha = {
+          ...updatedAyush.dashavidhaPariksha,
+          vikriti: {
+            aggravatedDosha: [doshaVal],
+            manifestations: [finalAnswer],
+          },
+        };
+      } else if (category === 'ayush_ahara_shakti_agni') {
+        const agni = finalAnswer.includes('Samagni')
+          ? 'Samagni (Balanced digestive fire)' as const
+          : finalAnswer.includes('Tikshnagni')
+          ? 'Tikshnagni (Excessive / Intense fire)' as const
+          : finalAnswer.includes('Mandagni')
+          ? 'Mandagni (Low / Slow fire)' as const
+          : 'Vishamagni (Variable / Irregular fire)' as const;
+        updatedAyush.dashavidhaPariksha = {
+          ...updatedAyush.dashavidhaPariksha,
+          aharaShakti: {
+            ...updatedAyush.dashavidhaPariksha?.aharaShakti,
+            agniType: agni,
+            abhyavaharanaShakti: 'Madhyama (Average intake)',
+          },
+        };
+      } else if (category === 'ayush_kostha_ahara') {
+        const kostha = finalAnswer.includes('Krura')
+          ? 'Krura Kostha (Hard stools / Constipated tendency)' as const
+          : finalAnswer.includes('Mridu')
+          ? 'Mridu Kostha (Loose stools / Rapid evacuation)' as const
+          : 'Madhyama Kostha (Regular normal bowel movement)' as const;
+        updatedAyush.aharaVihara = {
+          ...updatedAyush.aharaVihara,
+          kosthaNature: kostha,
+        };
+      } else if (category === 'ayush_vihara_nidra') {
+        const nidra = finalAnswer.toLowerCase().includes('sukha') || finalAnswer.toLowerCase().includes('sound')
+          ? 'Sukha Nidra (Sound restful sleep)' as const
+          : finalAnswer.toLowerCase().includes('atinidra') || finalAnswer.toLowerCase().includes('excessive')
+          ? 'Atinidra (Excessive sleep / Drowsiness)' as const
+          : 'Alpanidra / Anidra (Disturbed / Insomnia)' as const;
+        updatedAyush.aharaVihara = {
+          ...updatedAyush.aharaVihara,
+          viharaHabits: {
+            ...updatedAyush.aharaVihara?.viharaHabits,
+            nidraPattern: nidra,
+            ratriJagarana: finalAnswer.toLowerCase().includes('jagarana') || finalAnswer.toLowerCase().includes('late'),
+          },
+        };
+      } else if (category === 'ayush_sattva_vyayama') {
+        const sattvaLevel = finalAnswer.includes('Pravara')
+          ? 'Pravara Sattva (High psychic endurance / Calm & Resilient)' as const
+          : finalAnswer.includes('Madhyama')
+          ? 'Madhyama Sattva (Moderate psychic endurance)' as const
+          : 'Avara Sattva (Low endurance / Anxious & Vulnerable)' as const;
+        const vyayamaLevel = finalAnswer.includes('Pravara')
+          ? 'Pravara (High physical stamina)' as const
+          : finalAnswer.includes('Madhyama')
+          ? 'Madhyama (Moderate endurance)' as const
+          : 'Avara (Poor / Quickly fatigued)' as const;
+        updatedAyush.dashavidhaPariksha = {
+          ...updatedAyush.dashavidhaPariksha,
+          sattva: {
+            resilienceLevel: sattvaLevel,
+          },
+          vyayamaShakti: {
+            capacityLevel: vyayamaLevel,
+            dailyExertionLevel: finalAnswer,
+          },
+        };
+      }
+      setAyushHistory(updatedAyush);
+    }
 
     if (category === 'chief_complaint' || turns.length === 0) {
       updatedChiefComplaint = finalAnswer;
@@ -298,7 +446,7 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
 
     // Check if finished or if Gemini signaled isComplete
     if (currentQuestionData?.isComplete || newTurns.length >= 7) {
-      compileAndFinish(newTurns, updatedSocrates, updatedChiefComplaint);
+      compileAndFinish(newTurns, updatedSocrates, updatedChiefComplaint, updatedAyush);
     } else {
       fetchNextQuestion(newTurns);
     }
@@ -308,25 +456,29 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
   const compileAndFinish = (
     finalTurns: InterviewTurn[],
     finalHpi: SocratesHPI,
-    finalComplaint: string
+    finalComplaint: string,
+    finalAyush?: AYUSHHistory
   ) => {
+    const activeAyush = finalAyush || ayushHistory;
     const intake: StructuredPatientIntake = {
       intakeId: `INT-${Date.now()}`,
       startedAt: turns[0]?.timestamp || new Date().toLocaleTimeString(),
       completedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      clinicalDepartment: clinicalDepartment === 'Ayurveda (AYUSH)' ? 'Ayurveda (AYUSH)' : 'Allopathic',
       abhaId: patientDemographics.abhaId,
       patientDemographics: {
         fullName: patientDemographics.fullName,
         age: patientDemographics.age,
         gender: patientDemographics.gender,
       },
-      chiefComplaint: finalComplaint || 'Primary consultation intake',
+      chiefComplaint: finalComplaint || (isAyurveda ? 'Ayurveda OPD consultation intake' : 'Primary consultation intake'),
       socratesHpi: finalHpi,
+      ayushHistory: isAyurveda ? activeAyush : undefined,
       pastMedicalHistory: [],
       pastSurgicalHistory: [],
       familyHistory: [],
       personalHistory: {
-        dietType: 'Vegetarian',
+        dietType: isAyurveda ? 'Vegetarian / Ayurvedic Pathya' : 'Vegetarian',
       },
       reviewOfSystems: {
         cardiovascular: {
@@ -386,15 +538,26 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
       )}
 
       {/* Progress & Breadcrumb */}
-      <div className="w-full flex items-center justify-between mb-4 px-2">
-        <div className="flex items-center gap-2">
+      <div className="w-full flex flex-wrap items-center justify-between gap-2 mb-4 px-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {isAyurveda ? (
+            <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+              <Leaf className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Ayurveda OPD • Dashavidha Pariksha</span>
+            </span>
+          ) : (
+            <span className="px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+              <Building2 className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Allopathic OPD • SOCRATES Intake</span>
+            </span>
+          )}
           <span className="px-3 py-1 rounded-full bg-teal-500/20 border border-teal-400/40 text-teal-300 text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5" />
             <span>Question {turns.length + 1} of ~7</span>
           </span>
           {currentQuestionData?.category && (
             <span className="hidden sm:inline px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-mono font-bold">
-              {currentQuestionData.category.replace('_', ' ').toUpperCase()}
+              {currentQuestionData.category.replace(/_/g, ' ').toUpperCase()}
             </span>
           )}
         </div>

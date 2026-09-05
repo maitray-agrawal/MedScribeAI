@@ -331,6 +331,55 @@ Initial deep-dive audit of the existing MedScribe Lite codebase and setup of the
   - `npm test` (`vitest run`): All 46 tests across 7 test suites passed.
   - `todo.md`: Checked off Sub-phase (b) as completed.
 
+---
+
+## Session Log: 2026-09-05 — Phase 6 Sub-phase (c): Structured Intake Data Model & Adaptive Voice+Touch Interview Engine Implemented
+
+### Deliverables & Architecture Completed:
+- **Structured Intake Data Model (`src/types.ts`)**:
+  - Maintained backward-compatibility for all existing `SOAPNote` and `PatientInfo` clinical documentation interfaces without deletion.
+  - Introduced the comprehensive `StructuredPatientIntake` data model to replace unstructured free-text medical history:
+    1. *SOCRATES HPI Framework*: Discrete structured fields for Site, Onset (sudden vs gradual), Character (nature of pain/symptom), Radiation (spread to shoulder/jaw/back), Associated symptoms (dyspnea, nausea, diaphoresis, fever), Timing/Duration (constant, intermittent, fluctuating), Exacerbating/Aggravating factors, Relieving factors, and Severity (1–10 numerical scale or descriptive).
+    2. *Discrete Past Medical & Surgical History*: Structured arrays for condition name, diagnosis year, disease status (Active/Controlled/Resolved), procedure details, and surgical complications.
+    3. *Discrete Family & Personal History*: Relationship mapping, age at onset, tobacco/smoking status (including smokeless tobacco/Gutkha), alcohol consumption, diet types (Vegetarian, Non-Veg, Jain), and occupational/sleep factors.
+    4. *Review of Systems (ROS) Structured Checklist*: Multi-system boolean screening flags across General, Cardiovascular, Respiratory, Gastrointestinal, Genitourinary, Musculoskeletal, Neurological, and Integumentary systems.
+    5. *Discrete Medications & Known Allergies*: Explicit dosage, frequency, therapeutic compliance, allergen name, reaction, and severity classification.
+    6. *Turn-Based Interview Record*: Preserves step-by-step questions, answer values, modalities (voice/touch_pill/scale/typed), and timestamps.
+
+- **Adaptive Gemini Per-Turn Interview Engine Route (`server.ts`)**:
+  - Built `POST /api/kiosk/interview-turn` endpoint powered by Gemini (`gemini-3.8-flash`).
+  - Sends full accumulated conversation history, patient demographic context, and active SOCRATES state per-turn.
+  - Requests the single next best clinical follow-up question rather than relying on a static, rigid decision tree.
+  - Enforces systematic SOCRATES traversal whenever the chief complaint involves pain (chest pain, abdominal pain, headache, joint pain) or acute somatic symptoms.
+  - Generates 4–6 oversized touch-friendly multiple-choice answer options per turn for seamless walk-up terminal interaction.
+  - Dynamically triggers `scale_1_to_10` input mode for severity queries.
+  - Real-time clinical red-flag detector: analyzes patient responses for acute cardiopulmonary or neurological alarms, populates alert flags, and upgrades encounter triage priority to Urgent or Emergency.
+  - Includes deterministic algorithmic SOCRATES fallback handler ensuring zero terminal downtime if network or API keys are unavailable.
+
+- **Turn-Based Kiosk Interview Component (`src/components/kiosk/InterviewEngine.tsx`)**:
+  - Displays one clinical question at a time in large, high-contrast typography.
+  - Dual multimodal input channels:
+    * *Tapped Multiple-Choice Pills*: Oversized, high-contrast touch targets (min 58px) with visual indicators.
+    * *Web Speech API Voice Capture*: Real-time microphone listening button with pulsing recording animation and instant live transcript feedback.
+    * *Touch Scale 1–10*: Oversized color-coded numeric buttons for pain/severity estimation.
+    * *Typed Fallback*: Expandable input for custom text entry.
+  - Low-literacy accessibility: Built-in `SpeechSynthesis` read-aloud button for auditory question delivery.
+  - Live clinical red-flag alert banner that activates immediately if severe distress or emergency symptoms are detected.
+  - Progress indicator and collapsible transcript history drawer allowing patients to inspect and undo previous answers.
+  - Compiles completed responses into `StructuredPatientIntake` upon interview completion and transitions to subsequent steps.
+
+- **Kiosk Navigation Integration (`src/components/kiosk/KioskShell.tsx`)**:
+  - Replaced the Step 3 placeholder screen with live interactive `<InterviewEngine>`.
+  - Seamlessly receives verified ABHA demographics from Step 1 (`AbhaVerificationStep`) and consent parameters from Step 2 (`ConsentStep`).
+  - Persists completed intake into transient kiosk state, with automatic purge on 120s inactivity timeout or session reset.
+
+- **Automated Verification & Test Coverage**:
+  - Created unit test suite `src/__tests__/interviewEngine.test.tsx` verifying question rendering, multiple-choice selection, and emergency red-flag alert displays (all 3 tests passed).
+  - Executed `npm run lint` (`tsc --noEmit`): 0 errors.
+  - Executed `npm test` (`vitest run`): All 49 tests across 8 suites passing.
+  - Checked off Sub-phase (c) in `todo.md`.
+
+
 
 
 

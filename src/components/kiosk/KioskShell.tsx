@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { AbhaVerificationStep, VerifiedAbhaProfile } from './AbhaVerificationStep';
 import { ConsentStep, ConsentPreferences } from './ConsentStep';
+import { InterviewEngine } from './InterviewEngine';
+import { StructuredPatientIntake } from '../../types';
 
 export type KioskStep = 'abha' | 'consent' | 'interview' | 'documents' | 'summary';
 
@@ -83,6 +85,7 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
   // Kiosk Session State
   const [verifiedProfile, setVerifiedProfile] = useState<VerifiedAbhaProfile | null>(null);
   const [consent, setConsent] = useState<ConsentPreferences | null>(null);
+  const [structuredIntake, setStructuredIntake] = useState<StructuredPatientIntake | null>(null);
 
   const currentStep = STEPS[currentStepIndex];
 
@@ -127,6 +130,7 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
   const handleReset = () => {
     setVerifiedProfile(null);
     setConsent(null);
+    setStructuredIntake(null);
     setCurrentStepIndex(0);
     setInactivitySeconds(120);
   };
@@ -280,8 +284,23 @@ export const KioskShell: React.FC<KioskShellProps> = ({ onExit, onSwitchToWorkst
             }}
             onBack={handleBack}
           />
+        ) : currentStep.id === 'interview' ? (
+          <InterviewEngine
+            patientDemographics={{
+              fullName: verifiedProfile?.fullName || 'Aarav Sharma',
+              age: verifiedProfile?.age || 38,
+              gender: verifiedProfile?.gender || 'Male',
+              abhaId: verifiedProfile?.abhaId || '91-8765-4321-0987',
+            }}
+            initialIntake={structuredIntake}
+            onComplete={(intake) => {
+              setStructuredIntake(intake);
+              handleNext();
+            }}
+            onBackToConsent={handleBack}
+          />
         ) : (
-          /* Placeholder Screens for subsequent sub-phases (interview, documents, summary) */
+          /* Placeholder Screens for subsequent sub-phases (documents, summary) */
           <div className="w-full bg-slate-900/80 border-2 border-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl backdrop-blur-sm text-center flex flex-col items-center">
             {/* Step Icon Badge */}
             <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br from-teal-500/20 to-blue-600/20 border-2 border-teal-400/30 flex items-center justify-center text-teal-300 mb-6 shadow-xl">

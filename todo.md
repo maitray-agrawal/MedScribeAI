@@ -53,11 +53,11 @@
 - **Exit Criteria:** Patient can verify/input ABHA ID or scan an ABHA QR code, view explicit data processing consent in their preferred language, and authenticate session. [COMPLETED]
 
 ### Sub-phase (c): Adaptive Voice+Touch Interview Engine (Allopathic)
-- [ ] Build conversational intake step-by-step wizard (Chief Complaint -> Onset -> Severity -> Associated Symptoms)
-- [ ] Support hybrid input: patient can tap oversized category pills OR speak naturally via microphone
-- [ ] Implement dynamic follow-up questioning based on detected symptoms (e.g., chest pain -> radiation, shortness of breath)
-- [ ] Integrate real-time voice transcription into structured symptom cards
-- **Exit Criteria:** Multilingual conversational intake agent guides the patient through dynamic, symptom-specific follow-up questions using voice and large on-screen touch options.
+- [x] Build conversational intake step-by-step wizard (Chief Complaint -> Onset -> Severity -> Associated Symptoms)
+- [x] Support hybrid input: patient can tap oversized category pills OR speak naturally via microphone
+- [x] Implement dynamic follow-up questioning based on detected symptoms (e.g., chest pain -> radiation, shortness of breath)
+- [x] Integrate real-time voice transcription into structured symptom cards
+- **Exit Criteria:** Multilingual conversational intake agent guides the patient through dynamic, symptom-specific follow-up questions using voice and large on-screen touch options. [COMPLETED]
 
 ### Sub-phase (d): AYUSH / Ayurveda History Mode
 - [ ] Build AYUSH / Ayurveda intake toggle / tab aligned with AIIA guidelines

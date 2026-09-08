@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { DocumentationConfidenceBadge } from '../components/soap-note/DocumentationConfidenceBadge';
 import { SOAPNoteView } from '../components/SOAPNoteView';
@@ -81,6 +81,7 @@ describe('Documentation Confidence Component Suite', () => {
         soapNote={mockSOAPNoteWithConfidence}
         onSaveEncounter={() => {}}
         onOpenPrintPrescription={() => {}}
+        onUpdateSOAP={vi.fn()}
       />
     );
 

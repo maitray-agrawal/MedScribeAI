@@ -18,12 +18,14 @@ import {
 
 export interface DepartmentSelectionStepProps {
   initialDepartment?: 'Allopathic' | 'Ayurveda (AYUSH)' | null;
+  selectedDepartment?: 'Allopathic' | 'Ayurveda (AYUSH)' | null;
   onSelectDepartment: (dept: 'Allopathic' | 'Ayurveda (AYUSH)') => void;
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 export const DepartmentSelectionStep: React.FC<DepartmentSelectionStepProps> = ({
   initialDepartment,
+  selectedDepartment,
   onSelectDepartment,
   onBack,
 }) => {
@@ -31,7 +33,7 @@ export const DepartmentSelectionStep: React.FC<DepartmentSelectionStepProps> = (
   const isHindi = language === 'hi';
 
   const [selected, setSelected] = useState<'Allopathic' | 'Ayurveda (AYUSH)' | null>(
-    initialDepartment || null
+    selectedDepartment || initialDepartment || null
   );
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
 
@@ -284,7 +286,7 @@ export const DepartmentSelectionStep: React.FC<DepartmentSelectionStepProps> = (
       <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-4 pt-6 border-t border-slate-800">
         <button
           type="button"
-          onClick={onBack}
+          onClick={() => onBack?.()}
           className="flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 hover:text-white transition-all border border-slate-700"
         >
           <ArrowLeft className="w-5 h-5" />

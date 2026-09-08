@@ -169,7 +169,7 @@ export const MultilingualVoiceInput: React.FC<MultilingualVoiceInputProps> = ({
 
     onTranscriptSubmitted(
       textToSubmit,
-      activeSession?.detectedLanguage?.language || currentLocale,
+      activeSession?.language || activeSession?.detectedLanguages?.[0] || currentLocale,
       extractedConcepts
     );
 

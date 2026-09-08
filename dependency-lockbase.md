@@ -25,6 +25,7 @@
 
 | Package Name | Locked Specifier Version | Purpose / Description |
 | :--- | :--- | :--- |
+| `@testing-library/dom` | `^10.4.0` | Required peer dependency of `@testing-library/react` for DOM queries |
 | `@testing-library/jest-dom` | `^7.0.0` | Custom jest/vitest matchers for asserting on DOM state |
 | `@testing-library/react` | `^16.3.2` | Simple and complete React DOM testing utilities |
 | `@types/express` | `^4.17.21` | TypeScript definitions for Express |

@@ -564,6 +564,55 @@ Initial deep-dive audit of the existing MedScribe Lite codebase and setup of the
    - `compile_applet`: Production build succeeded with zero errors.
    - `lint_applet`: Clean, zero TypeScript errors.
 
+---
+
+## 2026-09-09 — Targeted TypeScript & Build Integrity Fixes
+
+**Context:**
+A direct `npm run lint` (`tsc --noEmit`) audit confirmed 9 TypeScript/build issues across component prop declarations, missing peer dependencies, stale union types causing dead branches in AYUSH flow, and missing test mocks. All 6 targeted items were resolved individually without broad refactoring.
+
+**Item-by-Item Changes:**
+
+1. **Item 1: Added Missing `@testing-library/dom` Dependency**
+   - **File Changed:** `package.json`, `dependency-lockbase.md`
+   - **What Changed:** Added `"@testing-library/dom": "^10.4.0"` to `devDependencies` in `package.json` to explicitly declare the required peer dependency of `@testing-library/react` (which requires `^10.0.0`). Recorded the addition and rationale in `dependency-lockbase.md`.
+   - **Why:** Avoids runtime peer dependency resolution issues in clean CI environments where `@testing-library/dom` is not hoisted.
+
+2. **Item 2: Resolved Dead AYUSH Branches in `InterviewEngine.tsx:340, 350`**
+   - **Files Changed:** `src/types.ts`, `src/__tests__/interviewEngine.test.tsx`
+   - **Investigation Findings:** Investigated whether the question category union type was stale or the comparison values were wrong. In `server.ts` (lines 752-780 and 826), the backend adaptive interview turns 4 and 5 specifically emit `category: 'ayush_kostha_ahara'` (for digestive fire, bowel/kostha, and dietary habits) and `category: 'ayush_vihara_nidra'` (for sleep patterns, exercise, and physical habits). The branch logic in `InterviewEngine.tsx` at lines 340 and 350 was correct, but `AdaptiveInterviewTurnResponse.category` in `src/types.ts` was stale and omitted these two categories.
+   - **What Changed:** Added `'ayush_kostha_ahara' | 'ayush_vihara_nidra'` to the `AdaptiveInterviewTurnResponse.category` union type in `src/types.ts`. Added a targeted unit test suite in `src/__tests__/interviewEngine.test.tsx` verifying that turns with these categories execute properly and accurately update `intake.ayushHistory.aharaVihara.kosthaNature` and `viharaHabits.nidraPattern`. All 4 tests in `interviewEngine.test.tsx` passed cleanly.
+   - **Why:** Restores functional handling for AYUSH dietary (Ahara) and lifestyle/sleep (Vihara) interview stages, preventing dead-code branches in clinical intake.
+
+3. **Item 3: Fixed Property Name Regression in `MultilingualVoiceInput.tsx:172`**
+   - **File Changed:** `src/components/kiosk/MultilingualVoiceInput.tsx`
+   - **Investigation Findings:** At line 172, code accessed `activeSession?.detectedLanguage?.language || currentLocale`. `SpeechSessionRecord` defined in `src/speech/speechTypes.ts` declares `language: SupportedLocale` and `detectedLanguages: SupportedLocale[]`, but has no `detectedLanguage` (singular) object.
+   - **What Changed:** Updated line 172 to access `activeSession?.language || activeSession?.detectedLanguages?.[0] || currentLocale`.
+   - **Why:** Aligns with `SpeechSessionRecord`'s resolved session language property, consistent with `session.language` usage at line 91 and the language-confidence badge display at line 357 (`activeSession.language`), properly forwarding the detected primary locale on submission without breaking confidence badges.
+
+4. **Item 4: Resolved Prop Mismatch on `DepartmentSelectionStep` (`KioskShell.tsx:474` & `kioskAYUSH.test.tsx:11, 25, 44`)**
+   - **File Changed:** `src/components/kiosk/DepartmentSelectionStep.tsx`
+   - **Investigation Findings:** Investigated whether `DepartmentSelectionStep` actually renders based on the selected department or if the prop was unused. `DepartmentSelectionStep` maintains `selected` state that visually highlights the chosen card with glowing borders, checks (`CheckCircle2`), and enables the "Proceed to [Department] Intake" button. `DepartmentSelectionStepProps` previously declared only `initialDepartment?: ...` and required `onBack: () => void;`, whereas `KioskShell.tsx:474` passed `selectedDepartment={clinicalDepartment}` and `kioskAYUSH.test.tsx` passed `selectedDepartment="Allopathic"` / `selectedDepartment="Ayurveda (AYUSH)"` without `onBack`.
+   - **What Changed:** Added `selectedDepartment?: 'Allopathic' | 'Ayurveda (AYUSH)' | null;` and made `onBack?: () => void;` optional in `DepartmentSelectionStepProps`. Initialized component state with `selectedDepartment || initialDepartment || null` and guarded the `onBack` invocation (`onClick={() => onBack?.()}`).
+   - **Why:** Satisfies the call sites in `KioskShell.tsx` and `kioskAYUSH.test.tsx` while ensuring the pre-selected department is visually highlighted upon returning to the step.
+
+5. **Item 5: Resolved Type Mismatch for `patientContext.age` (`KioskShell.tsx:513`)**
+   - **File Changed:** `src/components/kiosk/DocumentUploadStep.tsx`
+   - **Investigation Findings:** In `KioskShell.tsx:513`, `patientContext={{ ..., age: verifiedProfile?.age || 'Not documented', ... }}` assigns `number | string`. Investigated whether `age` should be coerced to `number` or if `DocumentUploadStepProps.patientContext.age` should legitimately accept `number | string`. If coerced to a number (e.g. `0` or `Number(...)`), an unverified or absent profile would pass `Age=0` or `Age=NaN` to the Gemini vision extraction prompt, falsifying patient clinical context. In `DocumentUploadStep.tsx`, `patientContext` is simply serialized to JSON and sent to `/api/kiosk/extract-document`, where `server.ts:1144` formats it into a text prompt (`Age=${patientContext?.age || 'Unknown'}`) with zero numeric calculations. Furthermore, `PatientInfo.age` throughout the codebase (`src/types.ts`) is typed as `number | string`.
+   - **What Changed:** Updated `DocumentUploadStepProps.patientContext.age` from `number` to `number | string`.
+   - **Why:** Preserves the authentic `'Not documented'` or `'Unknown'` string representation when patient age is not recorded, avoiding clinical misinformation in AI document extraction.
+
+6. **Item 6: Added Missing `onUpdateSOAP` Callback Prop to `documentationConfidence.test.tsx:80`**
+   - **File Changed:** `src/__tests__/documentationConfidence.test.tsx`
+   - **What Changed:** Imported `vi` from `vitest` and provided `onUpdateSOAP={vi.fn()}` to `<SOAPNoteView />` at line 80.
+   - **Why:** Satisfies the required `onUpdateSOAP: (updatedNote: SOAPNote) => void;` prop in `SOAPNoteViewProps`, matching the convention used in `components.test.tsx:129`.
+
+7. **Item 7: Full Verification & Validation**
+   - `npm run lint` (`tsc --noEmit`): Exited with code 0 — 0 errors.
+   - `npm test` (`vitest run`): 12 test files passed, 219 of 219 tests passing.
+   - `npm run build` (`vite build && esbuild server.ts ...`): Frontend and backend production bundle compiled cleanly.
+
+
 
 
 

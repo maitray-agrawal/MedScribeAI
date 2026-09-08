@@ -86,3 +86,15 @@
 - [x] Reuse existing SOAP note presentation components as the Physician Confirmation Screen upon patient arrival in the doctor's consultation room
 - [x] Enforce zero data retention on the kiosk public terminal by wiping session memory immediately upon handoff or finish to protect patient privacy
 - **Exit Criteria:** Pre-consultation intake is compiled into a verified structured summary (SOAP note + AYUSH assessment) and pushed as an ABDM-compliant FHIR R4 Bundle to the doctor's workstation queue with zero kiosk terminal data retention. [COMPLETED]
+
+---
+
+## Targeted TypeScript & Build Integrity Fixes (2026-09-09)
+- [x] **Item 1 (Missing Dependency)**: Declare `@testing-library/dom` (`^10.4.0`) explicitly in `devDependencies` in `package.json` to satisfy `@testing-library/react` peerDependency; record in `dependency-lockbase.md`.
+- [x] **Item 2 (InterviewEngine.tsx dead AYUSH branches)**: Add `'ayush_kostha_ahara'` and `'ayush_vihara_nidra'` to the `AdaptiveInterviewTurnResponse.category` union type in `src/types.ts` to restore dead branches at lines 340 & 350; add tests in `src/__tests__/interviewEngine.test.tsx` verifying both question types update AYUSH intake state.
+- [x] **Item 3 (MultilingualVoiceInput.tsx:172 property regression)**: Resolve `SpeechSessionRecord` language property correctly (`activeSession?.language || activeSession?.detectedLanguages?.[0] || currentLocale`) instead of non-existent `.detectedLanguage.language`.
+- [x] **Item 4 (KioskShell.tsx:474 & kioskAYUSH.test.tsx prop mismatch)**: Add `selectedDepartment?: 'Allopathic' | 'Ayurveda (AYUSH)' | null;` and `onBack?: () => void;` to `DepartmentSelectionStepProps` in `DepartmentSelectionStep.tsx` and initialize state with `selectedDepartment || initialDepartment || null` to enable visual selection highlights.
+- [x] **Item 5 (KioskShell.tsx:513 type mismatch)**: Allow `patientContext.age` in `DocumentUploadStepProps` to accept `number | string` (consistent with `PatientInfo.age: number | string`), preventing falsified age coercions (`Age=0`/`Age=NaN`) sent to the multimodal Gemini clinical extraction endpoint.
+- [x] **Item 6 (documentationConfidence.test.tsx:80 missing prop)**: Provide required `onUpdateSOAP={vi.fn()}` callback prop to `<SOAPNoteView />` in `documentationConfidence.test.tsx`.
+- [x] **Item 7 (Full Verification)**: Run `npm run lint` (0 errors), `npm test` (12 test files, 219 tests passed), and `npm run build` (clean Vite + esbuild production bundle).
+

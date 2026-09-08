@@ -36,7 +36,7 @@ export interface DocumentUploadStepProps {
   onBack: () => void;
   patientContext?: {
     name?: string;
-    age?: number;
+    age?: number | string;
     gender?: string;
   };
 }

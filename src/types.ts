@@ -498,6 +498,8 @@ export interface AdaptiveInterviewTurnResponse {
     | 'ayush_pramana_satmya'
     | 'ayush_sattva_vyayama'
     | 'ayush_ahara_shakti_agni'
+    | 'ayush_kostha_ahara'
+    | 'ayush_vihara_nidra'
     | 'ayush_vaya'
     | 'ayush_ahara_vihara'
     | 'ayush_nidana_samprapti';

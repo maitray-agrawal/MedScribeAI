@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { en, Translations } from './locales/en';
-import { es } from './locales/es';
+import { hi } from './locales/hi';
 
-export type SupportedLanguage = 'en' | 'es';
+export type SupportedLanguage = 'en' | 'hi';
 
 interface LanguageContextType {
   language: SupportedLanguage;
@@ -12,7 +12,7 @@ interface LanguageContextType {
 
 const translations: Record<SupportedLanguage, Translations> = {
   en,
-  es,
+  hi,
 };
 
 const LANGUAGE_STORAGE_KEY = 'medscribe_lite_language_v1';
@@ -23,7 +23,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [language, setLanguageState] = useState<SupportedLanguage>(() => {
     try {
       const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-      if (saved === 'en' || saved === 'es') {
+      if (saved === 'en' || saved === 'hi') {
         return saved;
       }
     } catch {

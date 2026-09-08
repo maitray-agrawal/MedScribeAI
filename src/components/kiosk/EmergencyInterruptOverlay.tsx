@@ -16,13 +16,13 @@ import { publishEmergencyAlert, playEmergencyAlertChime } from '../../utils/emer
 
 export interface EmergencyInterruptOverlayProps {
   alert: EmergencyTriageAlert;
-  isSpanish?: boolean;
+  isHindi?: boolean;
   onStaffOverride: () => void;
 }
 
 export const EmergencyInterruptOverlay: React.FC<EmergencyInterruptOverlayProps> = ({
   alert,
-  isSpanish = false,
+  isHindi = false,
   onStaffOverride,
 }) => {
   const [isSpeakingReassurance, setIsSpeakingReassurance] = useState<boolean>(false);
@@ -49,13 +49,13 @@ export const EmergencyInterruptOverlay: React.FC<EmergencyInterruptOverlayProps>
     }
 
     window.speechSynthesis.cancel();
-    const reassuranceText = isSpanish
-      ? `Atención médica prioritaria activada. El equipo de enfermería y urgencias ha sido notificado a su terminal. Por favor permanezca sentado, la ayuda viene en camino.`
+    const reassuranceText = isHindi
+      ? `आपातकालीन मेडिकल ट्रायज अलर्ट सक्रिय किया गया है। अस्पताल के आपातकालीन कर्मचारियों को आपके कियोस्क पर सूचित कर दिया गया है। कृपया शांतिपूर्वक यहीं बैठे रहें। चिकित्सा सहायता आ रही है।`
       : `Emergency medical triage alert activated. Hospital emergency staff have been notified to your terminal. Please remain seated calmly. Medical assistance is on the way.`;
 
     const utterance = new SpeechSynthesisUtterance(reassuranceText);
     utterance.rate = 0.9;
-    utterance.lang = isSpanish ? 'es-ES' : 'en-IN';
+    utterance.lang = isHindi ? 'hi-IN' : 'en-IN';
     utterance.onstart = () => setIsSpeakingReassurance(true);
     utterance.onend = () => setIsSpeakingReassurance(false);
     utterance.onerror = () => setIsSpeakingReassurance(false);
@@ -109,8 +109,8 @@ export const EmergencyInterruptOverlay: React.FC<EmergencyInterruptOverlayProps>
                 </span>
               </div>
               <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">
-                {isSpanish
-                  ? 'ALERTA DE EMERGENCIA CLÍNICA'
+                {isHindi
+                  ? 'आपातकालीन क्लिनिकल ट्रायज अलर्ट'
                   : 'EMERGENCY CLINICAL TRIAGE ACTIVATED'}
               </h1>
             </div>
@@ -128,13 +128,13 @@ export const EmergencyInterruptOverlay: React.FC<EmergencyInterruptOverlayProps>
             <HeartPulse className="w-7 h-7 text-red-400 shrink-0 mt-0.5 animate-pulse" />
             <div>
               <h2 className="text-lg sm:text-xl font-black text-red-100">
-                {isSpanish
-                  ? 'Por favor permanezca sentado. El personal médico ha sido notificado.'
+                {isHindi
+                  ? 'कृपया शांतिपूर्वक बैठे रहें। मेडिकल स्टाफ को सूचित कर दिया गया है।'
                   : 'Please remain seated calmly. Hospital medical staff have been alerted.'}
               </h2>
               <p className="text-sm sm:text-base text-red-200 mt-1 leading-relaxed">
-                {isSpanish
-                  ? 'Nuestra evaluación de seguridad detectó síntomas que requieren atención médica prioritaria inmediata. Una enfermera de urgencias y un médico han sido despachados a su kiosco.'
+                {isHindi
+                  ? 'हमारे क्लिनिकल इनटेक ने ऐसे आपातकालीन लक्षणों का पता लगाया है जिनके लिए तत्काल चिकित्सा मूल्यांकन आवश्यक है। आपातकालीन नर्सिंग स्टाफ एवं डॉक्टर को तुरंत सूचित किया गया है और वे सीधे आपके कियोस्क पर आ रहे हैं।'
                   : 'Our live clinical intake detected emergency symptoms requiring immediate medical evaluation. An emergency triage nurse and attending physician have been paged in the hospital Triage Queue and are coming directly to your station.'}
               </p>
             </div>

@@ -152,7 +152,7 @@ export function matchConcepts(
     if (!bestMatch) {
       for (const { phrase } of forms) {
         const wordCount = phrase.split(' ').length;
-        if (wordCount > 3) continue; // skip long phrases (>3 words) for fuzzy pass
+        if (wordCount > 4) continue; // skip long phrases (>4 words) for fuzzy pass
         for (let i = 0; i <= tokens.length - wordCount; i++) {
           const windowText = tokens.slice(i, i + wordCount).join(' ');
           const sim = similarity(phrase, windowText);
@@ -194,9 +194,8 @@ interface NegationDict {
 /**
  * Applies negation to already-extracted facts using a small token-window
  * heuristic: if a negation trigger appears within `windowSize` tokens AFTER
- * the matched phrase's position in the transcript, mark the fact negated.
- * This is intentionally simple — it is a heuristic, not a parser. Always
- * keep `evidence` so a clinician can verify.
+ * (or immediately before) the matched phrase's position in the transcript, mark the fact negated.
+ * Always keep `evidence` so a clinician can verify.
  */
 export function applyNegation(
   facts: ExtractedFact[],
@@ -214,12 +213,53 @@ export function applyNegation(
   );
 
   return facts.map((fact) => {
-    const matchIndex = tokens.findIndex((t) => t.includes(fact.matchedPhrase) || fact.matchedPhrase.includes(t));
-    if (matchIndex === -1) return fact;
+    const matchedTokens = tokenize(fact.matchedPhrase);
+    let matchStartIndex = -1;
+    let matchEndIndex = -1;
 
-    const windowEnd = Math.min(tokens.length, matchIndex + 1 + windowSize);
-    const windowTokens = tokens.slice(matchIndex + 1, windowEnd);
-    const negated = windowTokens.some((t) => triggers.has(t));
+    // 1. Locate the matched token sequence in tokens
+    for (let i = 0; i <= tokens.length - matchedTokens.length; i++) {
+      let isMatch = true;
+      for (let j = 0; j < matchedTokens.length; j++) {
+        if (tokens[i + j] !== matchedTokens[j] && similarity(tokens[i + j], matchedTokens[j]) < 0.75) {
+          isMatch = false;
+          break;
+        }
+      }
+      if (isMatch) {
+        matchStartIndex = i;
+        matchEndIndex = i + matchedTokens.length;
+        break;
+      }
+    }
+
+    // 2. Fallback: match by significant token (length >= 3)
+    if (matchStartIndex === -1) {
+      for (const mt of matchedTokens) {
+        if (mt.length >= 3) {
+          const idx = tokens.findIndex((t) => t === mt || similarity(t, mt) >= 0.82);
+          if (idx !== -1) {
+            matchStartIndex = idx;
+            matchEndIndex = idx + 1;
+            break;
+          }
+        }
+      }
+    }
+
+    if (matchStartIndex === -1) {
+      // If concept phrase itself contains negation trigger (e.g. "BP ka problem nahi hai")
+      const selfNegated = matchedTokens.some((t) => triggers.has(t) || ['nahi', 'nahin', 'nhi', 'nai'].includes(t));
+      return selfNegated ? { ...fact, assertion: 'negated' as Assertion } : fact;
+    }
+
+    // Check tokens within the matched phrase, immediately after, and shortly before
+    const windowEnd = Math.min(tokens.length, matchEndIndex + windowSize);
+    const windowTokensAfter = tokens.slice(matchEndIndex, windowEnd);
+    const windowTokensBefore = tokens.slice(Math.max(0, matchStartIndex - 2), matchStartIndex);
+
+    const checkTokens = [...matchedTokens, ...windowTokensBefore, ...windowTokensAfter];
+    const negated = checkTokens.some((t) => triggers.has(t) || ['nahi', 'nahin', 'nhi', 'nai'].includes(t));
 
     return negated ? { ...fact, assertion: 'negated' as Assertion } : fact;
   });

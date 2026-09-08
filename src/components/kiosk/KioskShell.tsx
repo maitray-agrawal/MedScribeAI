@@ -367,16 +367,16 @@ export const KioskShell: React.FC<KioskShellProps> = ({
                 <span>English</span>
               </button>
               <button
-                id="kiosk-lang-es"
-                onClick={() => setLanguage('es')}
+                id="kiosk-lang-hi"
+                onClick={() => setLanguage('hi')}
                 className={`px-4 py-2.5 rounded-xl font-bold text-sm sm:text-base transition-all cursor-pointer flex items-center gap-2 ${
-                  language === 'es'
+                  language === 'hi'
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
                 }`}
               >
                 <Globe className="w-4 h-4" />
-                <span>Español</span>
+                <span>हिन्दी</span>
               </button>
             </div>
 
@@ -481,10 +481,10 @@ export const KioskShell: React.FC<KioskShellProps> = ({
         ) : currentStep.id === 'interview' ? (
           <InterviewEngine
             patientDemographics={{
-              fullName: verifiedProfile?.fullName || 'Aarav Sharma',
-              age: verifiedProfile?.age || 38,
-              gender: verifiedProfile?.gender || 'Male',
-              abhaId: verifiedProfile?.abhaId || '91-8765-4321-0987',
+              fullName: verifiedProfile?.fullName || 'Patient',
+              age: verifiedProfile?.age || 'Not documented',
+              gender: verifiedProfile?.gender || 'Not documented',
+              abhaId: verifiedProfile?.abhaId || 'Not documented',
             }}
             clinicalDepartment={clinicalDepartment}
             initialIntake={structuredIntake}
@@ -509,9 +509,9 @@ export const KioskShell: React.FC<KioskShellProps> = ({
             onNext={handleNext}
             onBack={handleBack}
             patientContext={{
-              name: verifiedProfile?.fullName || 'Aarav Sharma',
-              age: verifiedProfile?.age || 38,
-              gender: verifiedProfile?.gender || 'Male',
+              name: verifiedProfile?.fullName || 'Patient',
+              age: verifiedProfile?.age || 'Not documented',
+              gender: verifiedProfile?.gender || 'Not documented',
             }}
           />
         ) : (
@@ -623,11 +623,11 @@ export const KioskShell: React.FC<KioskShellProps> = ({
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 <div>
                   <span className="text-slate-400 block text-[11px]">Patient:</span>
-                  <strong className="text-white font-bold">{verifiedProfile?.fullName || 'Aarav Sharma'}</strong>
+                  <strong className="text-white font-bold">{verifiedProfile?.fullName || 'Patient'}</strong>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[11px]">ABHA ID:</span>
-                  <span className="text-teal-300 font-mono font-bold">{verifiedProfile?.abhaId || '91-8765-4321-0987'}</span>
+                  <span className="text-teal-300 font-mono font-bold">{verifiedProfile?.abhaId || 'Not documented'}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[11px]">Clinical Mode:</span>

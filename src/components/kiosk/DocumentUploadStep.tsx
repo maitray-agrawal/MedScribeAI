@@ -206,7 +206,7 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
   patientContext,
 }) => {
   const { language } = useTranslation();
-  const isSpanish = language === 'es';
+  const isHindi = language === 'hi';
 
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -228,13 +228,13 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
       return;
     }
 
-    const textToRead = isSpanish
-      ? 'Paso de carga de documentos. Puede fotografiar o subir recetas anteriores, informes de laboratorio o resúmenes de alta. Nuestra inteligencia artificial clínica extraerá diagnósticos, medicamentos y resaltará cualquier valor de laboratorio fuera de rango normal.'
+    const textToRead = isHindi
+      ? 'दस्तावेज़ एवं पर्चा अपलोड चरण। आप अपने पुराने पर्चे, लैब टेस्ट रिपोर्ट या डिस्चार्ज सारांश की फोटो खींच सकते हैं या अपलोड कर सकते हैं। हमारा क्लिनिकल AI आपकी दवाएं, पिछले निदान और असामान्य लैब मान निकालेगा।'
       : 'Document and prescription upload step. You can photograph or upload prior physical prescriptions, lab reports, or discharge summaries. Our clinical AI will extract your medications, past diagnoses, and highlight any lab values outside the normal reference range.';
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(textToRead);
-    utterance.lang = isSpanish ? 'es-ES' : 'en-IN';
+    utterance.lang = isHindi ? 'hi-IN' : 'en-IN';
     utterance.rate = 0.95;
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
@@ -446,14 +446,14 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
         <div>
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-teal-500/10 border border-teal-400/30 text-teal-300 text-xs font-bold uppercase tracking-wider mb-2">
             <UploadCloud className="w-3.5 h-3.5" />
-            {isSpanish ? 'Paso 5 de 6 • Carga de Documentos' : 'Step 5 of 6 • Document Upload & Vision AI'}
+            {isHindi ? 'चरण 5 • दस्तावेज़ अपलोड एवं विज़न AI' : 'Step 5 of 6 • Document Upload & Vision AI'}
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-            {isSpanish ? 'Subir Recetas e Informes' : 'Upload Past Medical Records'}
+            {isHindi ? 'पुरानी मेडिकल पर्चियां एवं रिपोर्ट अपलोड करें' : 'Upload Past Medical Records'}
           </h1>
           <p className="text-slate-400 text-sm sm:text-base mt-1">
-            {isSpanish
-              ? 'Fotografíe o suba recetas, análisis de laboratorio o altas para extraer diagnósticos y medicamentos'
+            {isHindi
+              ? 'पर्चे की फोटो लें या PDF/छवि अपलोड करें। AI डॉक्टर के लिए दवाएं एवं लैब परिणाम निकालेगा।'
               : 'Scan prior prescriptions, diagnostic labs, or discharge summaries for multimodal clinical extraction'}
           </p>
         </div>
@@ -462,7 +462,7 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
         <button
           type="button"
           onClick={handleToggleSpeech}
-          aria-label={isSpanish ? 'Escuchar instrucciones' : 'Listen to instructions'}
+          aria-label={isHindi ? 'निर्देश सुनें' : 'Listen to instructions'}
           className={`flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold transition-all border shrink-0 ${
             isSpeaking
               ? 'bg-amber-500/20 text-amber-300 border-amber-400/40 animate-pulse'
@@ -470,7 +470,7 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
           }`}
         >
           {isSpeaking ? <VolumeX className="w-4 h-4 text-amber-400" /> : <Volume2 className="w-4 h-4 text-teal-400" />}
-          <span>{isSpeaking ? (isSpanish ? 'Detener Voz' : 'Stop Audio') : (isSpanish ? 'Escuchar Guía' : 'Audio Guide')}</span>
+          <span>{isSpeaking ? (isHindi ? 'आवाज रोकें' : 'Stop Audio') : (isHindi ? 'ऑडियो गाइड' : 'Audio Guide')}</span>
         </button>
       </div>
 
@@ -488,10 +488,10 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
           </div>
           <div className="text-left">
             <div className="font-black text-white text-base">
-              {isSpanish ? 'Tomar Foto con Cámara' : 'Take Photo with Camera'}
+              {isHindi ? 'कैमरे से फोटो लें' : 'Take Photo with Camera'}
             </div>
             <div className="text-xs text-teal-300/80 font-normal">
-              {isSpanish ? 'Enfoque la receta física' : 'Photograph paper prescription or lab sheet'}
+              {isHindi ? 'कागज़ी पर्चे की फोटो खींचें' : 'Photograph paper prescription or lab sheet'}
             </div>
           </div>
         </button>
@@ -508,10 +508,10 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
           </div>
           <div className="text-left">
             <div className="font-black text-white text-base">
-              {isSpanish ? 'Cargar Archivo o PDF' : 'Upload Image or File'}
+              {isHindi ? 'फ़ाइल या PDF अपलोड करें' : 'Upload Image or File'}
             </div>
             <div className="text-xs text-slate-400 font-normal">
-              {isSpanish ? 'Formatos JPG, PNG, WEBP' : 'Supports JPG, PNG, WEBP formats'}
+              {isHindi ? 'JPG, PNG, WEBP प्रारूप' : 'Supports JPG, PNG, WEBP formats'}
             </div>
           </div>
         </button>
@@ -538,7 +538,7 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
       <div className="mt-4 p-4 rounded-2xl bg-slate-800/40 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-wider">
           <Sparkles className="w-4 h-4 text-amber-400" />
-          <span>{isSpanish ? 'Probar con Muestras Clínicas:' : 'Instant Kiosk Test Samples:'}</span>
+          <span>{isHindi ? 'नमूना दस्तावेज़ से परीक्षण करें:' : 'Instant Kiosk Test Samples:'}</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -604,8 +604,8 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
                   <ShieldAlert className="w-5 h-5 text-orange-400 animate-bounce" />
                   <h3 className="font-extrabold text-sm sm:text-base text-white flex items-center space-x-2">
                     <span>
-                      {isSpanish
-                        ? 'Alertas de Laboratorio Fuera de Rango Normal'
+                      {isHindi
+                        ? 'असामान्य लैब टेस्ट परिणाम पाए गए'
                         : 'Abnormal Laboratory Values Detected'}
                     </span>
                     <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-orange-500 text-slate-950 shadow-md">
@@ -682,7 +682,7 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-teal-400" />
             <h2 className="text-base sm:text-lg font-black text-white">
-              {isSpanish ? 'Documentos Analizados' : 'Uploaded Clinical Documents'}
+              {isHindi ? 'अपलोड किए गए क्लिनिकल दस्तावेज़' : 'Uploaded Clinical Documents'}
             </h2>
             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-800 text-teal-300 border border-slate-700">
               {documents.length}
@@ -701,8 +701,8 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
               <ArrowUpDown className="w-3.5 h-3.5 text-teal-400" />
               <span>
                 {sortOrder === 'newest'
-                  ? (isSpanish ? 'Orden: Más Reciente Primero' : 'Sorted: Newest First')
-                  : (isSpanish ? 'Orden: Más Antiguo Primero' : 'Sorted: Oldest First')}
+                  ? (isHindi ? 'क्रम: नवीनतम पहले' : 'Sorted: Newest First')
+                  : (isHindi ? 'क्रम: पुरातन पहले' : 'Sorted: Oldest First')}
               </span>
             </button>
           )}
@@ -715,11 +715,11 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
               <FileText className="w-8 h-8" />
             </div>
             <h3 className="text-base font-bold text-slate-200">
-              {isSpanish ? 'No se han subido documentos aún' : 'No prior records uploaded yet'}
+              {isHindi ? 'अभी तक कोई दस्तावेज़ अपलोड नहीं हुआ' : 'No prior records uploaded yet'}
             </h3>
             <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
-              {isSpanish
-                ? 'Subir documentos es opcional. Si tiene recetas o análisis previos, fotografíelos ahora o pulse "Continuar".'
+              {isHindi
+                ? 'दस्तावेज़ अपलोड करना वैकल्पिक है। यदि आपके पास पुराने पर्चे या रिपोर्ट हैं, तो ऊपर फोटो लें अथवा "आगे बढ़ें" पर क्लिक करें।'
                 : 'Uploading past records is optional. If you have previous medical papers, take a photo above or click Proceed to continue.'}
             </p>
           </div>
@@ -954,7 +954,7 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
           className="flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 hover:text-white transition-all border border-slate-700"
         >
           <ArrowLeft className="w-5 h-5" />
-          <span>{isSpanish ? 'Volver a la Entrevista' : 'Back to Interview'}</span>
+          <span>{isHindi ? 'इंटरव्यू पर वापस जाएं' : 'Back to Interview'}</span>
         </button>
 
         <button
@@ -964,11 +964,11 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
         >
           <span>
             {documents.length > 0
-              ? isSpanish
-                ? `Continuar con ${documents.length} Documento(s)`
+              ? isHindi
+                ? `${documents.length} दस्तावेज़ों के साथ आगे बढ़ें`
                 : `Proceed to Summary (${documents.length} Document${documents.length > 1 ? 's' : ''})`
-              : isSpanish
-              ? 'Continuar sin Documentos'
+              : isHindi
+              ? 'बिना दस्तावेज़ आगे बढ़ें'
               : 'Proceed to Intake Summary'}
           </span>
           <ArrowRight className="w-5 h-5" />

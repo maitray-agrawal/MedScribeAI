@@ -17,8 +17,6 @@ import { EmergencyInterruptOverlay } from './EmergencyInterruptOverlay';
 import { MultilingualVoiceInput } from './MultilingualVoiceInput';
 import { SupportedLocale } from '../../speech/speechTypes';
 import {
-  Mic,
-  MicOff,
   Volume2,
   VolumeX,
   Sparkles,
@@ -56,9 +54,9 @@ export interface InterviewEngineProps {
 export const InterviewEngine: React.FC<InterviewEngineProps> = ({
   patientDemographics = {
     fullName: 'Patient',
-    age: 42,
-    gender: 'Male',
-    abhaId: '91-8765-4321-0987',
+    age: 'Not documented',
+    gender: 'Not documented',
+    abhaId: 'Not documented',
   },
   clinicalDepartment = 'Allopathic',
   initialIntake,
@@ -67,7 +65,7 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
   onEmergencyAlertTriggered,
 }) => {
   const { language } = useTranslation();
-  const isSpanish = language === 'es';
+  const isHindi = language === 'hi';
   const isAyurveda = clinicalDepartment === 'Ayurveda (AYUSH)';
 
   // Multilingual Indian Voice Locale
@@ -118,14 +116,9 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
   // Input states (Voice, Touch, Scale, Custom text)
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [typedInput, setTypedInput] = useState<string>('');
-  const [severityRating, setSeverityRating] = useState<number>(6);
+  const [severityRating, setSeverityRating] = useState<number | null>(null);
   const [showCustomText, setShowCustomText] = useState<boolean>(false);
   const [showHistory, setShowHistory] = useState<boolean>(false);
-
-  // Speech Recognition (Web Speech API)
-  const [isRecording, setIsRecording] = useState<boolean>(false);
-  const [voiceInterimText, setVoiceInterimText] = useState<string>('');
-  const recognitionRef = useRef<any>(null);
 
   // Text to Speech (SpeechSynthesis)
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
@@ -139,16 +132,9 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
     }
   }, []);
 
-  // Stop active speech recognition & speech synthesis on unmount
+  // Stop active speech synthesis on unmount
   useEffect(() => {
     return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch {
-          // ignore
-        }
-      }
       if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
@@ -161,7 +147,6 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
     setErrorMessage(null);
     setSelectedOption(null);
     setTypedInput('');
-    setVoiceInterimText('');
     setShowCustomText(false);
 
     try {
@@ -219,76 +204,13 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(questionToSpeak);
     utterance.rate = 0.95;
-    const LOCALE_TTS_LANG_MAP: Record<SupportedLocale, string> = {
-      'en-IN': 'en-IN',
-      'hi-IN': 'hi-IN',
-      'mr-IN': 'mr-IN',
-      'ta-IN': 'ta-IN',
-      'gu-IN': 'gu-IN',
-    };
-    utterance.lang = isSpanish ? 'es-ES' : (LOCALE_TTS_LANG_MAP[activeVoiceLocale] || 'en-IN');
+    utterance.lang = activeVoiceLocale;
 
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
 
     window.speechSynthesis.speak(utterance);
-  };
-
-  // Web Speech API Voice Dictation
-  const toggleSpeechRecognition = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      alert(
-        isSpanish
-          ? 'El reconocimiento de voz no es compatible con este navegador. Por favor seleccione una opción tocando la pantalla.'
-          : 'Speech recognition is not supported in this browser. Please tap an option on screen.'
-      );
-      return;
-    }
-
-    if (isRecording) {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      setIsRecording(false);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = isSpanish ? 'es-ES' : 'en-IN';
-
-      recognition.onresult = (event: any) => {
-        let interim = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          interim += event.results[i][0].transcript;
-        }
-        setVoiceInterimText(interim);
-        setTypedInput(interim);
-        checkForEmergencyRedFlags(interim);
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error('Kiosk voice recognition error:', event.error);
-        setIsRecording(false);
-      };
-
-      recognition.onend = () => {
-        setIsRecording(false);
-      };
-
-      recognition.start();
-      recognitionRef.current = recognition;
-      setIsRecording(true);
-    } catch (err) {
-      console.error('Failed to initialize speech recognition:', err);
-      setIsRecording(false);
-    }
   };
 
   // Live Emergency Red Flag Detector (Real-time Interrupt during data entry)
@@ -305,24 +227,15 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
     });
 
     if (detected) {
-      // 1. Immediately abort active speech recognition
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch {
-          // ignore
-        }
-        setIsRecording(false);
-      }
-      // 2. Cancel speech synthesis
+      // 1. Cancel speech synthesis
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         window.speechSynthesis.cancel();
         setIsSpeaking(false);
       }
-      // 3. Immediately trigger high-priority interrupt
+      // 2. Immediately trigger high-priority interrupt
       setActiveEmergencyAlert(detected);
       setRedFlags((prev) => Array.from(new Set([...prev, detected.detectedPattern])));
-      // 4. Broadcast to server and local TriageQueue
+      // 3. Broadcast to server and local TriageQueue
       publishEmergencyAlert(detected);
       if (onEmergencyAlertTriggered) {
         onEmergencyAlertTriggered(detected);
@@ -339,21 +252,12 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
 
   // Process & Advance to next turn
   const handleAnswerSubmit = (chosenAnswer?: string, mode: 'touch_pill' | 'voice' | 'scale' | 'typed' = 'touch_pill') => {
-    if (isRecording && recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
-      setIsRecording(false);
-    }
-
     if (isSpeaking && typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
     }
 
-    const finalAnswer = (chosenAnswer || typedInput || (currentQuestionData?.inputType === 'scale_1_to_10' ? `${severityRating}/10` : selectedOption) || '').trim();
+    const finalAnswer = (chosenAnswer || typedInput || (currentQuestionData?.inputType === 'scale_1_to_10' ? (severityRating !== null ? `${severityRating}/10` : 'Not documented') : selectedOption) || '').trim();
 
     if (!finalAnswer) {
       return;
@@ -554,7 +458,7 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
       pastSurgicalHistory: [],
       familyHistory: [],
       personalHistory: {
-        dietType: isAyurveda ? 'Vegetarian / Ayurvedic Pathya' : 'Vegetarian',
+        dietType: 'Not documented',
       },
       reviewOfSystems: {
         cardiovascular: {
@@ -597,7 +501,7 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
       {activeEmergencyAlert && (
         <EmergencyInterruptOverlay
           alert={activeEmergencyAlert}
-          isSpanish={isSpanish}
+          isHindi={isHindi}
           onStaffOverride={() => {
             setActiveEmergencyAlert(null);
           }}
@@ -722,8 +626,8 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
               <div className="flex-1">
                 <h2 className="text-xl sm:text-3xl font-black text-white leading-tight">
                   {currentQuestionData?.question ||
-                    (isSpanish
-                      ? '¿Cuál es su síntoma principal el día de hoy?'
+                    (isHindi
+                      ? 'आज आपका मुख्य लक्षण या स्वास्थ्य समस्या क्या है?'
                       : 'What is your main health concern today?')}
                 </h2>
                 <span className="text-xs text-slate-400 mt-1 block">
@@ -799,7 +703,7 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
                     Select Pain / Severity Level (1 to 10)
                   </span>
                   <span className="text-2xl font-black text-amber-400 font-mono">
-                    {severityRating} / 10
+                    {severityRating !== null ? `${severityRating} / 10` : '—'}
                   </span>
                 </div>
 
@@ -833,10 +737,13 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
 
                 <button
                   type="button"
-                  onClick={() => handleAnswerSubmit(`${severityRating} / 10`, 'scale')}
-                  className="w-full h-14 mt-2 rounded-2xl bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-slate-950 font-black text-base sm:text-lg transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xl"
+                  disabled={severityRating === null}
+                  onClick={() => severityRating !== null && handleAnswerSubmit(`${severityRating} / 10`, 'scale')}
+                  className={`w-full h-14 mt-2 rounded-2xl bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-slate-950 font-black text-base sm:text-lg transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xl ${
+                    severityRating === null ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
-                  <span>Confirm Rating ({severityRating}/10)</span>
+                  <span>{severityRating !== null ? `Confirm Rating (${severityRating}/10)` : 'Select a rating to confirm'}</span>
                   <ArrowRight className="w-5 h-5" />
                 </button>
               </div>

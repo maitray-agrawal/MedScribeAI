@@ -61,7 +61,7 @@ export function exportToFHIRBundle(
     identifier: [
       {
         system: 'https://healthid.ndhm.gov.in',
-        value: options?.abhaId || safePatient.id || '91-8765-4321-0987',
+        value: options?.abhaId || safePatient.id || 'Not documented',
         type: {
           coding: [
             {

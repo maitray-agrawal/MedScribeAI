@@ -96,16 +96,16 @@ export const Header: React.FC<HeaderProps> = ({
               EN
             </button>
             <button
-              id="btn-lang-es"
-              onClick={() => setLanguage('es')}
+              id="btn-lang-hi"
+              onClick={() => setLanguage('hi')}
               className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-colors ${
-                language === 'es'
+                language === 'hi'
                   ? 'bg-white text-blue-600 shadow-xs border border-slate-200/60'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
-              title={t.header.langSpanish}
+              title={t.header.langHindi}
             >
-              ES
+              HI
             </button>
           </div>
 

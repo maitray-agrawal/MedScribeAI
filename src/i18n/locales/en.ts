@@ -18,7 +18,7 @@ export const en = {
     historyTitle: 'View Encounters History',
     analyticsTitle: 'Clinic Productivity Metrics',
     langEnglish: 'English',
-    langSpanish: 'Español',
+    langHindi: 'हिन्दी',
   },
   banner: {
     title: 'Clinical Documentation & Safety Engine',

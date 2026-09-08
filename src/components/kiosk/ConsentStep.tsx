@@ -58,28 +58,28 @@ export const ConsentStep: React.FC<ConsentStepProps> = ({
   const consentItems: ConsentItem[] = [
     {
       id: 'voiceCapture',
-      title: language === 'es' ? 'Captura de Voz y Transcripción' : 'Voice Capture & Spoken Intake',
+      title: language === 'hi' ? 'आवाज़ रिकॉर्डिंग एवं ट्रांसक्रिप्शन' : 'Voice Capture & Spoken Intake',
       explanation:
-        language === 'es'
-          ? 'Permite a MediKiosk grabar su voz y transcribir sus síntomas a su ficha clínica en su idioma materno.'
+        language === 'hi'
+          ? 'मेडिस्कियोस्क को आपकी आवाज़ रिकॉर्ड करने और आपकी चुनी हुई भाषा में लक्षणों को क्लिनिकल रिकॉर्ड में दर्ज करने की अनुमति दें।'
           : 'Allow MediKiosk to record and transcribe your voice to document your symptoms in your preferred language.',
       spokenText:
-        language === 'es'
-          ? 'Consentimiento uno: Captura de voz. Permite a MediKiosk grabar su voz y transcribir sus síntomas a su ficha médica en su idioma.'
+        language === 'hi'
+          ? 'सहमति बिंदु एक: आवाज़ रिकॉर्डिंग। मेडिस्कियोस्क को आपकी आवाज़ में लक्षण दर्ज करने की अनुमति दें।'
           : 'Consent item one: Voice capture. Allow MediKiosk to record your voice and transcribe your symptoms into your clinical record in your preferred language.',
       icon: Mic,
       requiredForFullExperience: false,
     },
     {
       id: 'documentUpload',
-      title: language === 'es' ? 'Escaneo de Recetas y Documentos' : 'Document & Prescription Digitization',
+      title: language === 'hi' ? 'पर्चे एवं मेडिकल दस्तावेज़ स्कैनिंग' : 'Document & Prescription Digitization',
       explanation:
-        language === 'es'
-          ? 'Permite usar la cámara del quiosco para capturar recetas físicas previas, informes de laboratorio y resúmenes de alta.'
+        language === 'hi'
+          ? 'कियोस्क कैमरे द्वारा पुरानी शारीरिक पर्चियों, लैब टेस्ट रिपोर्ट और डिस्चार्ज सारांश को स्कैन करने की अनुमति दें।'
           : 'Allow the kiosk camera to scan physical prescriptions, lab test reports, and hospital discharge summaries.',
       spokenText:
-        language === 'es'
-          ? 'Consentimiento dos: Subida de documentos. Permite que el quiosco capture fotos de sus recetas anteriores e informes de laboratorio.'
+        language === 'hi'
+          ? 'सहमति बिंदु दो: दस्तावेज़ स्कैनिंग। अपने पुराने पर्चे और लैब रिपोर्ट कैमरे से स्कैन करने की अनुमति दें।'
           : 'Consent item two: Document upload. Allow the kiosk camera to scan past physical prescriptions and laboratory test reports.',
       icon: FileText,
       requiredForFullExperience: false,
@@ -87,16 +87,16 @@ export const ConsentStep: React.FC<ConsentStepProps> = ({
     {
       id: 'hospitalSharing',
       title:
-        language === 'es'
-          ? 'Compartir Resumen Clínico con Médico y ABDM'
+        language === 'hi'
+          ? 'डॉक्टर एवं ABDM के साथ क्लिनिकल सारांश साझा करना'
           : 'Structured History Sharing with Hospital & ABDM',
       explanation:
-        language === 'es'
-          ? 'Permite compilar su historial clínico en formato interoperable y enviarlo directamente al consultorio del médico antes de su consulta.'
+        language === 'hi'
+          ? 'मेडिस्कियोस्क को आपके परामर्श सारांश को संकलित करने और परामर्शदाता डॉक्टर के साथ ABDM मानकों के तहत सुरक्षित रूप से साझा करने की अनुमति दें।'
           : 'Allow MediKiosk to compile your structured intake summary and securely route it to your consulting OPD doctor via ABDM standards.',
       spokenText:
-        language === 'es'
-          ? 'Consentimiento tres: Compartir historial. Permite compilar el resumen de su consulta y enviarlo al médico que le atenderá.'
+        language === 'hi'
+          ? 'सहमति बिंदु तीन: अस्पताल एवं ABDM के साथ साझा करना। संरचित क्लिनिकल सारांश डॉक्टर के साथ सुरक्षित साझा करने की अनुमति दें।'
           : 'Consent item three: Hospital and ABDM sharing. Allow MediKiosk to compile your structured history and share it securely with your consulting OPD doctor.',
       icon: Share2,
       requiredForFullExperience: true,
@@ -120,7 +120,7 @@ export const ConsentStep: React.FC<ConsentStepProps> = ({
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.rate = 0.95; // comfortable cadence for public kiosk patients
     utterance.pitch = 1.0;
-    utterance.lang = language === 'es' ? 'es-ES' : 'en-IN';
+    utterance.lang = language === 'hi' ? 'hi-IN' : 'en-IN';
 
     utterance.onstart = () => {
       setActiveSpeakingId(itemId);
@@ -172,12 +172,12 @@ export const ConsentStep: React.FC<ConsentStepProps> = ({
       </div>
 
       <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white mb-2 text-center">
-        {language === 'es' ? 'Consentimiento Informado del Paciente' : 'Patient Informed Consent'}
+        {language === 'hi' ? 'मरीज़ की सूचित सहमति (DPDP Act 2023)' : 'Patient Informed Consent'}
       </h1>
 
       <p className="text-sm sm:text-base text-slate-300 max-w-xl mb-6 text-center leading-relaxed">
-        {language === 'es'
-          ? 'Seleccione individualmente los permisos para la atención en este terminal. Puede presionar el botón de audio para escuchar cada cláusula.'
+        {language === 'hi'
+          ? 'इस कियोस्क सत्र के लिए प्रत्येक अनुमति का व्यक्तिगत रूप से चयन करें। किसी भी बिंदु को सुनने के लिए स्पीकर आइकन दबाएं।'
           : 'Select each authorization individually for this kiosk session. Tap the audio speaker icon to listen to each item read aloud.'}
       </p>
 

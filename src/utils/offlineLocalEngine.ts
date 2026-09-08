@@ -1,8 +1,7 @@
 import { PatientInfo, SOAPNote, Prescription, ICD10Code, CPTCode, SafetyAlert } from '../types';
 import { checkDrugInteractions } from './drugInteractionChecker';
 import { isNonEnglishTranscript } from './languageDetector';
-import { analyzeHindiTranscript, ExtractedFact } from '../clinical/hindiClinicalMatcher';
-import { ClinicalConcept } from '../nlp/codeSwitchingExtractor';
+import { analyzeHindiTranscript, ClinicalConcept } from '../clinical/hindiClinicalMatcher';
 import hindiSymptoms from '../dictionaries/medical/hindi_symptoms.json';
 import hindiNegation from '../dictionaries/medical/hindi_negation.json';
 import hindiTemporal from '../dictionaries/medical/hindi_temporal.json';
@@ -260,11 +259,17 @@ function generateHindiOfflineSOAPNote(patientInfo: PatientInfo, transcript: stri
     );
   }
 
+  const formatCanonical = (name: string): string =>
+    name
+      .split(' ')
+      .map((w) => (w.length > 0 ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w))
+      .join(' ');
+
   if (presentFacts.length > 0) {
     hpiLines.push('• Affirmed Clinical Findings (Evidence Provenance):');
     for (const fact of presentFacts) {
       hpiLines.push(
-        `  - ${fact.canonicalEnglish} [PRESENT] — Evidence: "${fact.evidence}" (Matched: "${fact.matchedPhrase}", Confidence: ${Math.round(fact.confidence * 100)}%)`
+        `  - ${formatCanonical(fact.canonicalEnglish)} [PRESENT] — Evidence: "${fact.evidence}" (Matched: "${fact.matchedPhrase}", Confidence: ${Math.round(fact.confidence * 100)}%)`
       );
     }
   }
@@ -273,7 +278,7 @@ function generateHindiOfflineSOAPNote(patientInfo: PatientInfo, transcript: stri
     hpiLines.push('• Explicitly Negated / Denied Symptoms & Conditions:');
     for (const fact of negatedFacts) {
       hpiLines.push(
-        `  - ${fact.canonicalEnglish} [NEGATED] — Evidence: "${fact.evidence}" (Matched: "${fact.matchedPhrase}", Confidence: ${Math.round(fact.confidence * 100)}%)`
+        `  - ${formatCanonical(fact.canonicalEnglish)} [NEGATED] — Evidence: "${fact.evidence}" (Matched: "${fact.matchedPhrase}", Confidence: ${Math.round(fact.confidence * 100)}%)`
       );
     }
   }
@@ -319,31 +324,18 @@ function generateHindiOfflineSOAPNote(patientInfo: PatientInfo, transcript: stri
   }
   const ros = rosLines.join('\n');
 
-  // 2. Objective Data
-  let vitals = 'Temp 37.0°C, BP 120/80 mmHg, HR 76 bpm, RR 16/min, SpO2 98%';
+  // 2. Objective Data (Zero-fabrication: document only reported/requested, else Not documented)
+  let vitals = 'Not documented';
   if (hasPresent('SYM_FEVER')) {
-    vitals = 'Temp 38.8°C, BP 118/76 mmHg, HR 96 bpm, RR 18/min, SpO2 98%';
+    vitals = 'Patient reports acute fever; formal triage vitals pending.';
   } else if (hasPresent('COND_HYPERTENSION') && !hasNegated('COND_HYPERTENSION')) {
-    vitals = 'BP 154/96 mmHg, Temp 36.8°C, HR 78 bpm, RR 14/min, SpO2 99%';
+    vitals = 'Patient reports high blood pressure; formal blood pressure measurement pending.';
   } else if (hasPresent('SYM_CHEST_PAIN')) {
-    vitals = 'BP 138/88 mmHg, Temp 36.9°C, HR 88 bpm, RR 20/min, SpO2 97%';
+    vitals = 'Emergency flag: STAT vital signs and 12-lead ECG required.';
   }
 
-  let physicalExam = 'Patient alert, oriented x3. Cardiovascular RRR, Chest clear bilaterally, Abdomen soft and non-tender.';
-  if (hasPresent('SYM_CHEST_PAIN')) {
-    physicalExam = 'Cardiovascular: Normal S1/S2, regular rate and rhythm, no murmurs, gallops, or friction rubs. Chest wall non-tender to palpation. Lungs clear bilaterally.';
-  } else if (hasPresent('SYM_FEVER')) {
-    physicalExam = 'General: Febrile, flushed appearance. Oropharynx clear, no cervical lymphadenopathy. Abdomen soft, non-tender.';
-  } else if (hasPresent('SYM_DIARRHEA') || hasPresent('SYM_VOMITING')) {
-    physicalExam = 'Abdomen: Soft, mild epigastric/periumbilical tenderness without guarding or rigidity, hyperactive bowel sounds.';
-  }
-
-  let labs = 'Point-of-care rapid testing unremarkable.';
-  if (hasPresent('SYM_CHEST_PAIN')) {
-    labs = '12-lead ECG: Sinus rhythm without acute ST-segment elevation. High-sensitivity Troponin requested.';
-  } else if (hasPresent('SYM_FEVER')) {
-    labs = 'CBC, Peripheral Blood Smear, and Malaria Rapid Diagnostic Test (RDT) ordered.';
-  }
+  let physicalExam = 'Not documented (Pending physician physical examination)';
+  let labs = 'Not documented';
 
   // 3. Clinical Assessment & Diagnosis Selection - Derived ONLY from presentFacts
   let primaryDiag = 'Unspecified Acute Clinical Condition';
@@ -492,15 +484,19 @@ function generateHindiOfflineSOAPNote(patientInfo: PatientInfo, transcript: stri
   );
 
   // Red-Flag Safety Alerts for affirmed high-risk symptoms
-  for (const fact of presentFacts) {
-    if (['SYM_CHEST_PAIN', 'SYM_BREATHLESSNESS', 'SYM_FAINTING'].includes(fact.conceptId)) {
-      safetyAlerts.unshift({
-        type: 'Red Flag',
-        severity: 'High',
-        message: `Emergency Red Flag detected: ${fact.canonicalEnglish} — Patient stated: "${fact.evidence}" (${Math.round(fact.confidence * 100)}% confidence). Immediate clinical evaluation recommended.`,
-      });
-    }
+  const redFlagAlerts: SafetyAlert[] = [];
+  const highRiskFacts = [...presentFacts]
+    .filter((f) => ['SYM_CHEST_PAIN', 'SYM_BREATHLESSNESS', 'SYM_FAINTING'].includes(f.conceptId))
+    .sort((a, b) => (a.conceptId === 'SYM_CHEST_PAIN' ? -1 : b.conceptId === 'SYM_CHEST_PAIN' ? 1 : 0));
+
+  for (const fact of highRiskFacts) {
+    redFlagAlerts.push({
+      type: 'Red Flag',
+      severity: 'High',
+      message: `Emergency Red Flag detected: ${formatCanonical(fact.canonicalEnglish)} — Patient stated: "${fact.evidence}" (${Math.round(fact.confidence * 100)}% confidence). Immediate clinical evaluation recommended.`,
+    });
   }
+  safetyAlerts.unshift(...redFlagAlerts);
 
   // 5. Documentation Confidence Scores
   const avgConfidence = facts.length > 0

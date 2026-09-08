@@ -38,39 +38,38 @@ export function generatePhysicianReadyIntakeSummary(
   const isAyush = clinicalDepartment === 'Ayurveda (AYUSH)';
 
   // 1. Patient Demographics Normalization
-  const fullName = verifiedProfile?.fullName || intake?.patientDemographics?.fullName || 'Aarav Sharma';
-  const age = verifiedProfile?.age || intake?.patientDemographics?.age || 38;
-  const gender = (verifiedProfile?.gender || intake?.patientDemographics?.gender || 'Male') as 'Male' | 'Female' | 'Other';
-  const abhaId = verifiedProfile?.abhaId || intake?.abhaId || '91-8765-4321-0987';
+  const fullName = verifiedProfile?.fullName || intake?.patientDemographics?.fullName || 'Not documented';
+  const age = verifiedProfile?.age || intake?.patientDemographics?.age || 'Not documented';
+  const gender = (verifiedProfile?.gender || intake?.patientDemographics?.gender || 'Not documented') as 'Male' | 'Female' | 'Other';
+  const abhaId = verifiedProfile?.abhaId || intake?.abhaId || 'Not documented';
 
   // 2. Section 1: Chief Complaint
   let chiefComplaint = intake?.chiefComplaint || '';
   if (!chiefComplaint) {
-    if (isAyush) {
-      chiefComplaint = intake?.ayushHistory?.nidanaSamprapti?.chiefComplaintAyush ||
-        'Amlapitta (Hyperacidity) with Vidaha (retrosternal burning) and Tikta-Amlodgara (sour eructations) for 5 days';
+    if (isAyush && intake?.ayushHistory?.nidanaSamprapti?.chiefComplaintAyush) {
+      chiefComplaint = intake.ayushHistory.nidanaSamprapti.chiefComplaintAyush;
     } else {
-      chiefComplaint = 'Epigastric and retrosternal burning pain with acid reflux for 5 days';
+      chiefComplaint = 'Not documented';
     }
   }
 
   // 3. Section 2: History of Present Illness (HPI - SOCRATES + Ayurvedic Samprapti)
   const socrates = intake?.socratesHpi || {};
-  const site = socrates.site || 'Epigastrium and lower retrosternal area';
-  const onset = socrates.onset || 'Gradual onset over 5 days, progressive';
-  const character = socrates.character || 'Burning and gnawing discomfort';
-  const radiation = socrates.radiation || 'Radiates upward to mid-chest; no radiation to left arm, back, or jaw';
-  const severity = socrates.severity ? `${socrates.severity}/10 on numerical rating scale` : '6/10 (Moderate to Severe)';
-  const timing = socrates.timing || 'Post-prandial, typically 1 to 2 hours after meals and at bedtime';
+  const site = socrates.site || 'Not documented';
+  const onset = socrates.onset || 'Not documented';
+  const character = socrates.character || 'Not documented';
+  const radiation = socrates.radiation || 'Not documented';
+  const severity = socrates.severity ? `${socrates.severity}/10 on numerical rating scale` : 'Not documented';
+  const timing = socrates.timing || 'Not documented';
   const exacerbating = socrates.exacerbatingFactors?.length
     ? socrates.exacerbatingFactors.join(', ')
-    : 'Spicy or fried foods, prolonged fasting, recumbent position';
+    : 'Not documented';
   const relieving = socrates.relievingFactors?.length
     ? socrates.relievingFactors.join(', ')
-    : 'Over-the-counter antacids, warm water or cold milk, upright posture';
+    : 'Not documented';
   const associated = socrates.associatedSymptoms?.length
     ? socrates.associatedSymptoms.join(', ')
-    : 'Nausea, epigastric fullness, acid regurgitation; denies hematemesis or dysphagia';
+    : 'Not documented';
 
   let hpiText = `Patient presents with ${chiefComplaint.toLowerCase()}.
 - Site: ${site}
@@ -85,15 +84,15 @@ export function generatePhysicianReadyIntakeSummary(
 
   if (isAyush && intake?.ayushHistory) {
     const samprapti = intake.ayushHistory.nidanaSamprapti;
-    const doshas = samprapti?.sampraptiGhatakas?.doshaInvolved?.join(', ') || 'Pachaka Pitta pradhana, Kledaka Kapha anubandha';
-    const dushya = samprapti?.sampraptiGhatakas?.dushyaInvolved?.join(', ') || 'Rasa Dhatu, Rakta Dhatu';
-    const srotas = samprapti?.sampraptiGhatakas?.srotasInvolved?.join(', ') || 'Annavaha and Purishavaha Srotas';
-    const ama = samprapti?.sampraptiGhatakas?.amaPresence || 'Saama (Metabolic toxins / sluggish digestion present)';
+    const doshas = samprapti?.sampraptiGhatakas?.doshaInvolved?.join(', ') || 'Not documented';
+    const dushya = samprapti?.sampraptiGhatakas?.dushyaInvolved?.join(', ') || 'Not documented';
+    const srotas = samprapti?.sampraptiGhatakas?.srotasInvolved?.join(', ') || 'Not documented';
+    const ama = samprapti?.sampraptiGhatakas?.amaPresence || 'Not documented';
 
     hpiText += `\n\nAyurvedic Pathogenesis (Samprapti Ghatakas):
 - Dosha Involved: ${doshas}
 - Dushya: ${dushya}
-- Srotas & Sroto-Dushti: ${srotas} (Sanga / Vimargagamana)
+- Srotas & Sroto-Dushti: ${srotas}
 - Ama Status: ${ama}`;
   }
 
@@ -105,7 +104,7 @@ export function generatePhysicianReadyIntakeSummary(
       .map((c) => `- ${c.condition}${c.diagnosedYear ? ` (Diagnosed ${c.diagnosedYear})` : ''}: ${c.status || 'Active'}${c.currentTreatment ? ` — on ${c.currentTreatment}` : ''}`)
       .join('\n');
   } else {
-    medicalHistoryText = '- Essential Hypertension (Diagnosed 2022, well controlled on daily medication)\n- Denies prior myocardial infarction, diabetes, tuberculosis, or asthma.';
+    medicalHistoryText = '- None documented';
   }
 
   const surgeries = intake?.pastSurgicalHistory || [];
@@ -115,7 +114,7 @@ export function generatePhysicianReadyIntakeSummary(
       .map((s) => `- ${s.procedure}${s.approximateYear ? ` (${s.approximateYear})` : ''}${s.complications ? ` — Complications: ${s.complications}` : ' (No complications)'}`)
       .join('\n');
   } else {
-    surgicalHistoryText = '- No prior major surgical procedures. Denies adverse reactions to general anesthesia.';
+    surgicalHistoryText = '- None documented';
   }
 
   const pastMedicalSurgicalText = `Past Medical History:\n${medicalHistoryText}\n\nPast Surgical History:\n${surgicalHistoryText}`;
@@ -146,9 +145,7 @@ export function generatePhysicianReadyIntakeSummary(
   if (allMedsFormatted.length > 0) {
     drugHistoryText = allMedsFormatted.map((m, i) => `${i + 1}. ${m}`).join('\n');
   } else {
-    allMedsFormatted.push('Telmisartan 40mg PO once daily in morning');
-    allMedsFormatted.push('Pantoprazole 40mg PO PRN for gastric burning');
-    drugHistoryText = allMedsFormatted.map((m, i) => `${i + 1}. ${m}`).join('\n');
+    drugHistoryText = 'None documented';
   }
 
   const allergies = intake?.knownAllergies || [];
@@ -161,8 +158,7 @@ export function generatePhysicianReadyIntakeSummary(
     });
     allergyHistoryText = allergiesFormatted.map((a) => `- ${a}`).join('\n');
   } else {
-    allergiesFormatted.push('Penicillin: Urticaria and mild facial pruritus (Avoid beta-lactams)');
-    allergyHistoryText = '- Penicillin: Urticaria and mild facial pruritus (Avoid beta-lactams)\n- No known food or environmental allergies reported.';
+    allergyHistoryText = '- None documented / NKDA';
   }
 
   const drugAndAllergyText = `Current Medications:\n${drugHistoryText}\n\nKnown Allergies:\n${allergyHistoryText}`;
@@ -175,45 +171,45 @@ export function generatePhysicianReadyIntakeSummary(
       .map((f) => `- ${f.relationship}: ${f.condition}${f.ageAtOnset ? ` (Onset age ${f.ageAtOnset})` : ''}`)
       .join('\n');
   } else {
-    familyHistoryText = '- Father: Type 2 Diabetes Mellitus & Hypertension (Diagnosed age 54)\n- Mother: Osteoarthritis (Knee)\n- No known family history of early coronary artery disease or GI malignancies.';
+    familyHistoryText = '- None documented';
   }
 
   // 7. Section 6: Personal History (Lifestyle, Diet, Ahara-Vihara & Prakriti)
   const personal = intake?.personalHistory || {};
-  const diet = personal.dietType || 'Vegetarian';
-  const smoking = personal.smokingStatus || 'Never Smoker';
-  const alcohol = personal.alcoholConsumption || 'Occasional / Social';
-  const sleep = personal.sleepQuality || 'Disturbed by nighttime acid reflux';
-  const activity = personal.physicalActivityLevel || 'Sedentary desk job';
+  const diet = personal.dietType || 'Not documented';
+  const smoking = personal.smokingStatus || 'Not documented';
+  const alcohol = personal.alcoholConsumption || 'Not documented';
+  const sleep = personal.sleepQuality || 'Not documented';
+  const activity = personal.physicalActivityLevel || 'Not documented';
 
   let personalHistoryText = `- Diet: ${diet}\n- Tobacco/Smoking: ${smoking}\n- Alcohol: ${alcohol}\n- Sleep Hygiene: ${sleep}\n- Physical Activity: ${activity}`;
 
   if (isAyush && intake?.ayushHistory) {
     const aharaVihara = intake.ayushHistory.aharaVihara;
     const prakriti = intake.ayushHistory.dashavidhaPariksha?.prakriti;
-    const agni = intake.ayushHistory.dashavidhaPariksha?.aharaShakti?.agniType || 'Vishamagni (Irregular digestive fire)';
-    const kostha = aharaVihara?.kosthaNature || 'Krura Kostha (Hard / constipated bowel tendency)';
+    const agni = intake.ayushHistory.dashavidhaPariksha?.aharaShakti?.agniType || 'Not documented';
+    const kostha = aharaVihara?.kosthaNature || 'Not documented';
 
     personalHistoryText += `\n\nAyurvedic Constitutional Profile (Prakriti & Ahara-Vihara):
-- Prakriti: ${prakriti?.dominantPrakriti || 'Pitta-Vata'} dominant constitution
+- Prakriti: ${prakriti?.dominantPrakriti ? `${prakriti.dominantPrakriti} dominant constitution` : 'Not documented'}
 - Agni (Digestive Fire): ${agni}
 - Kostha (Bowel Pattern): ${kostha}
-- Ahara Timing: ${aharaVihara?.dietPatterns?.aharaTiming || 'Akala Bhojana (Irregular meal timings)'}
-- Dominant Rasa in Diet: ${aharaVihara?.dietPatterns?.rasaPredominance?.join(', ') || 'Katu (Pungent), Amla (Sour)'}
-- Nidra (Sleep): ${aharaVihara?.viharaHabits?.nidraPattern || 'Alpanidra (Fragmented sleep due to burning discomfort)'}`;
+- Ahara Timing: ${aharaVihara?.dietPatterns?.aharaTiming || 'Not documented'}
+- Dominant Rasa in Diet: ${aharaVihara?.dietPatterns?.rasaPredominance?.join(', ') || 'Not documented'}
+- Nidra (Sleep): ${aharaVihara?.viharaHabits?.nidraPattern || 'Not documented'}`;
   }
 
   // 8. Section 7: Review of Systems (ROS)
   const ros = intake?.reviewOfSystems || {};
   const rosLines: string[] = [
-    `- General: ${ros.general?.fever ? 'Positive for low-grade fever' : 'Afebrile, denies chills, night sweats, or unintended weight loss.'}`,
-    `- Cardiovascular: ${ros.cardiovascular?.chestPain ? 'Chest discomfort as noted in HPI' : 'Denies exertional angina, palpitations, orthopnea, or pedal edema.'}`,
-    `- Respiratory: ${ros.respiratory?.shortnessOfBreath ? 'Shortness of breath reported' : 'Denies cough, hemoptysis, dyspnea, or wheezing.'}`,
-    `- Gastrointestinal: Positive for epigastric burning and post-prandial acid reflux. Denies dysphagia, hematemesis, melena, jaundice, or bowel habit alteration.`,
-    `- Genitourinary: Denies dysuria, hematuria, nocturia, or flank tenderness.`,
-    `- Musculoskeletal: Denies joint pains, swelling, or morning stiffness.`,
-    `- Neurological: Denies headache, syncopal episodes, focal motor weakness, or numbness.`,
-    `- Integumentary: Denies active rash, jaundice, or cutaneous lesions.`,
+    `- General: ${ros.general?.fever ? 'Positive for fever' : 'Not documented / negative'}`,
+    `- Cardiovascular: ${ros.cardiovascular?.chestPain ? 'Positive for chest discomfort' : 'Not documented / negative'}`,
+    `- Respiratory: ${ros.respiratory?.shortnessOfBreath ? 'Positive for shortness of breath' : 'Not documented / negative'}`,
+    `- Gastrointestinal: ${ros.gastrointestinal?.abdominalPain ? 'Positive for abdominal discomfort' : 'Not documented / negative'}`,
+    `- Genitourinary: Not documented / negative`,
+    `- Musculoskeletal: Not documented / negative`,
+    `- Neurological: Not documented / negative`,
+    `- Integumentary: Not documented / negative`,
   ];
   const reviewOfSystemsText = rosLines.join('\n');
 
@@ -303,7 +299,7 @@ ${priorInvestigationsText}
     name: fullName,
     age: age,
     sex: gender,
-    medicalHistory: `Pre-consultation kiosk intake (${clinicalDepartment}). Chronic history: ${conditions.map((c) => c.condition).join(', ') || 'Hypertension'}.`,
+    medicalHistory: `Pre-consultation kiosk intake (${clinicalDepartment}). Chronic history: ${conditions.map((c) => c.condition).join(', ') || 'None documented'}.`,
     currentMedications: allMedsFormatted.join('; '),
     knownAllergies: allergiesFormatted.join('; '),
     encounterType: `${clinicalDepartment} Pre-Consultation Handoff`,
@@ -354,10 +350,10 @@ ${priorInvestigationsText}
       allergies: allergiesFormatted,
     },
     objective: {
-      vital_signs: 'Self-reported at kiosk terminal: Stable. Formal triage vitals pending nursing intake at room 4.',
+      vital_signs: 'Self-reported at kiosk terminal: Not documented. Formal triage vitals pending nursing intake.',
       physical_exam: isAyush
-        ? 'Pre-consultation intake. Dashavidha Pariksha: Pitta-Vata Prakriti, Mandagni, Krura Kostha. In-person Ashtavidha Pariksha pending physician examination.'
-        : 'Pre-consultation kiosk self-service intake. In-person physical examination (abdominal palpation, chest auscultation) pending attending physician consultation.',
+        ? 'Pre-consultation intake. In-person Ashtavidha Pariksha pending physician examination.'
+        : 'Pre-consultation kiosk self-service intake. In-person physical examination pending attending physician consultation.',
       labs_and_imaging: priorInvestigationsText,
     },
     assessment: {

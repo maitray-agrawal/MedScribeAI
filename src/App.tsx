@@ -319,7 +319,7 @@ export default function App() {
             encounterType: 'Acute Emergency Triage Handoff',
           });
           setTranscript(`Patient: ${alert.patientName} (${alert.age}y, ${alert.gender}).
-ABHA ID: ${alert.abhaId || '91-8765-4321-0987'}.
+ABHA ID: ${alert.abhaId || 'Not documented'}.
 Location: ${alert.kioskStationId}.
 Emergency Category: ${alert.emergencyCategory}.
 Detected Pattern: ${alert.detectedPattern}.

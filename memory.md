@@ -718,6 +718,69 @@ Successfully completed Phase 7B Canonical ClinicalFact Migration across MedScrib
 - **Python Backend** (`pytest backend/tests`): 11/11 tests passed in 0.85s.
 - **Production Build** (`npm run build`): Clean build (Vite + esbuild).
 
+---
+
+## 2026-09-09 — Phase 8: Local AI Clinical Intelligence Implemented
+
+**Summary of Work:**
+Implemented complete Phase 8 sovereign, offline-first clinical pipeline with `ClinicalFact[]` as the single canonical source of truth and strict zero-fabrication enforcement.
+
+1. **Hardware & Environment Assessment (Phase 8A)**:
+   - Evaluated target host: Windows 11, Intel Core Ultra 5 125H (14-core, 16 GB RAM), Intel Arc Graphics (NO NVIDIA GPU), Python 3.14.3.
+   - Identified constraints: No pre-built binary wheels for heavy ML frameworks (torch, paddleocr, onnxruntime-gpu) for Python 3.14 on Win64.
+   - Enforced architectural rule: When local runtime tools (whisper.cpp, tesseract, ffmpeg) are not in PATH, providers return an explicit, honest `UNAVAILABLE` state with diagnostics rather than silently invoking cloud models.
+
+2. **Unified Ingestion Contract (Phase 8B)**:
+   - Built `src/clinical/ingestionContract.ts` and `backend/app/clinical/ingestion.py`.
+   - Typed models: `IngestionEvent`, `TextInput`, `AudioInput`, `DocumentInput`, `IngestionProvenance`.
+   - Rigorous validation: Rejects empty text, zero-byte audio, empty documents, and unsupported MIME types.
+
+3. **Language Identification Abstraction (Phase 8C)**:
+   - Built `src/clinical/languageIdentification.ts` and `backend/app/nlp/language_id.py`.
+   - Fast Unicode block inspection (Devanagari, Tamil, Gujarati, Latin).
+   - Lexical heuristic scoring for Indian clinical dialects (EN, HI, MR, TA, GU) and mixed code-switching.
+   - Calibrated confidence scoring with rejection of ambiguous short inputs.
+
+4. **ASR Provider Abstraction & Audio Quality Gate (Phase 8D & 8E)**:
+   - Built `src/speech/asrProvider.ts` defining `ASRProvider`, `LocalWhisperCppASRProvider`, `MockASRProvider`, `ASRModelRegistry`.
+   - Implemented `evaluateAudioQuality()` rejecting empty audio, silence < 200ms, and invalid MIME containers.
+
+5. **OCR Provider Abstraction & Hallucination Eradication (Phase 8F & 8G)**:
+   - Built `src/ocr/ocrProvider.ts` defining `OCRProvider`, `LocalTesseractOCRProvider`, `MockOCRProvider`, `OCRDocumentPipeline`.
+   - Audited `server.ts` and **completely eradicated `getDocumentFallback()`** which was fabricating Telmisartan, Metformin, BP 148/92, Acute Gastroenteritis, and HbA1c 8.4%. Endpoint now fails honestly with HTTP 422 `error: 'OCR_FAILED'` and zero clinical facts.
+
+6. **Clinical NLP & Normalization (Phase 8H & 8I)**:
+   - Implemented `extractTemporalConditionFacts()` and `extractVitalFacts()` in TypeScript and Python (`backend/app/nlp/extractor.py`).
+   - Added contrastive temporal clause extraction (`"Pehle diabetes tha, ab nahi hai"` -> emits BOTH `HISTORICAL AFFIRMED` and `CURRENT NEGATED` facts without collapsing).
+   - Added family experiencer detection (`"Mother had asthma"` -> `FAMILY_MEMBER`).
+   - Added suspected condition detection (`"Shayad pathri hai"` -> `SUSPECTED`, `COND_KIDNEY_STONE`).
+   - Added conditional assertion detection (`"Agar dard badhe to"` -> `CONDITIONAL`).
+   - Added vital signs extraction (`"Blood pressure 148/92"` -> `VITAL_BP_SYSTOLIC` 148, `VITAL_BP_DIASTOLIC` 92).
+   - Added AYUSH Dashavidha Pariksha vs patient reported distinction (`CLINICIAN_OBSERVED` vs `PATIENT_REPORTED`).
+   - Updated deduplication keys to composite `canonicalId_assertion_temporality_experiencer`.
+
+7. **Safety Integration & Red Flag Triage (Phase 8J)**:
+   - Hardened `src/clinical/redFlagRules.ts`: replaced all clinical treatment directives with kiosk triage guidance (`"Priority triage required... Alert on-duty medical officer immediately."`).
+   - Enforced negative assertion safety: negated symptoms never trigger red flags (`"Chest pain nahi hai"` -> 0 red flags).
+
+8. **Interview & Documentation Projection (Phase 8K & 8L)**:
+   - Dynamic questioning driven by known vs missing SOCRATES facts with zero invented patient answers.
+   - Verified pure projections in `intakeSummaryGenerator.ts`, `offlineLocalEngine.ts`, and `fhirConverter.ts`.
+
+9. **Offline Persistence & Physician Approval Gate (Phase 8M)**:
+   - Created sovereign repositories in `src/storage/clinicalRepositories.ts` and `backend/app/storage/database.py` (SQLite schema: `encounters`, `clinical_facts`, `fact_evidence`, `audit_log`, `sync_queue`).
+   - Strict workflow: `AI_DRAFT` -> `REVIEWING` -> `APPROVED` -> `EXPORTED`.
+   - Guaranteed: Blocks export before approval, blocks fact modification after approval, local physician edits win conflict resolution.
+
+10. **Fabrication Regression Suite & Final Verification (Phase 8N)**:
+    - Created `src/__tests__/fabricationRegression.test.ts` covering all 15 required clinical NLP cases, zero synthetic vitals, and red flag negation safety.
+    - Verified test suite:
+      - `npm run lint` (`tsc --noEmit`): 0 errors.
+      - Vitest (`npx vitest run`): 20 test files, 311/311 tests passing in 7.22s.
+      - Pytest (`python -m pytest backend/tests`): 5 test files, 24/24 tests passing in 1.15s.
+      - Build (`npm run build`): Clean production bundle.
+
+
 
 
 

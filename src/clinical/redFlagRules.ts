@@ -32,7 +32,7 @@ const DETERMINISTIC_RED_FLAG_RULES: RedFlagRule[] = [
     title: 'Possible Acute Coronary Syndrome (Chest Pain + Dyspnea)',
     severity: 'CRITICAL',
     clinicalSummary: 'Patient reports chest pain associated with breathlessness/shortness of breath. High suspicion for myocardial ischemia or infarction.',
-    recommendedImmediateAction: 'Immediate triage to emergency resuscitation area. Obtain urgent 12-lead ECG, establish IV access, and alert the on-duty medical officer.',
+    recommendedImmediateAction: 'Priority triage required: Potential acute coronary emergency detected. Alert on-duty medical officer immediately.',
     evaluate: (ids) => ids.has('SYM_CHEST_PAIN') && ids.has('SYM_BREATHLESSNESS'),
   },
 
@@ -42,7 +42,7 @@ const DETERMINISTIC_RED_FLAG_RULES: RedFlagRule[] = [
     title: 'Chest Discomfort with Syncope or Loss of Consciousness',
     severity: 'CRITICAL',
     clinicalSummary: 'Combination of chest symptoms with syncope or altered consciousness suggests dangerous dysrhythmia or major hemodynamic compromise.',
-    recommendedImmediateAction: 'Check vitals immediately (BP, pulse, SpO2), continuous cardiac monitoring, defibrillator on standby, immediate clinician review.',
+    recommendedImmediateAction: 'Priority triage required: Potential cardiovascular emergency detected. Alert on-duty medical officer immediately.',
     evaluate: (ids) => ids.has('SYM_CHEST_PAIN') && (ids.has('SYM_ALTERED_CONSCIOUSNESS') || ids.has('SYM_DIZZINESS')),
   },
 
@@ -52,7 +52,7 @@ const DETERMINISTIC_RED_FLAG_RULES: RedFlagRule[] = [
     title: 'Suspected Acute Stroke (FAST Protocol)',
     severity: 'CRITICAL',
     clinicalSummary: 'Signs of acute focal neurological deficit, facial asymmetry, limb weakness, or sudden altered consciousness.',
-    recommendedImmediateAction: 'Note time of onset precisely. Urgent non-contrast CT brain, maintain airway, check capillary blood glucose, alert nearest stroke center.',
+    recommendedImmediateAction: 'Priority triage required: Suspected acute stroke symptoms detected. Alert on-duty medical officer immediately.',
     evaluate: (ids) => ids.has('EMERG_STROKE_FAST') || (ids.has('SYM_HEADACHE') && ids.has('SYM_ALTERED_CONSCIOUSNESS')),
   },
 
@@ -62,7 +62,7 @@ const DETERMINISTIC_RED_FLAG_RULES: RedFlagRule[] = [
     title: 'Severe Breathlessness / Respiratory Distress',
     severity: 'HIGH',
     clinicalSummary: 'Acute dyspnea reported without relief.',
-    recommendedImmediateAction: 'Administer supplemental oxygen to maintain SpO2 >= 94%, position patient upright, auscultate chest, nebulize if wheezing present.',
+    recommendedImmediateAction: 'Priority triage required: Potential respiratory emergency detected. Alert on-duty medical officer immediately.',
     evaluate: (ids) => ids.has('SYM_BREATHLESSNESS'),
   },
 
@@ -72,7 +72,7 @@ const DETERMINISTIC_RED_FLAG_RULES: RedFlagRule[] = [
     title: 'Loss of Consciousness / Unresponsive Patient',
     severity: 'CRITICAL',
     clinicalSummary: 'Patient reported to have fainted or become unresponsive.',
-    recommendedImmediateAction: 'Assess Airway, Breathing, Circulation (ABC), check blood sugar (r/o hypoglycemia), place in recovery position if breathing normally.',
+    recommendedImmediateAction: 'Priority triage required: Altered consciousness detected. Alert on-duty medical officer immediately.',
     evaluate: (ids) => ids.has('SYM_ALTERED_CONSCIOUSNESS') || ids.has('EMERG_UNRESPONSIVE'),
   },
 
@@ -82,7 +82,7 @@ const DETERMINISTIC_RED_FLAG_RULES: RedFlagRule[] = [
     title: 'Active Gastrointestinal Bleeding',
     severity: 'HIGH',
     clinicalSummary: 'Evidence of blood in stool or vomiting blood.',
-    recommendedImmediateAction: 'Assess for postural hypotension and pallor, large-bore IV cannula, type and cross-match blood, urgent gastrointestinal review.',
+    recommendedImmediateAction: 'Priority triage required: Suspected gastrointestinal bleeding. Alert on-duty medical officer immediately.',
     evaluate: (ids) => ids.has('SYM_BLOOD_IN_STOOL'),
   }
 ];
@@ -140,7 +140,7 @@ export function evaluateRedFlagsFromFacts(facts: ClinicalFact[]): RedFlagAlert[]
         'Patient reports chest pain associated with breathlessness/shortness of breath. High suspicion for myocardial ischemia or infarction.',
       matchedConcepts: ['SYM_CHEST_PAIN', 'SYM_BREATHLESSNESS'],
       recommendedImmediateAction:
-        'Immediate triage to emergency resuscitation area. Obtain urgent 12-lead ECG, establish IV access, and alert the on-duty medical officer.',
+        'Priority triage required: Potential acute coronary emergency detected. Alert on-duty medical officer immediately.',
     });
   } else if (affirmedCodes.has('SYM_CHEST_PAIN')) {
     // Acute chest pain alone
@@ -153,7 +153,7 @@ export function evaluateRedFlagsFromFacts(facts: ClinicalFact[]): RedFlagAlert[]
         'Patient reports acute chest pain/discomfort (सीने में दर्द). Immediate cardiovascular evaluation indicated.',
       matchedConcepts: [`SYM_CHEST_PAIN (${chestFact?.evidence[0]?.verbatimText || chestFact?.term})`],
       recommendedImmediateAction:
-        'Triage to priority area. Obtain STAT 12-lead ECG, check vitals, and alert on-duty physician.',
+        'Priority triage required: Acute chest pain reported. Alert on-duty medical officer immediately.',
     });
   }
 
@@ -174,7 +174,7 @@ export function evaluateRedFlagsFromFacts(facts: ClinicalFact[]): RedFlagAlert[]
         `SYM_BREATHLESSNESS (${breathFact?.evidence[0]?.verbatimText || breathFact?.term})`,
       ],
       recommendedImmediateAction:
-        'Administer supplemental oxygen to maintain SpO2 >= 94%, position patient upright, auscultate chest.',
+        'Priority triage required: Potential respiratory emergency detected. Alert on-duty medical officer immediately.',
     });
   }
 

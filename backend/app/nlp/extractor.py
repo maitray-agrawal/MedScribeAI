@@ -134,6 +134,30 @@ CLINICAL_DICTIONARY: List[Dict[str, Any]] = [
             r"\bशुगर\b",
         ],
     },
+    {
+        "concept_id": "COND_ASTHMA",
+        "canonical_text": "asthma",
+        "category": FactCategory.CONDITION,
+        "patterns": [
+            r"\basthma\b",
+            r"\bdama\b",
+            r"\bdame\s+ki\s+bimari\b",
+            r"\bदमा\b",
+            r"\bअस्थमा\b",
+        ],
+    },
+    {
+        "concept_id": "COND_KIDNEY_STONE",
+        "canonical_text": "kidney stones (nephrolithiasis)",
+        "category": FactCategory.CONDITION,
+        "patterns": [
+            r"\bpathri\b",
+            r"\bgurde\s+ki\s+pathri\b",
+            r"\bkidney\s+stones?\b",
+            r"\bnephrolithiasis\b",
+            r"\bपथरी\b",
+        ],
+    },
 ]
 
 # Negation patterns
@@ -176,12 +200,76 @@ def extract_clinical_facts(
 
     lower_text = text.lower()
     extracted_facts: List[ClinicalFact] = []
-    seen_concepts = set()
+    seen_facts: set[tuple[str, str, str, str]] = set()
+
+    # 1. Vital Signs: Blood pressure extraction (e.g. "Blood pressure 148/92")
+    bp_match = re.search(r"\b(?:blood\s+pressure|bp|raktchap)?\s*[:=]?\s*(\d{2,3})\s*/\s*(\d{2,3})\s*(?:mm\s*hg)?\b", lower_text)
+    if bp_match and bp_match.group(1) and bp_match.group(2):
+        sys_val = int(bp_match.group(1))
+        dia_val = int(bp_match.group(2))
+        if 50 <= sys_val <= 300 and 30 <= dia_val <= 200:
+            start_c, end_c = bp_match.span()
+            matched_bp = text[start_c:end_c]
+            # Systolic
+            sys_fact = ClinicalFact(
+                concept_id="VITAL_BP_SYSTOLIC",
+                canonical_text="systolic blood pressure",
+                category=FactCategory.VITAL,
+                assertion=FactAssertion.PRESENT,
+                temporality=FactTemporality.CURRENT,
+                experiencer=FactExperiencer.PATIENT,
+                evidence=matched_bp,
+                source=FactSource.PATIENT_TRANSCRIPT,
+                confidence=0.98,
+                language=language,
+                provenance=FactProvenance(
+                    source_id=source_id,
+                    start_char=start_c,
+                    end_char=end_c,
+                    matched_text=matched_bp,
+                    engine="medscribe-deterministic-nlp",
+                ),
+            )
+            extracted_facts.append(sys_fact)
+            seen_facts.add(("VITAL_BP_SYSTOLIC", sys_fact.assertion.value, sys_fact.temporality.value, sys_fact.experiencer.value))
+
+            # Diastolic
+            dia_fact = ClinicalFact(
+                concept_id="VITAL_BP_DIASTOLIC",
+                canonical_text="diastolic blood pressure",
+                category=FactCategory.VITAL,
+                assertion=FactAssertion.PRESENT,
+                temporality=FactTemporality.CURRENT,
+                experiencer=FactExperiencer.PATIENT,
+                evidence=matched_bp,
+                source=FactSource.PATIENT_TRANSCRIPT,
+                confidence=0.98,
+                language=language,
+                provenance=FactProvenance(
+                    source_id=source_id,
+                    start_char=start_c,
+                    end_char=end_c,
+                    matched_text=matched_bp,
+                    engine="medscribe-deterministic-nlp",
+                ),
+            )
+            extracted_facts.append(dia_fact)
+            seen_facts.add(("VITAL_BP_DIASTOLIC", dia_fact.assertion.value, dia_fact.temporality.value, dia_fact.experiencer.value))
+
+    # Experiencer check (e.g. "Mother had asthma")
+    has_family = bool(re.search(r"\b(mother|mummy|maa|father|papa|brother|bhai|sister|behan|family)\b", lower_text))
+    default_experiencer = FactExperiencer.FAMILY_MEMBER if has_family else FactExperiencer.PATIENT
+
+    # Uncertainty / Conditional checks
+    is_suspected = bool(re.search(r"\b(shayad|lagta\s+hai|ho\s+sakta\s+hai|suspect|maybe|perhaps)\b", lower_text))
+    is_conditional = bool(re.search(r"\b(agar|yadi|jab|if|whenever)\b", lower_text))
+
+    # Check for historical past markers and current negation
+    has_historical_marker = bool(re.search(r"\b(pehle|past\s+me|earlier|previously|history\s+of|had\b|tha|thi)\b", lower_text))
+    has_current_negation = bool(re.search(r"\b(ab\s+nahi|ab\s+nahin|now\s+no|not\s+anymore|ab\s+theek|now\s+resolved)\b", lower_text)) or bool(re.search(r"\bab\b.*\bnahi\b", lower_text))
 
     for item in CLINICAL_DICTIONARY:
         concept_id = item["concept_id"]
-        if concept_id in seen_concepts:
-            continue
 
         best_match = None
         for pattern_str in item["patterns"]:
@@ -193,17 +281,90 @@ def extract_clinical_facts(
         if not best_match:
             continue
 
-        seen_concepts.add(concept_id)
         start_char, end_char = best_match.span()
         matched_text = text[start_char:end_char]
 
-        # Evaluate Negation Scope within a bounded window
+        # Case: Contrastive past affirmed + current negated: "Pehle diabetes tha, ab nahi hai"
+        if has_historical_marker and has_current_negation:
+            # 1. Historical Fact
+            hist_match = re.search(r"(?:pehle|earlier|previously)[\w\s]+(?:tha|thi|had)?", lower_text)
+            hist_span_text = text[hist_match.start():hist_match.end()] if hist_match else matched_text
+            hist_start = hist_match.start() if hist_match else start_char
+            hist_end = hist_match.end() if hist_match else end_char
+
+            hist_key = (concept_id, FactAssertion.PRESENT.value, FactTemporality.HISTORICAL.value, default_experiencer.value)
+            if hist_key not in seen_facts:
+                seen_facts.add(hist_key)
+                hist_fact = ClinicalFact(
+                    concept_id=concept_id,
+                    canonical_text=item["canonical_text"],
+                    category=item["category"],
+                    assertion=FactAssertion.PRESENT,
+                    temporality=FactTemporality.HISTORICAL,
+                    experiencer=default_experiencer,
+                    evidence=hist_span_text.strip() or matched_text,
+                    source=FactSource.PATIENT_TRANSCRIPT,
+                    confidence=0.95,
+                    language=language,
+                    provenance=FactProvenance(
+                        source_id=source_id,
+                        start_char=hist_start,
+                        end_char=hist_end,
+                        matched_text=matched_text,
+                        engine="medscribe-deterministic-nlp",
+                    ),
+                )
+                extracted_facts.append(hist_fact)
+
+            # 2. Current Negated Fact
+            curr_match = re.search(r"(?:ab\s+nahi\s+hai|ab\s+nahin|now\s+no|not\s+anymore|ab\s+theek)", lower_text)
+            curr_span_text = text[curr_match.start():curr_match.end()] if curr_match else "ab nahi hai"
+            curr_start = curr_match.start() if curr_match else end_char
+            curr_end = curr_match.end() if curr_match else len(text)
+
+            curr_key = (concept_id, FactAssertion.NEGATED.value, FactTemporality.CURRENT.value, default_experiencer.value)
+            if curr_key not in seen_facts:
+                seen_facts.add(curr_key)
+                curr_fact = ClinicalFact(
+                    concept_id=concept_id,
+                    canonical_text=item["canonical_text"],
+                    category=item["category"],
+                    assertion=FactAssertion.NEGATED,
+                    temporality=FactTemporality.CURRENT,
+                    experiencer=default_experiencer,
+                    evidence=curr_span_text.strip(),
+                    source=FactSource.PATIENT_TRANSCRIPT,
+                    confidence=0.95,
+                    language=language,
+                    provenance=FactProvenance(
+                        source_id=source_id,
+                        start_char=curr_start,
+                        end_char=curr_end,
+                        matched_text=curr_span_text.strip(),
+                        engine="medscribe-deterministic-nlp",
+                    ),
+                )
+                extracted_facts.append(curr_fact)
+
+            continue
+
+        # Standard non-contrastive case:
         is_negated, evidence_start, evidence_end, trigger_word = check_negation_scope(
             text, start_char, end_char
         )
 
-        assertion = FactAssertion.NEGATED if is_negated else FactAssertion.PRESENT
-        verbatim_evidence = text[evidence_start:evidence_end].strip()
+        assertion = FactAssertion.NEGATED if is_negated else (
+            FactAssertion.SUSPECTED if is_suspected else (
+                FactAssertion.CONDITIONAL if is_conditional else FactAssertion.PRESENT
+            )
+        )
+        temporality = FactTemporality.HISTORICAL if has_historical_marker else FactTemporality.CURRENT
+        verbatim_evidence = text[evidence_start:evidence_end].strip() or matched_text
+
+        fact_key = (concept_id, assertion.value, temporality.value, default_experiencer.value)
+        if fact_key in seen_facts:
+            continue
+        seen_facts.add(fact_key)
 
         provenance = FactProvenance(
             source_id=source_id,
@@ -218,9 +379,9 @@ def extract_clinical_facts(
             canonical_text=item["canonical_text"],
             category=item["category"],
             assertion=assertion,
-            temporality=FactTemporality.CURRENT,
-            experiencer=FactExperiencer.PATIENT,
-            evidence=verbatim_evidence or matched_text,
+            temporality=temporality,
+            experiencer=default_experiencer,
+            evidence=verbatim_evidence,
             source=FactSource.PATIENT_TRANSCRIPT,
             confidence=0.92 if is_negated else 0.95,
             language=language,

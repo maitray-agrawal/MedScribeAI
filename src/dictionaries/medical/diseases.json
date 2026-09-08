@@ -76,5 +76,18 @@
       "gu": { "standard": "કમળો", "transliteration": "kamlo", "variants": ["piliyo", "kamalo", "aankho pili thai"] }
     },
     "isChronic": false
+  },
+  {
+    "canonicalId": "COND_KIDNEY_STONE",
+    "nameEn": "Kidney Stones / Nephrolithiasis",
+    "icd10": "N20.0",
+    "translations": {
+      "en": { "standard": "kidney stone", "variants": ["nephrolithiasis", "renal calculus", "kidney stones", "stones"] },
+      "hi": { "standard": "पथरी", "transliteration": "pathri", "variants": ["gurde ki pathri", "pathari", "pathri hai"] },
+      "mr": { "standard": "खडे", "transliteration": "khada", "variants": ["mutkhada", "kidney stone"] },
+      "ta": { "standard": "சிறுநீரகக் கல்", "transliteration": "siruneeraga kal", "variants": ["kidney stone"] },
+      "gu": { "standard": "પથરી", "transliteration": "pathari", "variants": ["kidney stone"] }
+    },
+    "isChronic": false
   }
 ]

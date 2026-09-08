@@ -14,12 +14,15 @@ class FactCategory(str, Enum):
     INVESTIGATION = "investigation"
     ANATOMY = "anatomy"
     AYUSH = "ayush"
+    VITAL = "vital"
 
 
 class FactAssertion(str, Enum):
     PRESENT = "present"
     NEGATED = "negated"
     UNCERTAIN = "uncertain"
+    SUSPECTED = "suspected"
+    CONDITIONAL = "conditional"
     NOT_ELICITED = "not_elicited"
 
 

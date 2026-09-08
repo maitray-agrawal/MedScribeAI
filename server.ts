@@ -899,158 +899,9 @@ Based on the accumulated clinical history above, determine what clinical informa
   }
 });
 
-/**
- * Deterministic fallback for multimodal clinical document extraction
- */
-function getDocumentFallback(documentHint?: string, patientContext?: any) {
-  const hint = (documentHint || '').toLowerCase();
-  const isPrescription = hint.includes('presc') || hint.includes('rx') || hint.includes('med');
-  const isDischarge = hint.includes('discharge') || hint.includes('summary') || hint.includes('admit');
+// Document extraction uses real OCR / vision inference.
+// Zero-Fabrication Invariant: On failure, returns OCR_FAILED without synthetic fallbacks.
 
-  if (isPrescription) {
-    return {
-      documentType: 'prescription',
-      documentDate: '2024-01-20',
-      extractedDateConfidence: 'high',
-      facilityOrDoctor: 'Dr. R. K. Gupta, MD (Internal Medicine), City Health Clinic',
-      diagnoses: ['Essential Hypertension (Grade 1)', 'Mild Osteoarthritis Knee'],
-      medications: [
-        {
-          name: 'Telmisartan',
-          dosage: '40 mg',
-          frequency: 'OD (Once daily in morning)',
-          duration: '30 days',
-          instructions: 'Take orally after breakfast',
-        },
-        {
-          name: 'Metformin Hydrochloride',
-          dosage: '500 mg',
-          frequency: 'BD (Twice daily)',
-          duration: '30 days',
-          instructions: 'Take with major meals',
-        },
-        {
-          name: 'Paracetamol',
-          dosage: '650 mg',
-          frequency: 'SOS (As needed for pain, max 3/day)',
-          duration: '5 days',
-          instructions: 'After food, do not exceed 2g daily',
-        },
-      ],
-      investigations: [
-        {
-          testName: 'Office Blood Pressure (Recorded on Rx)',
-          value: '148/92',
-          unit: 'mmHg',
-          referenceRange: '< 120/80 mmHg',
-          isOutOfRange: true,
-          flagSeverity: 'medium',
-          interpretation: 'Recorded office BP of 148/92 mmHg indicates stage 1 hypertension requiring ongoing antihypertensive therapy.',
-        },
-      ],
-      clinicalSummary: 'Outpatient prescription detailing ongoing antihypertensive (Telmisartan 40mg) and glycemic management (Metformin 500mg) with recorded elevated clinic BP.',
-      criticalFlags: [],
-    };
-  }
-
-  if (isDischarge) {
-    return {
-      documentType: 'discharge_summary',
-      documentDate: '2023-11-10',
-      extractedDateConfidence: 'high',
-      facilityOrDoctor: 'All India Institute of Ayurveda & Hospital / Clinical Medicine Ward',
-      diagnoses: ['Acute Gastroenteritis with Moderate Dehydration', 'Hypokalemia (Resolved at discharge)'],
-      medications: [
-        {
-          name: 'ORS (Oral Rehydration Salts)',
-          dosage: '1 sachet dissolved in 1L clean water',
-          frequency: 'Ad libitum as thirst dictates',
-          duration: '3 days',
-          instructions: 'Sip slowly throughout the day',
-        },
-        {
-          name: 'Probiotic Spores (Bacillus clausii)',
-          dosage: '2 billion spores / 5ml mini-bottle',
-          frequency: 'BD (Twice daily)',
-          duration: '5 days',
-          instructions: 'Drink oral suspension directly',
-        },
-      ],
-      investigations: [
-        {
-          testName: 'Serum Potassium (Discharge Repeat)',
-          value: '4.2',
-          unit: 'mEq/L',
-          referenceRange: '3.5 - 5.1 mEq/L',
-          isOutOfRange: false,
-          flagSeverity: 'normal',
-          interpretation: 'Serum potassium fully normalized at discharge from initial 3.1 mEq/L on admission.',
-        },
-      ],
-      clinicalSummary: 'Discharge summary documenting complete recovery from acute dehydration and hypokalemia following IV fluid resuscitation and oral probiotic stabilization.',
-      criticalFlags: [],
-    };
-  }
-
-  // Default: Comprehensive Laboratory Diagnostic Report
-  return {
-    documentType: 'lab_report',
-    documentDate: '2024-02-14',
-    extractedDateConfidence: 'high',
-    facilityOrDoctor: 'Apex Clinical Reference Laboratories & Pathology Centre',
-    diagnoses: ['Type 2 Diabetes Mellitus (Uncontrolled)', 'Hypercholesterolemia'],
-    medications: [],
-    investigations: [
-      {
-        testName: 'HbA1c (Glycated Hemoglobin)',
-        value: '8.4',
-        unit: '%',
-        referenceRange: '< 5.7 % (Normal), 5.7 - 6.4 % (Prediabetes)',
-        isOutOfRange: true,
-        flagSeverity: 'high',
-        interpretation: 'HbA1c 8.4% is significantly elevated above clinical target (<7.0%), reflecting persistent 3-month glycemic elevation.',
-      },
-      {
-        testName: 'Fasting Blood Glucose (FBS)',
-        value: '162',
-        unit: 'mg/dL',
-        referenceRange: '70 - 99 mg/dL',
-        isOutOfRange: true,
-        flagSeverity: 'high',
-        interpretation: 'Fasting glucose 162 mg/dL exceeds normal fasting limit (70-99 mg/dL).',
-      },
-      {
-        testName: 'Total Serum Cholesterol',
-        value: '228',
-        unit: 'mg/dL',
-        referenceRange: '< 200 mg/dL',
-        isOutOfRange: true,
-        flagSeverity: 'medium',
-        interpretation: 'Total cholesterol 228 mg/dL exceeds desirable limit (<200 mg/dL).',
-      },
-      {
-        testName: 'Serum Creatinine',
-        value: '0.9',
-        unit: 'mg/dL',
-        referenceRange: '0.7 - 1.3 mg/dL',
-        isOutOfRange: false,
-        flagSeverity: 'normal',
-        interpretation: 'Serum creatinine is within standard physiological reference limits.',
-      },
-      {
-        testName: 'Hemoglobin (Hb)',
-        value: '13.8',
-        unit: 'g/dL',
-        referenceRange: '13.0 - 17.0 g/dL',
-        isOutOfRange: false,
-        flagSeverity: 'normal',
-        interpretation: 'Hemoglobin count is within expected normal physiological limits.',
-      },
-    ],
-    clinicalSummary: 'Diagnostic blood report showing uncontrolled hyperglycemia (HbA1c 8.4%, Fasting Glucose 162 mg/dL) and mild hypercholesterolemia (228 mg/dL) with preserved renal function.',
-    criticalFlags: ['Significantly elevated HbA1c (8.4%) — Requires prompt clinical review of glycemic pharmacotherapy'],
-  };
-}
 
 /**
  * POST /api/kiosk/extract-document
@@ -1176,9 +1027,18 @@ Patient Context: Name=${patientContext?.name || 'Unknown'}, Age=${patientContext
     const parsed = JSON.parse(cleaned);
     res.json(parsed);
   } catch (err: any) {
-    console.error('Error in /api/kiosk/extract-document, falling back to deterministic extraction:', err);
-    const fallback = getDocumentFallback(req.body?.documentHint, req.body?.patientContext);
-    res.json(fallback);
+    console.error('Error in /api/kiosk/extract-document:', err);
+    res.status(422).json({
+      error: 'OCR_FAILED',
+      status: 'failed',
+      message: 'Physical document OCR extraction failed. Zero clinical facts generated.',
+      documentType: 'unknown',
+      diagnoses: [],
+      medications: [],
+      investigations: [],
+      clinicalSummary: 'Document extraction failed. Manual physician inspection required.',
+      criticalFlags: [],
+    });
   }
 });
 

@@ -92,7 +92,7 @@ export interface MedicationAttributes {
 export interface AYUSHAttributes {
   ayushCategory?: 'prakriti' | 'vikriti' | 'dosha' | 'agni' | 'kostha' | 'ahara' | 'vihara';
   constitutionalRole?: string;
-  reporterType?: 'PATIENT_REPORTED' | 'CLINICIAN_ASSESSED' | 'SYSTEM_DERIVED';
+  reporterType?: 'PATIENT_REPORTED' | 'CLINICIAN_ASSESSED' | 'CLINICIAN_OBSERVED' | 'SYSTEM_DERIVED';
   prakriti?: string;
   agniType?: string;
   vikriti?: string;
@@ -111,7 +111,7 @@ export interface ClinicalFact {
   term: string; // Alias for preferredTerm
   codingSystem?: string;
   confidence?: number;
-  reporterType?: 'PATIENT_REPORTED' | 'CLINICIAN_ASSESSED' | 'SYSTEM_DERIVED';
+  reporterType?: 'PATIENT_REPORTED' | 'CLINICIAN_ASSESSED' | 'CLINICIAN_OBSERVED' | 'SYSTEM_DERIVED';
   value?: string | number | boolean | Record<string, unknown>;
   attributes?: MedicationAttributes | AYUSHAttributes | Record<string, unknown>;
   assertion: FactAssertion;

@@ -351,5 +351,15 @@
     "colloquial": ["dil ki problem hai"],
     "asrVariants": ["dil ki bimari hai"],
     "relatedConcepts": ["SYM_CHEST_PAIN", "SYM_PALPITATIONS"]
+  },
+  {
+    "conceptId": "COND_KIDNEY_STONE",
+    "category": "condition",
+    "canonicalEnglish": "kidney stones (nephrolithiasis)",
+    "devanagari": ["पथरी", "गुर्दे की पथरी"],
+    "romanized": ["pathri", "gurde ki pathri", "kidney stone"],
+    "colloquial": ["pathri hai", "pathri ki problem"],
+    "asrVariants": ["pathri"],
+    "relatedConcepts": ["SYM_ABDOMINAL_PAIN"]
   }
 ]

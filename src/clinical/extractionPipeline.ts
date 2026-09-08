@@ -171,14 +171,19 @@ export function adaptHindiFactToFact(
   const domain: FactDomain = fact.category === 'condition' ? 'condition' : 'symptom';
   const sourceType: FactSourceType = context.sourceType || 'PATIENT_VOICE';
 
+  const evText =
+    fact.assertion === 'negated' && fact.evidence
+      ? fact.evidence
+      : fact.matchedPhrase || fact.evidence || rawTranscript;
+
   let startOffset = 0;
   let endOffset = rawTranscript.length;
-  if (fact.matchedPhrase && rawTranscript.includes(fact.matchedPhrase)) {
+  if (evText && rawTranscript.includes(evText)) {
+    startOffset = rawTranscript.indexOf(evText);
+    endOffset = startOffset + evText.length;
+  } else if (fact.matchedPhrase && rawTranscript.includes(fact.matchedPhrase)) {
     startOffset = rawTranscript.indexOf(fact.matchedPhrase);
     endOffset = startOffset + fact.matchedPhrase.length;
-  } else if (fact.evidence && rawTranscript.includes(fact.evidence)) {
-    startOffset = rawTranscript.indexOf(fact.evidence);
-    endOffset = startOffset + fact.evidence.length;
   }
 
   const durationStr =
@@ -198,8 +203,8 @@ export function adaptHindiFactToFact(
     attributes: durationStr ? { duration: durationStr } : undefined,
     evidence: [
       {
-        text: fact.matchedPhrase || fact.evidence || rawTranscript,
-        verbatimText: fact.matchedPhrase || fact.evidence || rawTranscript,
+        text: evText,
+        verbatimText: evText,
         startOffset,
         endOffset,
         startChar: startOffset,
@@ -390,6 +395,11 @@ export function extractAYUSHFacts(
   const facts: ClinicalFact[] = [];
   const sourceType: FactSourceType = context.sourceType || 'PATIENT_VOICE';
 
+  const isClinicianObserved =
+    context.sourceType === 'CLINICIAN_ENTERED' ||
+    /\b(pariksha|examin(?:ed|ation)|clinician|doctor|observed|vaidya|dashavidha)\b/i.test(text);
+  const reporterType = isClinicianObserved ? 'CLINICIAN_OBSERVED' : 'PATIENT_REPORTED';
+
   const prakritiRegex = /\b(prakriti|prakruti|dosha|body\s+type)\s*(?:hai|is|:)?\s*([a-z\s-]+)\b/i;
   const match =
     text.match(prakritiRegex) ||
@@ -409,7 +419,7 @@ export function extractAYUSHFacts(
       ayushCategory: 'prakriti',
       constitutionalRole: normalized,
       prakriti: normalized,
-      reporterType: 'PATIENT_REPORTED',
+      reporterType,
     };
 
     facts.push(
@@ -421,14 +431,14 @@ export function extractAYUSHFacts(
         encounterId: context.encounterId,
         domain: 'ayush',
         canonicalId: `AYUSH_PRAKRITI_${normalized.toUpperCase().replace(/[^A-Z]/g, '_')}`,
-        preferredTerm: `Patient-Reported Prakriti: ${normalized}`,
+        preferredTerm: `${reporterType === 'CLINICIAN_OBSERVED' ? 'Clinician-Observed' : 'Patient-Reported'} Prakriti: ${normalized}`,
         value: normalized,
         attributes: ayushAttrs,
         assertion: 'AFFIRMED',
         elicitation: 'ELICITED',
         temporality: 'CHRONIC',
         experiencer: context.experiencer || 'PATIENT',
-        reporterType: 'PATIENT_REPORTED',
+        reporterType,
         evidence: [
           {
             text: match[0],
@@ -467,7 +477,7 @@ export function extractAYUSHFacts(
     const agniAttrs: AYUSHAttributes = {
       ayushCategory: 'agni',
       agniType: normalizedAgni,
-      reporterType: 'PATIENT_REPORTED',
+      reporterType,
     };
 
     facts.push(
@@ -483,7 +493,7 @@ export function extractAYUSHFacts(
         elicitation: 'ELICITED',
         temporality: 'CURRENT',
         experiencer: context.experiencer || 'PATIENT',
-        reporterType: 'PATIENT_REPORTED',
+        reporterType,
         evidence: [
           {
             text: agniMatch[0],
@@ -595,6 +605,394 @@ export function extractMedicationFacts(
 }
 
 /**
+ * Extracts vital signs from clinical text or transcripts:
+ * - Blood pressure (e.g. "Blood pressure 148/92", "BP 148/92 mmHg")
+ * - Heart rate / Pulse (e.g. "Pulse 78 bpm", "Heart rate 80")
+ */
+export function extractVitalFacts(
+  text: string,
+  context: ExtractionContext = {}
+): ClinicalFact[] {
+  const facts: ClinicalFact[] = [];
+  const sourceType: FactSourceType = context.sourceType || 'PATIENT_VOICE';
+
+  // 1. Blood Pressure: e.g. "Blood pressure 148/92", "BP: 120/80 mmHg", "148/92 mmHg"
+  const bpRegex = /\b(?:blood\s+pressure|bp|raktchap)?\s*[:=]?\s*(\d{2,3})\s*\/\s*(\d{2,3})\s*(?:mm\s*hg|bp)?\b/i;
+  const bpMatch = text.match(bpRegex);
+  if (bpMatch && bpMatch[1] && bpMatch[2]) {
+    const systolicVal = parseInt(bpMatch[1], 10);
+    const diastolicVal = parseInt(bpMatch[2], 10);
+
+    // Validate physiological range
+    if (systolicVal >= 50 && systolicVal <= 300 && diastolicVal >= 30 && diastolicVal <= 200) {
+      const matchIndex = bpMatch.index ?? 0;
+      const matchEnd = matchIndex + bpMatch[0].length;
+
+      // Systolic Fact
+      facts.push(
+        createClinicalFact({
+          factId: generateFactId('VITAL_BP_SYSTOLIC', sourceType, 'systolic'),
+          encounterId: context.encounterId,
+          domain: 'vital',
+          canonicalId: 'VITAL_BP_SYSTOLIC',
+          preferredTerm: 'Systolic Blood Pressure',
+          value: systolicVal,
+          attributes: {
+            unit: 'mmHg',
+            systolic: systolicVal,
+            reading: `${systolicVal}/${diastolicVal}`,
+          },
+          assertion: 'AFFIRMED',
+          elicitation: 'ELICITED',
+          temporality: 'CURRENT',
+          experiencer: context.experiencer || 'PATIENT',
+          confidence: 0.98,
+          evidence: [
+            {
+              text: bpMatch[0],
+              verbatimText: bpMatch[0],
+              startOffset: matchIndex,
+              endOffset: matchEnd,
+              startChar: matchIndex,
+              endChar: matchEnd,
+            },
+          ],
+          provenance: {
+            sourceType,
+            sourceId: context.sourceId,
+            language: context.language || 'en',
+            extractionEngine: 'vitalSignsExtractor',
+            confidence: 0.98,
+            timestamp: new Date().toISOString(),
+          },
+        })
+      );
+
+      // Diastolic Fact
+      facts.push(
+        createClinicalFact({
+          factId: generateFactId('VITAL_BP_DIASTOLIC', sourceType, 'diastolic'),
+          encounterId: context.encounterId,
+          domain: 'vital',
+          canonicalId: 'VITAL_BP_DIASTOLIC',
+          preferredTerm: 'Diastolic Blood Pressure',
+          value: diastolicVal,
+          attributes: {
+            unit: 'mmHg',
+            diastolic: diastolicVal,
+            reading: `${systolicVal}/${diastolicVal}`,
+          },
+          assertion: 'AFFIRMED',
+          elicitation: 'ELICITED',
+          temporality: 'CURRENT',
+          experiencer: context.experiencer || 'PATIENT',
+          confidence: 0.98,
+          evidence: [
+            {
+              text: bpMatch[0],
+              verbatimText: bpMatch[0],
+              startOffset: matchIndex,
+              endOffset: matchEnd,
+              startChar: matchIndex,
+              endChar: matchEnd,
+            },
+          ],
+          provenance: {
+            sourceType,
+            sourceId: context.sourceId,
+            language: context.language || 'en',
+            extractionEngine: 'vitalSignsExtractor',
+            confidence: 0.98,
+            timestamp: new Date().toISOString(),
+          },
+        })
+      );
+    }
+  }
+
+  // 2. Pulse / Heart Rate: e.g. "Pulse 78 bpm", "Heart rate 80"
+  const hrRegex = /\b(?:heart\s+rate|pulse|hr)\s*[:=]?\s*(\d{2,3})\s*(?:bpm)?\b/i;
+  const hrMatch = text.match(hrRegex);
+  if (hrMatch && hrMatch[1]) {
+    const hrVal = parseInt(hrMatch[1], 10);
+    if (hrVal >= 30 && hrVal <= 250) {
+      const matchIndex = hrMatch.index ?? 0;
+      const matchEnd = matchIndex + hrMatch[0].length;
+      facts.push(
+        createClinicalFact({
+          factId: generateFactId('VITAL_HEART_RATE', sourceType),
+          encounterId: context.encounterId,
+          domain: 'vital',
+          canonicalId: 'VITAL_HEART_RATE',
+          preferredTerm: 'Heart Rate',
+          value: hrVal,
+          attributes: { unit: 'bpm', heartRate: hrVal },
+          assertion: 'AFFIRMED',
+          elicitation: 'ELICITED',
+          temporality: 'CURRENT',
+          experiencer: context.experiencer || 'PATIENT',
+          confidence: 0.95,
+          evidence: [
+            {
+              text: hrMatch[0],
+              verbatimText: hrMatch[0],
+              startOffset: matchIndex,
+              endOffset: matchEnd,
+              startChar: matchIndex,
+              endChar: matchEnd,
+            },
+          ],
+          provenance: {
+            sourceType,
+            sourceId: context.sourceId,
+            language: context.language || 'en',
+            extractionEngine: 'vitalSignsExtractor',
+            confidence: 0.95,
+            timestamp: new Date().toISOString(),
+          },
+        })
+      );
+    }
+  }
+
+  return facts;
+}
+
+interface KnownConditionDef {
+  canonicalId: string;
+  preferredTerm: string;
+  regex: RegExp;
+}
+
+const KNOWN_CONDITIONS: KnownConditionDef[] = [
+  {
+    canonicalId: 'COND_DIABETES',
+    preferredTerm: 'Diabetes Mellitus',
+    regex: /\b(diabetes|madhumeh|sugar\s+ki\s+bimari|shugar|sugar)\b/i,
+  },
+  {
+    canonicalId: 'COND_HYPERTENSION',
+    preferredTerm: 'Hypertension',
+    regex: /\b(hypertension|high\s+bp|bp\s+high|raktchap|raktadaab|bp\s+ki\s+problem|bp\s+ki\s+bimari)\b/i,
+  },
+  {
+    canonicalId: 'COND_ASTHMA',
+    preferredTerm: 'Asthma',
+    regex: /\b(asthma|dama|dame\s+ki\s+bimari)\b/i,
+  },
+  {
+    canonicalId: 'COND_KIDNEY_STONE',
+    preferredTerm: 'Kidney Stones (Nephrolithiasis)',
+    regex: /\b(pathri|gurde\s+ki\s+pathri|kidney\s+stones?|nephrolithiasis)\b/i,
+  },
+  {
+    canonicalId: 'COND_TUBERCULOSIS',
+    preferredTerm: 'Tuberculosis',
+    regex: /\b(tuberculosis|tapedik|tb\s+ki\s+bimari|\btb\b)\b/i,
+  },
+  {
+    canonicalId: 'COND_HEART_DISEASE',
+    preferredTerm: 'Heart Disease',
+    regex: /\b(heart\s+disease|heart\s+attack|dil\s+ki\s+bimari|hriday\s+rog)\b/i,
+  },
+];
+
+/**
+ * Extracts conditions with strict temporal, assertion, and experiencer semantics.
+ * Handles:
+ * - Contrastive clauses: "Pehle diabetes tha, ab nahi hai" -> emits both HISTORICAL AFFIRMED and CURRENT NEGATED
+ * - Historical past: "Pehle diabetes tha" -> HISTORICAL AFFIRMED
+ * - Current negation: "Ab diabetes nahi hai" -> CURRENT NEGATED
+ * - Family experiencer: "Mother had asthma" -> experiencer: 'FAMILY_MEMBER'
+ * - Suspected: "Shayad pathri hai" -> assertion: 'SUSPECTED'
+ * - Conditional: "Agar dard badhe to" -> assertion: 'CONDITIONAL'
+ */
+export function extractTemporalConditionFacts(
+  text: string,
+  context: ExtractionContext = {}
+): ClinicalFact[] {
+  const facts: ClinicalFact[] = [];
+  const sourceType: FactSourceType = context.sourceType || 'PATIENT_VOICE';
+  const lowerText = text.toLowerCase();
+
+  // Experiencer check (e.g. "Mother had asthma", "Father had hypertension")
+  const familyMatch = text.match(/\b(mother|mummy|maa|mataji|father|papa|pitaji|brother|bhai|sister|behan|parents|family)\b/i);
+  const experiencer: FactExperiencer = familyMatch ? 'FAMILY_MEMBER' : (context.experiencer || 'PATIENT');
+
+  // Uncertainty check (e.g. "Shayad pathri hai", "Maybe diabetes")
+  const isSuspected = /\b(shayad|lagta\s+hai|ho\s+sakta\s+hai|suspect|maybe|perhaps|possible|possibly)\b/i.test(lowerText);
+
+  // Conditional check (e.g. "Agar dard badhe to")
+  const isConditional = /\b(agar\b|yadi\b|jab\b|if\b|whenever|in\s+case)\b/i.test(lowerText);
+
+  // Historical markers
+  const hasHistoricalMarker = /\b(pehle|past\s+me|purani|earlier|previously|history\s+of|had\b|tha\b|thi\b|the\b)\b/i.test(lowerText);
+
+  // Current negation markers
+  const hasCurrentNegation =
+    /\b(ab\s+nahi|ab\s+nahin|now\s+no|not\s+anymore|ab\s+theek|ab\s+normal|now\s+resolved)\b/i.test(lowerText) ||
+    /\b(ab|now)\b[^,.;]*\b(nahi|nahin|not)\b/i.test(lowerText);
+
+  // General negation (e.g. "nahi hai", "denies", "no")
+  const hasGeneralNegation =
+    /\b(nahi\s+hai|nahin\s+hai|nhi\s+hai|not\s+present|denies|denied|no\b|ruled\s+out)\b/i.test(lowerText);
+
+  for (const cond of KNOWN_CONDITIONS) {
+    const match = text.match(cond.regex);
+    if (!match) continue;
+
+    const matchIndex = match.index ?? 0;
+    const matchEnd = matchIndex + match[0].length;
+
+    // Case 1: Contrastive utterance: "Pehle diabetes tha, ab nahi hai"
+    if (hasHistoricalMarker && hasCurrentNegation) {
+      // Split into clauses by punctuation or contrastive conjunctions
+      const clauses = text.split(/[,;।|]|\b(?:lekin|par|magar|kintu|but|however)\b/i);
+      const histClause = clauses.find((c) => /\b(pehle|past\s+me|purani|earlier|previously|history\s+of|had|tha|thi|the)\b/i.test(c)) || clauses[0] || text;
+      const currClause = clauses.find((c) => /\b(ab|now|not\s+anymore|resolved)\b/i.test(c)) || clauses[1] || 'ab nahi hai';
+
+      const histEvidence = histClause.trim();
+      const histStart = text.indexOf(histEvidence);
+      const histEnd = histStart >= 0 ? histStart + histEvidence.length : histEvidence.length;
+
+      facts.push(
+        createClinicalFact({
+          factId: generateFactId(cond.canonicalId, sourceType, 'historical'),
+          encounterId: context.encounterId,
+          domain: 'condition',
+          canonicalId: cond.canonicalId,
+          preferredTerm: cond.preferredTerm,
+          assertion: isSuspected ? 'SUSPECTED' : isConditional ? 'CONDITIONAL' : 'AFFIRMED',
+          elicitation: 'ELICITED',
+          temporality: 'HISTORICAL',
+          experiencer,
+          confidence: 0.95,
+          evidence: [
+            {
+              text: histEvidence,
+              verbatimText: histEvidence,
+              startOffset: Math.max(0, histStart),
+              endOffset: histEnd,
+              startChar: Math.max(0, histStart),
+              endChar: histEnd,
+            },
+          ],
+          provenance: {
+            sourceType,
+            sourceId: context.sourceId,
+            language: context.language || 'hi',
+            extractionEngine: 'temporalConditionExtractor',
+            confidence: 0.95,
+            timestamp: new Date().toISOString(),
+          },
+        })
+      );
+
+      // 2. Current Negated Fact
+      const currEvidence = currClause.trim();
+      const currStart = text.indexOf(currEvidence);
+      const currEnd = currStart >= 0 ? currStart + currEvidence.length : currEvidence.length;
+
+      facts.push(
+        createClinicalFact({
+          factId: generateFactId(cond.canonicalId, sourceType, 'current'),
+          encounterId: context.encounterId,
+          domain: 'condition',
+          canonicalId: cond.canonicalId,
+          preferredTerm: cond.preferredTerm,
+          assertion: 'NEGATED',
+          elicitation: 'ELICITED',
+          temporality: 'CURRENT',
+          experiencer,
+          confidence: 0.95,
+          evidence: [
+            {
+              text: currEvidence,
+              verbatimText: currEvidence,
+              startOffset: Math.max(0, currStart),
+              endOffset: currEnd,
+              startChar: Math.max(0, currStart),
+              endChar: currEnd,
+            },
+          ],
+          provenance: {
+            sourceType,
+            sourceId: context.sourceId,
+            language: context.language || 'hi',
+            extractionEngine: 'temporalConditionExtractor',
+            confidence: 0.95,
+            timestamp: new Date().toISOString(),
+          },
+        })
+      );
+
+      continue;
+    }
+
+    // Case 2: Individual Historical vs Current Negated vs Current Affirmed
+    let temporality: FactTemporality = 'CURRENT';
+    let assertion: FactAssertion = 'AFFIRMED';
+
+    if (hasHistoricalMarker) {
+      temporality = 'HISTORICAL';
+      assertion = isSuspected ? 'SUSPECTED' : isConditional ? 'CONDITIONAL' : (hasGeneralNegation ? 'NEGATED' : 'AFFIRMED');
+    } else if (hasCurrentNegation || hasGeneralNegation) {
+      temporality = 'CURRENT';
+      assertion = 'NEGATED';
+    } else {
+      temporality = 'CURRENT';
+      assertion = isSuspected ? 'SUSPECTED' : isConditional ? 'CONDITIONAL' : 'AFFIRMED';
+    }
+
+    // Evidence span
+    let evText = text.trim();
+    let evStart = 0;
+    let evEnd = text.length;
+    const clauseMatch = text.match(new RegExp(`[^,.;]*?${match[0]}[^,.;]*`, 'i'));
+    if (clauseMatch && clauseMatch.index !== undefined) {
+      evText = clauseMatch[0].trim();
+      evStart = clauseMatch.index;
+      evEnd = evStart + clauseMatch[0].length;
+    }
+
+    facts.push(
+      createClinicalFact({
+        factId: generateFactId(cond.canonicalId, sourceType, temporality.toLowerCase()),
+        encounterId: context.encounterId,
+        domain: 'condition',
+        canonicalId: cond.canonicalId,
+        preferredTerm: cond.preferredTerm,
+        assertion,
+        elicitation: 'ELICITED',
+        temporality,
+        experiencer,
+        confidence: 0.95,
+        evidence: [
+          {
+            text: evText,
+            verbatimText: evText,
+            startOffset: evStart,
+            endOffset: evEnd,
+            startChar: evStart,
+            endChar: evEnd,
+          },
+        ],
+        provenance: {
+          sourceType,
+          sourceId: context.sourceId,
+          language: context.language || 'en',
+          extractionEngine: 'temporalConditionExtractor',
+          confidence: 0.95,
+          timestamp: new Date().toISOString(),
+        },
+      })
+    );
+  }
+
+  return facts;
+}
+
+/**
  * Master Headless Canonical Fact Extractor.
  * Runs deterministic bilingual NLP + medication + AYUSH + allergy matching.
  * Validates each fact through the Evidence Gate before returning.
@@ -609,9 +1007,34 @@ export function extractCanonicalFacts(
 
   const raw = input.trim();
   const facts: ClinicalFact[] = [];
-  const seenCanonicalIds = new Set<string>();
+  const seenFactKeys = new Set<string>();
 
-  // 1. Check if Hindi / Romanized Hindi is present
+  const getFactKey = (f: ClinicalFact): string =>
+    `${f.canonicalId || f.code}_${f.assertion}_${f.temporality}_${f.experiencer}`;
+
+  // 1. Vital Signs Extraction (e.g. BP 148/92, Pulse 78)
+  const vitalFacts = extractVitalFacts(raw, context);
+  for (const vf of vitalFacts) {
+    const key = getFactKey(vf);
+    if (!seenFactKeys.has(key)) {
+      facts.push(vf);
+      seenFactKeys.add(key);
+    }
+  }
+
+  // 2. Temporal Condition Facts (contrastive clauses, historical vs current, suspected, experiencer)
+  const temporalCondFacts = extractTemporalConditionFacts(raw, context);
+  const specializedCondIds = new Set<string>();
+  for (const tcf of temporalCondFacts) {
+    const key = getFactKey(tcf);
+    if (!seenFactKeys.has(key)) {
+      facts.push(tcf);
+      seenFactKeys.add(key);
+      specializedCondIds.add(tcf.canonicalId);
+    }
+  }
+
+  // 3. Check if Hindi / Romanized Hindi is present
   const isDevanagari = /[\u0900-\u097F]/.test(raw);
   const isHindiKeywords =
     /\b(dard|bukhar|sirdard|chakkar|ulti|dast|khasi|seene|chhati|nahi|nahin|lekin|sar\s+dard)\b/i.test(
@@ -626,50 +1049,63 @@ export function extractCanonicalFacts(
       hindiTemporal as any
     );
     for (const hf of hindiResult.facts) {
+      if (specializedCondIds.has(hf.conceptId)) {
+        continue;
+      }
       const canonical = adaptHindiFactToFact(hf, raw, context, hindiResult.temporal);
-      facts.push(canonical);
-      seenCanonicalIds.add(canonical.canonicalId);
+      const key = getFactKey(canonical);
+      if (!seenFactKeys.has(key)) {
+        facts.push(canonical);
+        seenFactKeys.add(key);
+      }
     }
   }
 
-  // 2. Multilingual concept extractor
+  // 4. Multilingual concept extractor
   const concepts = extractMultilingualConcepts(raw, 'patient_voice', context.language);
   for (const c of concepts) {
-    if (!seenCanonicalIds.has(c.conceptId)) {
-      const canonical = adaptExtractedConceptToFact(c, context);
+    if (specializedCondIds.has(c.conceptId)) {
+      continue;
+    }
+    const canonical = adaptExtractedConceptToFact(c, context);
+    const key = getFactKey(canonical);
+    if (!seenFactKeys.has(key)) {
       facts.push(canonical);
-      seenCanonicalIds.add(canonical.canonicalId);
+      seenFactKeys.add(key);
     }
   }
 
-  // 3. Medication Extraction (with dose, unit, frequency)
+  // 5. Medication Extraction (with dose, unit, frequency)
   const medFacts = extractMedicationFacts(raw, context);
   for (const mf of medFacts) {
-    if (!seenCanonicalIds.has(mf.canonicalId)) {
+    const key = getFactKey(mf);
+    if (!seenFactKeys.has(key)) {
       facts.push(mf);
-      seenCanonicalIds.add(mf.canonicalId);
+      seenFactKeys.add(key);
     }
   }
 
-  // 4. AYUSH Extraction
+  // 6. AYUSH Extraction
   const ayushFacts = extractAYUSHFacts(raw, context);
   for (const af of ayushFacts) {
-    if (!seenCanonicalIds.has(af.canonicalId)) {
+    const key = getFactKey(af);
+    if (!seenFactKeys.has(key)) {
       facts.push(af);
-      seenCanonicalIds.add(af.canonicalId);
+      seenFactKeys.add(key);
     }
   }
 
-  // 5. Allergy Extraction
+  // 7. Allergy Extraction
   const allergyFacts = extractAllergyFacts(raw, context);
   for (const alf of allergyFacts) {
-    if (!seenCanonicalIds.has(alf.canonicalId)) {
+    const key = getFactKey(alf);
+    if (!seenFactKeys.has(key)) {
       facts.push(alf);
-      seenCanonicalIds.add(alf.canonicalId);
+      seenFactKeys.add(key);
     }
   }
 
-  // 6. Run all facts through the Evidence Gatekeeper
+  // 8. Run all facts through the Evidence Gatekeeper
   const validatedFacts = facts.filter((f) => {
     const validation = validateClinicalFact(f);
     if (!validation.valid) {

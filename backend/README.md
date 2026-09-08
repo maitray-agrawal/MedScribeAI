@@ -38,15 +38,17 @@ React (TypeScript Kiosk & Workstation)
 | Capability | Status | Implementation Details |
 | :--- | :--- | :--- |
 | **FastAPI Service Core** | **IMPLEMENTED** | `GET /health`, `GET /version`, `POST /api/v1/clinical/extract` running with CORS on `127.0.0.1:8000`. |
-| **Canonical ClinicalFact Model** | **IMPLEMENTED** | Pydantic v2 models with assertion (`present`, `negated`, `uncertain`, `not_elicited`), temporality, experiencer, and evidence spans. |
+| **Canonical ClinicalFact Model** | **IMPLEMENTED** | Pydantic v2 models with assertion (`present`, `negated`, `uncertain`, `suspected`, `conditional`, `not_elicited`), temporality, experiencer, vitals, and evidence spans. |
 | **Evidence & Provenance Tracking** | **IMPLEMENTED** | `FactProvenance` recording source ID, character start/end offsets, matched text, and engine metadata. |
-| **Deterministic Multilingual NLP** | **IMPLEMENTED** | Concept matcher supporting English and Hindi clinical terms with clause-bounded negation scoping (e.g. `"BP ka problem nahi hai lekin sar dard hai"`). |
+| **Unified Ingestion Contract** | **IMPLEMENTED** | `backend/app/clinical/ingestion.py` enforcing strict text, audio, and document payloads with MIME checking. |
+| **Language Identification** | **IMPLEMENTED** | `backend/app/nlp/language_id.py` with Unicode block detection, lexical Indic heuristics, and calibrated confidence. |
+| **Deterministic Clinical NLP** | **IMPLEMENTED** | Multilingual concept extraction with contrastive temporal resolution (`"Pehle diabetes tha, ab nahi hai"` -> emits both facts), vitals extraction, experiencer, and suspected assertions. |
+| **Local SQLite & Sync Engine** | **IMPLEMENTED** | `backend/app/storage/database.py` with `encounters`, `clinical_facts`, `fact_evidence`, `audit_log`, `sync_queue`, and physician approval gate (`AI_DRAFT` -> `REVIEWING` -> `APPROVED` -> `EXPORTED`). |
 | **TypeScript Client Adapter** | **IMPLEMENTED** | `src/services/clinicalAIClient.ts` with graceful fallback cascade. |
-| **Provider Abstraction** | **IMPLEMENTED** | `src/services/aiProvider.ts` defining `LocalPythonProvider` and `CloudGeminiProvider`. |
-| **Local Offline ASR (Whisper)** | **PLANNED** | Dedicated on-device acoustic model for Indic clinical dialects. |
-| **Local Document OCR (Paddle/Vision)** | **PLANNED** | On-device prescription and diagnostic report OCR pipeline. |
+| **Provider Abstraction** | **IMPLEMENTED** | `src/services/aiProvider.ts`, `src/speech/asrProvider.ts`, `src/ocr/ocrProvider.ts`. |
+| **Local Offline ASR (Whisper.cpp)** | **PLANNED / HOST-DEPENDENT** | Provider inspects host `whisper-cli`/`whisper.cpp`; returns honest `UNAVAILABLE` state when missing rather than silent cloud fallback. |
+| **Local Document OCR (Tesseract)** | **PLANNED / HOST-DEPENDENT** | Provider inspects host `tesseract`; returns honest `UNAVAILABLE` state when missing; synthetic fallbacks eradicated. |
 | **Local Quantized LLM (SLM/Ollama)** | **PLANNED** | Sovereign local model for clinical summary drafting. |
-| **Local SQLite & Sync Engine** | **PLANNED** | Zero-retention transient local storage and ABDM cloud sync. |
 
 ---
 

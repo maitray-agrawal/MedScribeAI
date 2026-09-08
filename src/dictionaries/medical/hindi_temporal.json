@@ -8,7 +8,7 @@
   ],
   "unitWords": {
     "din": { "devanagari": ["दिन", "दिनों"], "romanized": ["din", "dino"], "unit": "days" },
-    "hafta": { "devanagari": ["हफ्ते", "हफ्तों", "सप्ताह"], "romanized": ["hafte", "hafton", "saptah"], "unit": "weeks" },
+    "hafta": { "devanagari": ["हफ्ते", "हफ्तों", "सप्ताह"], "romanized": ["hafte", "hafton", "hafto", "hafta", "saptah"], "unit": "weeks" },
     "mahina": { "devanagari": ["महीने", "महीनों", "माह"], "romanized": ["mahine", "mahino", "maah"], "unit": "months" },
     "saal": { "devanagari": ["साल", "सालों", "वर्ष"], "romanized": ["saal", "saalon", "varsh"], "unit": "years" }
   },

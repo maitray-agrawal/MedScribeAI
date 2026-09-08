@@ -182,6 +182,7 @@ export const KioskShell: React.FC<KioskShellProps> = ({
         abhaId: verifiedProfile?.abhaId,
         department: clinicalDepartment,
         uploadedDocs,
+        canonicalFacts: summaryResult.clinicalFacts,
       });
       setCachedFhirBundle(bundle);
 
@@ -264,6 +265,7 @@ export const KioskShell: React.FC<KioskShellProps> = ({
         abhaId: verifiedProfile?.abhaId,
         department: clinicalDepartment,
         uploadedDocs,
+        canonicalFacts: summary.clinicalFacts,
       });
 
     const receipt: ABDMPushReceipt = abdmPushReceipt || {

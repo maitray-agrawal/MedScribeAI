@@ -296,7 +296,7 @@ export function extractTemporal(transcript: string, temporalDict: TemporalDict):
   }
 
   // "<number> <unit> se" pattern, numeric digits
-  const numericPattern = /(\d+)\s*(din|dino|hafte|hafton|mahine|mahino|saal|saalon)\s*se/;
+  const numericPattern = /(\d+)\s*(din|dino|hafta|hafte|hafton|hafto|mahina|mahine|mahino|saal|saalon)\s*se/;
   const numMatch = normalized.match(numericPattern);
   if (numMatch) {
     const value = parseInt(numMatch[1], 10);

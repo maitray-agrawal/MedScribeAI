@@ -328,43 +328,27 @@ export const DocumentUploadStep: React.FC<DocumentUploadStepProps> = ({
       );
     } catch (err: any) {
       console.error('Failed to extract document vision:', err);
-      // Mark as completed with fallback data so patient is never blocked
-      const fallbackDoc: UploadedDocumentRecord = {
+      // Zero-fabrication enforcement: Never invent synthetic diagnoses or medications on extraction failure!
+      const failedDoc: UploadedDocumentRecord = {
         ...pendingDoc,
-        status: 'completed',
-        effectiveDate: '2024-02-14',
+        status: 'error',
+        errorMessage: 'EXTRACTION_FAILED: Automated OCR/vision analysis failed. Document will be reviewed manually by attending physician.',
+        effectiveDate: nowIso.split('T')[0],
         extractedData: {
-          documentType: docHint?.includes('rx') ? 'prescription' : 'lab_report',
-          documentDate: '2024-02-14',
-          extractedDateConfidence: 'medium',
-          facilityOrDoctor: 'Outpatient Clinical Laboratory',
-          diagnoses: ['Type 2 Diabetes Mellitus', 'Hyperlipidemia'],
-          medications: [
-            {
-              name: 'Metformin Hydrochloride',
-              dosage: '500 mg',
-              frequency: 'BD (Twice daily)',
-              duration: '30 days',
-            },
-          ],
-          investigations: [
-            {
-              testName: 'HbA1c',
-              value: '8.4',
-              unit: '%',
-              referenceRange: '< 5.7 %',
-              isOutOfRange: true,
-              flagSeverity: 'high',
-              interpretation: 'Elevated HbA1c (8.4%) reflects sustained hyperglycemia.',
-            },
-          ],
-          clinicalSummary: 'Laboratory record analyzed with out-of-range glycemic markers.',
-          criticalFlags: ['Elevated HbA1c requires physician review.'],
+          documentType: 'other',
+          documentDate: nowIso.split('T')[0],
+          extractedDateConfidence: 'low',
+          facilityOrDoctor: 'Not documented',
+          diagnoses: [],
+          medications: [],
+          investigations: [],
+          clinicalSummary: 'Automated vision extraction failed. Retained for manual clinician evaluation.',
+          criticalFlags: ['Automated extraction failed — manual physician review required.'],
         },
       };
 
       onUpdateDocuments(
-        [...documents.filter((d) => d.id !== newDocId), fallbackDoc]
+        [...documents.filter((d) => d.id !== newDocId), failedDoc]
       );
     } finally {
       setIsProcessing(false);

@@ -12,17 +12,23 @@ import hindiTemporal from '../dictionaries/medical/hindi_temporal.json';
  * without requiring any external network or Gemini API call.
  * Supports English and Hindi offline clinical processing.
  */
+export interface OfflineSOAPOptions {
+  isDemoMode?: boolean;
+}
+
 export function generateOfflineSOAPNote(
   patientInfo: PatientInfo,
   transcript: string,
-  language?: string
+  language?: string,
+  options?: OfflineSOAPOptions
 ): SOAPNote {
   const isDevanagari = /[\u0900-\u097F]/.test(transcript);
   const isHindiTranslit = /\b(dard|bukhar|sirdard|chakkar|ulti|dast|khasi|seene|chhati|nahi|nahin|din|mahine|hafte|ghante|saal)\b/i.test(transcript);
   const isHindi = language === 'hi' || isDevanagari || isHindiTranslit;
+  const isDemo = options?.isDemoMode === true;
 
   if (isHindi) {
-    return generateHindiOfflineSOAPNote(patientInfo, transcript);
+    return generateHindiOfflineSOAPNote(patientInfo, transcript, options);
   }
 
   const lowerTranscript = transcript.toLowerCase();
@@ -44,89 +50,113 @@ export function generateOfflineSOAPNote(
 
   const hpi = transcript.trim() || 'Patient presented to clinic for unscheduled clinical consultation.';
   const currentMeds = patientInfo.currentMedications ? [patientInfo.currentMedications] : ['None documented'];
-  const allergies = patientInfo.knownAllergies ? [patientInfo.knownAllergies] : ['NKDA'];
+  // Zero-fabrication: Never default to NKDA without patient denial!
+  const allergies = patientInfo.knownAllergies ? [patientInfo.knownAllergies] : ['Not elicited / Not documented'];
 
   // 2. Extract Objective Data
-  let vitals = 'Temp 37.0°C, BP 120/80 mmHg, HR 72 bpm, RR 16/min, SpO2 98%';
+  let vitals = 'Not documented';
   const bpMatch = transcript.match(/(\d{2,3}\/\d{2,3})\s*(mmhg)?/i);
   const tempMatch = transcript.match(/(\d{2,3}\.?\d?)\s*(°?c|degrees)?/i);
   const hrMatch = transcript.match(/(\d{2,3})\s*(bpm|beats)/i);
 
   if (bpMatch || tempMatch || hrMatch) {
-    vitals = `BP ${bpMatch ? bpMatch[1] : '120/80'} mmHg, Temp ${tempMatch ? tempMatch[1] : '38.5'}°C, HR ${hrMatch ? hrMatch[1] : '88'} bpm, RR 18/min`;
-  } else if (lowerTranscript.includes('fever') || lowerTranscript.includes('malaria')) {
-    vitals = 'Temp 38.9°C, BP 115/75 mmHg, HR 98 bpm, RR 20/min, SpO2 97%';
-  } else if (lowerTranscript.includes('hypertension') || lowerTranscript.includes('blood pressure')) {
-    vitals = 'BP 152/94 mmHg, Temp 36.8°C, HR 76 bpm, RR 14/min, SpO2 99%';
+    vitals = `BP ${bpMatch ? bpMatch[1] : 'Not recorded'} mmHg, Temp ${tempMatch ? tempMatch[1] : 'Not recorded'}°C, HR ${hrMatch ? hrMatch[1] : 'Not recorded'} bpm`;
+  } else if (isDemo) {
+    // Isolated legacy demo preset
+    if (lowerTranscript.includes('fever') || lowerTranscript.includes('malaria')) {
+      vitals = 'Temp 38.9°C, BP 115/75 mmHg, HR 98 bpm, RR 20/min, SpO2 97%';
+    } else if (lowerTranscript.includes('hypertension') || lowerTranscript.includes('blood pressure')) {
+      vitals = 'BP 152/94 mmHg, Temp 36.8°C, HR 76 bpm, RR 14/min, SpO2 99%';
+    } else {
+      vitals = 'Temp 37.0°C, BP 120/80 mmHg, HR 72 bpm, RR 16/min, SpO2 98%';
+    }
   }
 
-  let physicalExam = 'Patient alert, oriented x3. Cardiovascular RRR, Chest clear to auscultation bilaterally. Abdomen soft, non-tender.';
-  if (lowerTranscript.includes('ear') || lowerTranscript.includes('tympanic')) {
-    physicalExam = 'ENT: Right tympanic membrane erythematous, bulging with lost light reflex. Left TM clear. Oropharynx clear.';
-  } else if (lowerTranscript.includes('spleen') || lowerTranscript.includes('malaria') || lowerTranscript.includes('fever')) {
-    physicalExam = 'General: Ill-appearing, febrile. Abdomen: Mild splenomegaly palpable below left costal margin, soft, non-rigid.';
-  } else if (lowerTranscript.includes('diarrhea') || lowerTranscript.includes('dehydration')) {
-    physicalExam = 'Abdomen: Soft, hyperactive bowel sounds in all 4 quadrants, mild diffuse tenderness. Dry mucous membranes.';
+  let physicalExam = 'Not documented (Pending physician physical examination)';
+  if (isDemo) {
+    if (lowerTranscript.includes('ear') || lowerTranscript.includes('tympanic')) {
+      physicalExam = 'ENT: Right tympanic membrane erythematous, bulging with lost light reflex. Left TM clear. Oropharynx clear.';
+    } else if (lowerTranscript.includes('spleen') || lowerTranscript.includes('malaria') || lowerTranscript.includes('fever')) {
+      physicalExam = 'General: Ill-appearing, febrile. Abdomen: Mild splenomegaly palpable below left costal margin, soft, non-rigid.';
+    } else if (lowerTranscript.includes('diarrhea') || lowerTranscript.includes('dehydration')) {
+      physicalExam = 'Abdomen: Soft, hyperactive bowel sounds in all 4 quadrants, mild diffuse tenderness. Dry mucous membranes.';
+    }
   }
 
-  let labs = 'Point-of-Care testing unremarkable.';
+  let labs = 'Not documented';
   if (lowerTranscript.includes('rdt') || lowerTranscript.includes('malaria') || lowerTranscript.includes('positive')) {
-    labs = 'Rapid Diagnostic Test (RDT): POSITIVE for Plasmodium falciparum. Urine dipstick: Unremarkable.';
+    labs = 'Rapid Diagnostic Test (RDT): Reported in encounter transcript. Confirmatory review pending.';
   } else if (lowerTranscript.includes('glucose') || lowerTranscript.includes('hba1c') || lowerTranscript.includes('diabetes')) {
-    labs = 'Random Blood Glucose (RBG): 186 mg/dL. Fingerstick HbA1c: 8.2%.';
+    labs = 'Glucose/HbA1c reported in encounter transcript. Laboratory validation pending.';
   }
 
   // 3. Clinical Assessment & Diagnosis Selection
-  let primaryDiag = 'Unspecified Acute Febrile Illness';
-  let diffDiags = ['Viral Syndrome', 'Bacterial Infection'];
+  let primaryDiag = 'Unspecified Acute Febrile Illness (Symptom evaluation; formal diagnosis pending clinician review)';
+  let diffDiags: string[] = [];
   let summary = 'Patient presents with acute symptoms evaluated via local offline clinical guidelines.';
   let prescriptions: Prescription[] = [];
   let icdCodes: ICD10Code[] = [];
-  let cptCodes: CPTCode[] = [
-    { code: '99213', description: 'Office or other outpatient visit, established patient', rationale: 'Low-to-moderate medical decision making' },
-  ];
+  let cptCodes: CPTCode[] = [];
 
-  if (lowerTranscript.includes('malaria') || lowerTranscript.includes('rdt positive') || lowerTranscript.includes('artemether')) {
-    primaryDiag = 'Uncomplicated Plasmodium falciparum Malaria';
-    diffDiags = ['Typhoid Fever', 'Dengue Fever', 'Acute Pyelonephritis'];
-    summary = 'Clinical presentation and positive malaria RDT confirm acute Plasmodium falciparum parasitemia requiring prompt antimalarial therapy.';
-    prescriptions = [
-      { medication: 'Artemether-Lumefantrine (Coartem)', dosage: '20/120mg', frequency: 'BID', duration: '3 days', instructions: 'Take 4 tablets per dose with milk or fatty meal' },
-      { medication: 'Paracetamol', dosage: '500mg', frequency: 'QID PRN', duration: '3 days', instructions: 'Take for fever > 38.5°C or body pain' },
+  if (isDemo) {
+    // Isolated legacy demo preset for testing demo templates
+    cptCodes = [
+      { code: '99213', description: 'Office or other outpatient visit, established patient', rationale: 'Low-to-moderate medical decision making' },
     ];
-    icdCodes = [{ code: 'B50.9', description: 'Plasmodium falciparum malaria, unspecified', confidence: 'High' }];
-  } else if (lowerTranscript.includes('hypertension') || lowerTranscript.includes('blood pressure') || lowerTranscript.includes('lisinopril')) {
-    primaryDiag = 'Essential Primary Hypertension (Stage 2)';
-    diffDiags = ['Secondary Hypertension', 'White Coat Hypertension', 'Renal Artery Stenosis'];
-    summary = 'Sustained elevation in systolic/diastolic blood pressure noted during outpatient screening. Antihypertensive therapy indicated.';
-    prescriptions = [
-      { medication: 'Lisinopril', dosage: '10mg', frequency: 'Once Daily', duration: '30 days', instructions: 'Take in the morning with water' },
-      { medication: 'Amlodipine', dosage: '5mg', frequency: 'Once Daily', duration: '30 days', instructions: 'Take at bedtime if blood pressure remains elevated' },
-    ];
-    icdCodes = [{ code: 'I10', description: 'Essential (primary) hypertension', confidence: 'High' }];
-  } else if (lowerTranscript.includes('ear') || lowerTranscript.includes('otitis') || lowerTranscript.includes('amoxicillin')) {
-    primaryDiag = 'Acute Suppurative Otitis Media (Right Ear)';
-    diffDiags = ['Otitis Externa', 'Bullous Myringitis', 'Viral Upper Respiratory Infection'];
-    summary = 'Otoscopic examination confirms acute right-sided middle ear effusion with inflammation, consistent with acute otitis media.';
-    prescriptions = [
-      { medication: 'Amoxicillin', dosage: '250mg/5mL', frequency: 'TID', duration: '7 days', instructions: 'Administer 5mL orally three times daily' },
-      { medication: 'Ibuprofen Suspension', dosage: '100mg/5mL', frequency: 'TID PRN', duration: '5 days', instructions: 'Take for severe pain or fever' },
-    ];
-    icdCodes = [{ code: 'H66.001', description: 'Acute suppurative otitis media without spontaneous rupture of tympanic membrane, right ear', confidence: 'High' }];
-  } else if (lowerTranscript.includes('diarrhea') || lowerTranscript.includes('gastroenteritis') || lowerTranscript.includes('ors')) {
-    primaryDiag = 'Acute Infectious Gastroenteritis';
-    diffDiags = ['Amebic Dysentery', 'Food Poisoning', 'Giardiasis'];
-    summary = 'Acute onset gastrointestinal symptoms with mild volume depletion. Oral rehydration and gut mucosal protection initiated.';
-    prescriptions = [
-      { medication: 'Oral Rehydration Salts (ORS)', dosage: '1 Packet in 1L clean water', frequency: 'Frequent sips', duration: '3 days', instructions: 'Drink 200mL after every loose stool' },
-      { medication: 'Zinc Sulfate', dosage: '20mg', frequency: 'Once Daily', duration: '10 days', instructions: 'Take daily to reduce diarrhea duration' },
-    ];
-    icdCodes = [{ code: 'A09', description: 'Infectious gastroenteritis and colitis, unspecified', confidence: 'High' }];
+    if (lowerTranscript.includes('malaria') || lowerTranscript.includes('rdt positive') || lowerTranscript.includes('artemether')) {
+      primaryDiag = 'Uncomplicated Plasmodium falciparum Malaria';
+      diffDiags = ['Typhoid Fever', 'Dengue Fever', 'Acute Pyelonephritis'];
+      summary = 'Clinical presentation and positive malaria RDT confirm acute Plasmodium falciparum parasitemia requiring prompt antimalarial therapy.';
+      prescriptions = [
+        { medication: 'Artemether-Lumefantrine (Coartem)', dosage: '20/120mg', frequency: 'BID', duration: '3 days', instructions: 'Take 4 tablets per dose with milk or fatty meal' },
+        { medication: 'Paracetamol', dosage: '500mg', frequency: 'QID PRN', duration: '3 days', instructions: 'Take for fever > 38.5°C or body pain' },
+      ];
+      icdCodes = [{ code: 'B50.9', description: 'Plasmodium falciparum malaria, unspecified', confidence: 'High' }];
+    } else if (lowerTranscript.includes('hypertension') || lowerTranscript.includes('blood pressure') || lowerTranscript.includes('lisinopril')) {
+      primaryDiag = 'Essential Primary Hypertension (Stage 2)';
+      diffDiags = ['Secondary Hypertension', 'White Coat Hypertension', 'Renal Artery Stenosis'];
+      summary = 'Sustained elevation in systolic/diastolic blood pressure noted during outpatient screening. Antihypertensive therapy indicated.';
+      prescriptions = [
+        { medication: 'Lisinopril', dosage: '10mg', frequency: 'Once Daily', duration: '30 days', instructions: 'Take in the morning with water' },
+        { medication: 'Amlodipine', dosage: '5mg', frequency: 'Once Daily', duration: '30 days', instructions: 'Take at bedtime if blood pressure remains elevated' },
+      ];
+      icdCodes = [{ code: 'I10', description: 'Essential (primary) hypertension', confidence: 'High' }];
+    } else if (lowerTranscript.includes('ear') || lowerTranscript.includes('otitis') || lowerTranscript.includes('amoxicillin')) {
+      primaryDiag = 'Acute Suppurative Otitis Media (Right Ear)';
+      diffDiags = ['Otitis Externa', 'Bullous Myringitis', 'Viral Upper Respiratory Infection'];
+      summary = 'Otoscopic examination confirms acute right-sided middle ear effusion with inflammation, consistent with acute otitis media.';
+      prescriptions = [
+        { medication: 'Amoxicillin', dosage: '250mg/5mL', frequency: 'TID', duration: '7 days', instructions: 'Administer 5mL orally three times daily' },
+        { medication: 'Ibuprofen Suspension', dosage: '100mg/5mL', frequency: 'TID PRN', duration: '5 days', instructions: 'Take for severe pain or fever' },
+      ];
+      icdCodes = [{ code: 'H66.001', description: 'Acute suppurative otitis media without spontaneous rupture of tympanic membrane, right ear', confidence: 'High' }];
+    } else if (lowerTranscript.includes('diarrhea') || lowerTranscript.includes('gastroenteritis') || lowerTranscript.includes('ors')) {
+      primaryDiag = 'Acute Infectious Gastroenteritis';
+      diffDiags = ['Amebic Dysentery', 'Food Poisoning', 'Giardiasis'];
+      summary = 'Acute onset gastrointestinal symptoms with mild volume depletion. Oral rehydration and gut mucosal protection initiated.';
+      prescriptions = [
+        { medication: 'Oral Rehydration Salts (ORS)', dosage: '1 Packet in 1L clean water', frequency: 'Frequent sips', duration: '3 days', instructions: 'Drink 200mL after every loose stool' },
+        { medication: 'Zinc Sulfate', dosage: '20mg', frequency: 'Once Daily', duration: '10 days', instructions: 'Take daily to reduce diarrhea duration' },
+      ];
+      icdCodes = [{ code: 'A09', description: 'Infectious gastroenteritis and colitis, unspecified', confidence: 'High' }];
+    }
   } else {
-    prescriptions = [
-      { medication: 'Paracetamol', dosage: '500mg', frequency: 'TID PRN', duration: '5 days', instructions: 'Take for symptomatic pain relief' },
-    ];
-    icdCodes = [{ code: 'R50.9', description: 'Fever, unspecified', confidence: 'Medium' }];
+    // Sovereign Zero-Fabrication Production Path:
+    // Prescriptions are NEVER ordered without explicit clinician action!
+    prescriptions = [];
+    if (lowerTranscript.includes('malaria') || lowerTranscript.includes('rdt positive')) {
+      primaryDiag = 'Suspected Malaria (Clinical impression; diagnostic confirmation pending clinician review)';
+      summary = 'Clinical presentation and reported RDT findings noted. Awaiting attending physician diagnosis.';
+    } else if (lowerTranscript.includes('hypertension') || lowerTranscript.includes('blood pressure')) {
+      primaryDiag = 'Elevated Blood Pressure Screening (Awaiting physician confirmation)';
+      summary = 'Blood pressure elevation noted during screening. Formal diagnosis pending attending clinician.';
+    } else if (lowerTranscript.includes('ear') || lowerTranscript.includes('otitis')) {
+      primaryDiag = 'Otalgia / Suspected Otitis Media (Pending in-person otoscopic examination)';
+      summary = 'Ear discomfort noted. Requires direct otoscopic visualization by attending physician.';
+    } else if (lowerTranscript.includes('diarrhea') || lowerTranscript.includes('vomiting')) {
+      primaryDiag = 'Acute Gastroenteritis Symptoms (Symptom evaluation)';
+      summary = 'Gastrointestinal symptoms documented. Awaiting physician assessment.';
+    }
   }
 
   // 4. Run Safety & Interaction Checker
@@ -213,7 +243,12 @@ export function generateOfflineSOAPNote(
  * Guarantees that negated concepts are NEVER added as positive symptoms/conditions downstream.
  * Attaches evidence and confidence scores for clinical provenance.
  */
-function generateHindiOfflineSOAPNote(patientInfo: PatientInfo, transcript: string): SOAPNote {
+function generateHindiOfflineSOAPNote(
+  patientInfo: PatientInfo,
+  transcript: string,
+  options?: OfflineSOAPOptions
+): SOAPNote {
+  const isDemo = options?.isDemoMode === true;
   const analysis = analyzeHindiTranscript(
     transcript,
     hindiSymptoms as ClinicalConcept[],
@@ -285,9 +320,10 @@ function generateHindiOfflineSOAPNote(patientInfo: PatientInfo, transcript: stri
 
   const hpi = hpiLines.join('\n');
   const currentMeds = patientInfo.currentMedications ? [patientInfo.currentMedications] : ['None documented'];
-  const allergies = patientInfo.knownAllergies ? [patientInfo.knownAllergies] : ['NKDA'];
+  // Zero-fabrication: Never default to NKDA without patient denial!
+  const allergies = patientInfo.knownAllergies ? [patientInfo.knownAllergies] : ['Not elicited / Not documented'];
 
-  // 1c. Review of Systems with explicit positive/negated provenance
+  // 1c. Review of Systems with explicit positive/negated provenance (NO fabricated negatives!)
   const rosLines: string[] = [];
   if (hasPresent('SYM_CHEST_PAIN')) {
     const f = getPresentFact('SYM_CHEST_PAIN')!;
@@ -296,14 +332,14 @@ function generateHindiOfflineSOAPNote(patientInfo: PatientInfo, transcript: stri
     const f = negatedFacts.find((n) => n.conceptId === 'SYM_CHEST_PAIN' || n.conceptId === 'COND_HYPERTENSION')!;
     rosLines.push(`Cardiovascular: Explicitly denies chest pain / hypertension (Evidence: "${f.evidence}", ${Math.round(f.confidence * 100)}% conf)`);
   } else {
-    rosLines.push('Cardiovascular: Denies palpitations or exertional angina');
+    rosLines.push('Cardiovascular: Not elicited / Not documented');
   }
 
   if (hasPresent('SYM_BREATHLESSNESS') || hasPresent('SYM_COUGH')) {
     const f = presentFacts.find((p) => p.conceptId === 'SYM_BREATHLESSNESS' || p.conceptId === 'SYM_COUGH')!;
     rosLines.push(`Respiratory: Positive for ${f.canonicalEnglish.toLowerCase()} (Evidence: "${f.evidence}", ${Math.round(f.confidence * 100)}% conf)`);
   } else {
-    rosLines.push('Respiratory: Denies active dyspnea, wheezing, or hemoptysis');
+    rosLines.push('Respiratory: Not elicited / Not documented');
   }
 
   if (hasPresent('SYM_HEADACHE') || hasPresent('SYM_DIZZINESS')) {
@@ -313,14 +349,14 @@ function generateHindiOfflineSOAPNote(patientInfo: PatientInfo, transcript: stri
     const f = getPresentFact('SYM_HEADACHE') || negatedFacts.find((n) => n.conceptId === 'SYM_HEADACHE')!;
     rosLines.push(`Neurological: Denies headache (Evidence: "${f.evidence}", ${Math.round(f.confidence * 100)}% conf)`);
   } else {
-    rosLines.push('Neurological: Denies focal neurological deficits, syncope, or numbness');
+    rosLines.push('Neurological: Not elicited / Not documented');
   }
 
   if (hasPresent('SYM_VOMITING') || hasPresent('SYM_DIARRHEA') || hasPresent('SYM_ABDOMINAL_PAIN')) {
     const f = presentFacts.find((p) => ['SYM_VOMITING', 'SYM_DIARRHEA', 'SYM_ABDOMINAL_PAIN'].includes(p.conceptId))!;
     rosLines.push(`Gastrointestinal: Positive for ${f.canonicalEnglish.toLowerCase()} (Evidence: "${f.evidence}", ${Math.round(f.confidence * 100)}% conf)`);
   } else {
-    rosLines.push('Gastrointestinal: Denies nausea, vomiting, melena, or bowel disturbance');
+    rosLines.push('Gastrointestinal: Not elicited / Not documented');
   }
   const ros = rosLines.join('\n');
 
@@ -337,121 +373,116 @@ function generateHindiOfflineSOAPNote(patientInfo: PatientInfo, transcript: stri
   let physicalExam = 'Not documented (Pending physician physical examination)';
   let labs = 'Not documented';
 
-  // 3. Clinical Assessment & Diagnosis Selection - Derived ONLY from presentFacts
+  // 3. Clinical Assessment & Diagnosis Selection
   let primaryDiag = 'Unspecified Acute Clinical Condition';
-  let diffDiags: string[] = ['Viral Syndrome', 'Functional Disorder'];
+  let diffDiags: string[] = [];
   let prescriptions: Prescription[] = [];
   const icdCodes: ICD10Code[] = [];
-  const cptCodes: CPTCode[] = [
-    {
-      code: '99213',
-      description: 'Office outpatient visit, established patient, low-to-moderate complexity',
-      rationale: 'Clinical evaluation driven by offline Hindi concept extraction with evidence auditing',
-    },
-  ];
+  let cptCodes: CPTCode[] = [];
 
-  if (hasPresent('SYM_CHEST_PAIN')) {
-    primaryDiag = 'Acute Retrosternal Chest Pain (Rule out Angina / ACS)';
-    diffDiags = ['Gastroesophageal Reflux Disease (GERD)', 'Musculoskeletal Chest Wall Pain', 'Costochondritis'];
-    prescriptions = [
+  if (isDemo) {
+    // Isolated legacy demo preset for testing demo templates
+    cptCodes = [
       {
-        medication: 'Aspirin (Dispersible)',
-        dosage: '300mg',
-        frequency: 'STAT (Once)',
-        duration: '1 day',
-        instructions: 'Chew immediately under medical observation',
-      },
-      {
-        medication: 'Sorbitrate (Isosorbide Dinitrate)',
-        dosage: '5mg',
-        frequency: 'Sublingual PRN',
-        duration: '3 days',
-        instructions: 'Place under tongue if retrosternal pressure recurs',
+        code: '99213',
+        description: 'Office outpatient visit, established patient, low-to-moderate complexity',
+        rationale: 'Clinical evaluation driven by offline Hindi concept extraction with evidence auditing',
       },
     ];
-    icdCodes.push({ code: 'R07.9', description: 'Chest pain, unspecified', confidence: 'High' });
-  } else if (hasPresent('SYM_FEVER')) {
-    primaryDiag = 'Unspecified Acute Febrile Illness';
-    diffDiags = ['Viral Fever / Dengue', 'Plasmodium falciparum Malaria', 'Upper Respiratory Tract Infection'];
-    prescriptions = [
-      {
-        medication: 'Paracetamol',
-        dosage: '500mg',
-        frequency: 'TID PRN',
-        duration: '5 days',
-        instructions: 'Take with water for temperature > 38.5°C or severe body aches',
-      },
-      {
-        medication: 'Oral Rehydration Salts (ORS)',
-        dosage: '1 Packet in 1L water',
-        frequency: 'Frequent sips',
-        duration: '3 days',
-        instructions: 'Maintain adequate oral fluid intake',
-      },
-    ];
-    icdCodes.push({ code: 'R50.9', description: 'Fever, unspecified', confidence: 'High' });
-  } else if (hasPresent('COND_HYPERTENSION') && !hasNegated('COND_HYPERTENSION')) {
-    primaryDiag = 'Essential Primary Hypertension (Stage 2)';
-    diffDiags = ['Secondary Hypertension', 'White Coat Hypertension'];
-    prescriptions = [
-      {
-        medication: 'Lisinopril',
-        dosage: '10mg',
-        frequency: 'Once Daily',
-        duration: '30 days',
-        instructions: 'Take in morning with water',
-      },
-    ];
-    icdCodes.push({ code: 'I10', description: 'Essential (primary) hypertension', confidence: 'High' });
-  } else if (hasPresent('SYM_HEADACHE')) {
-    primaryDiag = 'Acute Tension-Type Headache / Cephalea';
-    diffDiags = ['Migraine without aura', 'Cervicogenic Headache'];
-    prescriptions = [
-      {
-        medication: 'Paracetamol',
-        dosage: '500mg',
-        frequency: 'TID PRN',
-        duration: '3 days',
-        instructions: 'Take after meals for headache relief',
-      },
-    ];
-    icdCodes.push({ code: 'R51.9', description: 'Headache, unspecified', confidence: 'High' });
-  } else if (hasPresent('SYM_DIARRHEA') || hasPresent('SYM_VOMITING')) {
-    primaryDiag = 'Acute Infectious Gastroenteritis';
-    diffDiags = ['Viral Gastroenteritis', 'Food Poisoning', 'Amebiasis'];
-    prescriptions = [
-      {
-        medication: 'Oral Rehydration Salts (ORS)',
-        dosage: '1 Packet in 1L clean water',
-        frequency: 'Frequent sips',
-        duration: '3 days',
-        instructions: 'Drink 200mL after each loose stool',
-      },
-      {
-        medication: 'Zinc Sulfate',
-        dosage: '20mg',
-        frequency: 'Once Daily',
-        duration: '10 days',
-        instructions: 'Take daily to accelerate mucosal recovery',
-      },
-    ];
-    if (hasPresent('SYM_DIARRHEA')) {
-      icdCodes.push({ code: 'R19.7', description: 'Diarrhea, unspecified', confidence: 'High' });
-    }
-    if (hasPresent('SYM_VOMITING')) {
-      icdCodes.push({ code: 'R11.10', description: 'Vomiting, unspecified', confidence: 'High' });
+    diffDiags = ['Viral Syndrome', 'Functional Disorder'];
+    if (hasPresent('SYM_CHEST_PAIN')) {
+      primaryDiag = 'Acute Retrosternal Chest Pain (Rule out Angina / ACS)';
+      diffDiags = ['Gastroesophageal Reflux Disease (GERD)', 'Musculoskeletal Chest Wall Pain', 'Costochondritis'];
+      prescriptions = [
+        {
+          medication: 'Aspirin (Dispersible)',
+          dosage: '300mg',
+          frequency: 'STAT (Once)',
+          duration: '1 day',
+          instructions: 'Chew immediately under medical observation',
+        },
+        {
+          medication: 'Sorbitrate (Isosorbide Dinitrate)',
+          dosage: '5mg',
+          frequency: 'Sublingual PRN',
+          duration: '3 days',
+          instructions: 'Place under tongue if retrosternal pressure recurs',
+        },
+      ];
+      icdCodes.push({ code: 'R07.9', description: 'Chest pain, unspecified', confidence: 'High' });
+    } else if (hasPresent('SYM_FEVER')) {
+      primaryDiag = 'Unspecified Acute Febrile Illness';
+      diffDiags = ['Viral Fever / Dengue', 'Plasmodium falciparum Malaria', 'Upper Respiratory Tract Infection'];
+      prescriptions = [
+        {
+          medication: 'Paracetamol',
+          dosage: '500mg',
+          frequency: 'TID PRN',
+          duration: '5 days',
+          instructions: 'Take with water for temperature > 38.5°C or severe body aches',
+        },
+        {
+          medication: 'Oral Rehydration Salts (ORS)',
+          dosage: '1 Packet in 1L water',
+          frequency: 'Frequent sips',
+          duration: '3 days',
+          instructions: 'Maintain adequate oral fluid intake',
+        },
+      ];
+      icdCodes.push({ code: 'R50.9', description: 'Fever, unspecified', confidence: 'High' });
+    } else if (hasPresent('COND_HYPERTENSION') && !hasNegated('COND_HYPERTENSION')) {
+      primaryDiag = 'Essential Primary Hypertension (Stage 2)';
+      diffDiags = ['Secondary Hypertension', 'White Coat Hypertension'];
+      prescriptions = [
+        {
+          medication: 'Lisinopril',
+          dosage: '10mg',
+          frequency: 'Once Daily',
+          duration: '30 days',
+          instructions: 'Take in morning with water',
+        },
+      ];
+      icdCodes.push({ code: 'I10', description: 'Essential (primary) hypertension', confidence: 'High' });
+    } else if (hasPresent('SYM_HEADACHE')) {
+      primaryDiag = 'Acute Tension-Type Headache / Cephalea';
+      diffDiags = ['Migraine without aura', 'Cervicogenic Headache'];
+      prescriptions = [
+        {
+          medication: 'Paracetamol',
+          dosage: '500mg',
+          frequency: 'TID PRN',
+          duration: '3 days',
+          instructions: 'Take after meals for headache relief',
+        },
+      ];
+      icdCodes.push({ code: 'R51.9', description: 'Headache, unspecified', confidence: 'High' });
     }
   } else {
-    prescriptions = [
-      {
-        medication: 'Paracetamol',
-        dosage: '500mg',
-        frequency: 'TID PRN',
-        duration: '3 days',
-        instructions: 'Symptomatic relief as directed by physician',
-      },
-    ];
-    icdCodes.push({ code: 'R69', description: 'Illness, unspecified', confidence: 'Medium' });
+    // Sovereign Zero-Fabrication Production Path:
+    // Prescriptions are NEVER ordered without explicit clinician action!
+    prescriptions = [];
+    diffDiags = [];
+    if (hasPresent('SYM_CHEST_PAIN')) {
+      primaryDiag = 'Acute Retrosternal Chest Pain (Symptom evaluation; diagnostic confirmation pending physician review)';
+      icdCodes.push({ code: 'R07.9', description: 'Chest pain, unspecified', confidence: 'High' });
+    } else if (hasPresent('SYM_FEVER')) {
+      primaryDiag = 'Unspecified Acute Febrile Illness';
+      icdCodes.push({ code: 'R50.9', description: 'Fever, unspecified', confidence: 'High' });
+    } else if (hasPresent('COND_HYPERTENSION') && !hasNegated('COND_HYPERTENSION')) {
+      primaryDiag = 'Essential Primary Hypertension (Stage 2)';
+      icdCodes.push({ code: 'I10', description: 'Essential (primary) hypertension', confidence: 'High' });
+    } else if (hasPresent('SYM_HEADACHE')) {
+      primaryDiag = 'Acute Tension-Type Headache / Cephalea';
+      icdCodes.push({ code: 'R51.9', description: 'Headache, unspecified', confidence: 'High' });
+    } else if (hasPresent('SYM_DIARRHEA') || hasPresent('SYM_VOMITING')) {
+      primaryDiag = 'Acute Infectious Gastroenteritis';
+      if (hasPresent('SYM_DIARRHEA')) {
+        icdCodes.push({ code: 'R19.7', description: 'Diarrhea, unspecified', confidence: 'High' });
+      }
+      if (hasPresent('SYM_VOMITING')) {
+        icdCodes.push({ code: 'R11.10', description: 'Vomiting, unspecified', confidence: 'High' });
+      }
+    }
   }
 
   // Add supplementary ICD-10 codes for any additional PRESENT facts only

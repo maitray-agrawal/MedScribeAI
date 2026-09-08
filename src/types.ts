@@ -1,3 +1,5 @@
+import { ClinicalFact } from './clinical/clinicalFactModel';
+
 export interface PatientInfo {
   id?: string;
   name: string;
@@ -311,6 +313,7 @@ export interface StructuredPatientIntake {
   ayushHistory?: AYUSHHistory;
   uploadedDocuments?: UploadedDocumentRecord[];
   conversationTurns: InterviewTurn[];
+  clinicalFacts?: ClinicalFact[];
   triageClassification?: 'Green (Routine)' | 'Yellow (Priority)' | 'Red (Immediate Emergency)';
   redFlagsDetected: string[];
   isComplete: boolean;
@@ -543,6 +546,7 @@ export interface ExtractedMedication {
   frequency?: string;
   duration?: string;
   instructions?: string;
+  status?: string;
 }
 
 export interface ExtractedDocumentData {

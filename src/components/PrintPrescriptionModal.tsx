@@ -144,7 +144,7 @@ export const PrintPrescriptionModal: React.FC<PrintPrescriptionModalProps> = ({
             </div>
             <div>
               <span className="text-slate-400 block font-semibold">Known Allergies:</span>
-              <span className="text-rose-300 font-semibold">{patientInfo.knownAllergies || 'NKDA'}</span>
+              <span className="text-rose-300 font-semibold">{patientInfo.knownAllergies || 'None documented'}</span>
             </div>
             <div>
               <span className="text-slate-400 block font-semibold">Diagnosis:</span>

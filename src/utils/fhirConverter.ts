@@ -1,4 +1,5 @@
 import { PatientInfo, SOAPNote, UploadedDocumentRecord } from '../types';
+import { ClinicalFact } from '../clinical/clinicalFactModel';
 
 export interface FHIRResource {
   resourceType: string;
@@ -22,6 +23,8 @@ export interface ExportToFHIROptions {
   department?: string;
   uploadedDocs?: UploadedDocumentRecord[];
   encounterType?: string;
+  canonicalFacts?: ClinicalFact[];
+  isPhysicianVerified?: boolean;
 }
 
 export interface ABDMPushReceipt {
@@ -128,11 +131,16 @@ export function exportToFHIRBundle(
     resource: encounterResource,
   });
 
-  // 3. FHIR Condition Resources (ICD-10 Diagnoses)
-  const icdCodes = safeNote.billing_suggestions?.icd_10_codes || [];
-  if (icdCodes.length > 0) {
-    icdCodes.forEach((icd, idx) => {
-      const conditionId = `condition-${idx + 1}-${Date.now()}`;
+  // 3. FHIR Condition Resources
+  const canonicalConditionFacts = options?.canonicalFacts?.filter(
+    (f) =>
+      (f.domain.toLowerCase() === 'condition' || f.domain.toLowerCase() === 'symptom') &&
+      f.assertion === 'AFFIRMED'
+  );
+
+  if (canonicalConditionFacts && canonicalConditionFacts.length > 0) {
+    canonicalConditionFacts.forEach((fact, idx) => {
+      const conditionId = `condition-fact-${idx + 1}-${Date.now()}`;
       const conditionResource: FHIRResource = {
         resourceType: 'Condition',
         id: conditionId,
@@ -148,7 +156,7 @@ export function exportToFHIRBundle(
           coding: [
             {
               system: 'http://terminology.hl7.org/CodeSystem/condition-ver-status',
-              code: 'confirmed',
+              code: options?.isPhysicianVerified ? 'confirmed' : 'unconfirmed',
             },
           ],
         },
@@ -166,12 +174,12 @@ export function exportToFHIRBundle(
         code: {
           coding: [
             {
-              system: 'http://hl7.org/fhir/sid/icd-10',
-              code: icd.code,
-              display: icd.description,
+              system: fact.codingSystem || 'http://snomed.info/sct',
+              code: fact.code,
+              display: fact.term,
             },
           ],
-          text: icd.description,
+          text: fact.term,
         },
         subject: {
           reference: `Patient/${patientId}`,
@@ -185,27 +193,170 @@ export function exportToFHIRBundle(
         resource: conditionResource,
       });
     });
-  } else if (safeNote.assessment?.primary_diagnosis) {
-    const conditionId = `condition-primary-${Date.now()}`;
-    entries.push({
-      fullUrl: `urn:uuid:${conditionId}`,
-      resource: {
-        resourceType: 'Condition',
-        id: conditionId,
-        code: {
-          text: safeNote.assessment.primary_diagnosis,
+  } else {
+    // Fallback to SOAP note ICD-10 or primary diagnosis
+    const icdCodes = safeNote.billing_suggestions?.icd_10_codes || [];
+    if (icdCodes.length > 0) {
+      icdCodes.forEach((icd, idx) => {
+        const conditionId = `condition-${idx + 1}-${Date.now()}`;
+        const conditionResource: FHIRResource = {
+          resourceType: 'Condition',
+          id: conditionId,
+          clinicalStatus: {
+            coding: [
+              {
+                system: 'http://terminology.hl7.org/CodeSystem/condition-clinical',
+                code: 'active',
+              },
+            ],
+          },
+          verificationStatus: {
+            coding: [
+              {
+                system: 'http://terminology.hl7.org/CodeSystem/condition-ver-status',
+                code: options?.isPhysicianVerified ? 'confirmed' : 'unconfirmed',
+              },
+            ],
+          },
+          category: [
+            {
+              coding: [
+                {
+                  system: 'http://terminology.hl7.org/CodeSystem/condition-category',
+                  code: 'encounter-diagnosis',
+                  display: 'Encounter Diagnosis',
+                },
+              ],
+            },
+          ],
+          code: {
+            coding: [
+              {
+                system: 'http://hl7.org/fhir/sid/icd-10',
+                code: icd.code,
+                display: icd.description,
+              },
+            ],
+            text: icd.description,
+          },
+          subject: {
+            reference: `Patient/${patientId}`,
+          },
+          encounter: {
+            reference: `Encounter/${encounterId}`,
+          },
+        };
+        entries.push({
+          fullUrl: `urn:uuid:${conditionId}`,
+          resource: conditionResource,
+        });
+      });
+    } else if (safeNote.assessment?.primary_diagnosis) {
+      const conditionId = `condition-primary-${Date.now()}`;
+      entries.push({
+        fullUrl: `urn:uuid:${conditionId}`,
+        resource: {
+          resourceType: 'Condition',
+          id: conditionId,
+          clinicalStatus: {
+            coding: [
+              {
+                system: 'http://terminology.hl7.org/CodeSystem/condition-clinical',
+                code: 'active',
+              },
+            ],
+          },
+          verificationStatus: {
+            coding: [
+              {
+                system: 'http://terminology.hl7.org/CodeSystem/condition-ver-status',
+                code: options?.isPhysicianVerified ? 'confirmed' : 'unconfirmed',
+              },
+            ],
+          },
+          code: {
+            text: safeNote.assessment.primary_diagnosis,
+          },
+          subject: {
+            reference: `Patient/${patientId}`,
+          },
+          encounter: {
+            reference: `Encounter/${encounterId}`,
+          },
+        },
+      });
+    }
+  }
+
+  // 4. FHIR MedicationStatement Resources (Patient-Reported Medications)
+  // Patient-reported medications from kiosk intake / transcript MUST map to MedicationStatement, NEVER MedicationRequest.
+  const canonicalMedFacts = options?.canonicalFacts?.filter(
+    (f) => f.domain.toLowerCase() === 'medication' && f.assertion === 'AFFIRMED'
+  );
+
+  if (canonicalMedFacts && canonicalMedFacts.length > 0) {
+    canonicalMedFacts.forEach((fact, idx) => {
+      const medStmtId = `medstatement-fact-${idx + 1}-${Date.now()}`;
+      const medAttrs = fact.attributes as any;
+      const dosageStr = medAttrs
+        ? [medAttrs.dosage, medAttrs.frequency, medAttrs.duration].filter(Boolean).join(' ')
+        : '';
+      const medStmtResource: FHIRResource = {
+        resourceType: 'MedicationStatement',
+        id: medStmtId,
+        status: 'active',
+        medicationCodeableConcept: {
+          coding: [
+            {
+              system: fact.codingSystem || 'http://www.nlm.nih.gov/research/umls/rxnorm',
+              code: fact.code,
+              display: fact.term,
+            },
+          ],
+          text: fact.term,
         },
         subject: {
           reference: `Patient/${patientId}`,
         },
-        encounter: {
-          reference: `Encounter/${encounterId}`,
+        dosage: dosageStr
+          ? [
+              {
+                text: dosageStr,
+              },
+            ]
+          : undefined,
+      };
+      entries.push({
+        fullUrl: `urn:uuid:${medStmtId}`,
+        resource: medStmtResource,
+      });
+    });
+  } else if (safeNote.subjective?.current_medications && safeNote.subjective.current_medications.length > 0) {
+    const validMeds = safeNote.subjective.current_medications.filter(
+      (m) => m && !m.toLowerCase().includes('not documented') && !m.toLowerCase().includes('none')
+    );
+    validMeds.forEach((med, idx) => {
+      const medStmtId = `medstatement-${idx + 1}-${Date.now()}`;
+      const medStmtResource: FHIRResource = {
+        resourceType: 'MedicationStatement',
+        id: medStmtId,
+        status: 'active',
+        medicationCodeableConcept: {
+          text: med,
         },
-      },
+        subject: {
+          reference: `Patient/${patientId}`,
+        },
+      };
+      entries.push({
+        fullUrl: `urn:uuid:${medStmtId}`,
+        resource: medStmtResource,
+      });
     });
   }
 
-  // 4. FHIR MedicationRequest Resources (Prescriptions)
+  // 5. FHIR MedicationRequest Resources (Physician-Ordered Prescriptions ONLY)
+  // Kiosk intake never orders prescriptions. Only genuine physician orders map here.
   const prescriptions = safeNote.plan?.prescriptions || [];
   prescriptions.forEach((rx, idx) => {
     const medRequestId = `medrequest-${idx + 1}-${Date.now()}`;
@@ -239,6 +390,113 @@ export function exportToFHIRBundle(
       resource: medRequestResource,
     });
   });
+
+  // 6. FHIR AllergyIntolerance Resources (Affirmed / Negated ONLY — Zero unelicited AllergyIntolerance)
+  const canonicalAllergyFacts = options?.canonicalFacts?.filter((f) => f.domain.toLowerCase() === 'allergy');
+  if (canonicalAllergyFacts && canonicalAllergyFacts.length > 0) {
+    canonicalAllergyFacts.forEach((fact, idx) => {
+      // If UNKNOWN or NOT_ELICITED, do NOT create an AllergyIntolerance resource!
+      if (fact.assertion === 'UNKNOWN' || fact.elicitation === 'NOT_ELICITED') {
+        return;
+      }
+      const allergyId = `allergy-${idx + 1}-${Date.now()}`;
+      const isNegated = fact.assertion === 'NEGATED';
+      const allergyResource: FHIRResource = {
+        resourceType: 'AllergyIntolerance',
+        id: allergyId,
+        clinicalStatus: {
+          coding: [
+            {
+              system: 'http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical',
+              code: isNegated ? 'inactive' : 'active',
+            },
+          ],
+        },
+        verificationStatus: {
+          coding: [
+            {
+              system: 'http://terminology.hl7.org/CodeSystem/allergyintolerance-verification',
+              code: isNegated ? 'refuted' : 'confirmed',
+            },
+          ],
+        },
+        code: {
+          coding: [
+            {
+              system: fact.codingSystem || 'http://snomed.info/sct',
+              code: fact.code,
+              display: fact.term,
+            },
+          ],
+          text: fact.term,
+        },
+        subject: {
+          reference: `Patient/${patientId}`,
+        },
+      };
+      entries.push({
+        fullUrl: `urn:uuid:${allergyId}`,
+        resource: allergyResource,
+      });
+    });
+  }
+
+  // 7. FHIR Observations for Patient-Reported AYUSH Intake
+  const canonicalAyushFacts = options?.canonicalFacts?.filter(
+    (f) => f.domain.toLowerCase() === 'ayush' && f.assertion === 'AFFIRMED'
+  );
+  if (canonicalAyushFacts && canonicalAyushFacts.length > 0) {
+    canonicalAyushFacts.forEach((fact, idx) => {
+      const ayushObsId = `observation-ayush-${idx + 1}-${Date.now()}`;
+      const ayushResource: FHIRResource = {
+        resourceType: 'Observation',
+        id: ayushObsId,
+        status: 'preliminary',
+        category: [
+          {
+            coding: [
+              {
+                system: 'http://terminology.hl7.org/CodeSystem/observation-category',
+                code: 'social-history',
+                display: 'Social History / Constitution',
+              },
+            ],
+          },
+        ],
+        code: {
+          coding: [
+            {
+              system: fact.codingSystem || 'http://ayush.gov.in/terminology',
+              code: fact.code,
+              display: fact.term,
+            },
+          ],
+          text: `${fact.term} (Patient-Reported AYUSH Intake)`,
+        },
+        subject: {
+          reference: `Patient/${patientId}`,
+        },
+        encounter: {
+          reference: `Encounter/${encounterId}`,
+        },
+        valueString: fact.term,
+        performer: [
+          {
+            display: 'Patient (Self-Reported)',
+          },
+        ],
+        note: [
+          {
+            text: 'Patient-reported constitution / Prakriti; not a clinician-assessed Dashavidha Pariksha.',
+          },
+        ],
+      };
+      entries.push({
+        fullUrl: `urn:uuid:${ayushObsId}`,
+        resource: ayushResource,
+      });
+    });
+  }
 
   // 5. FHIR Observations for Uploaded Investigations / Lab Tests
   if (options?.uploadedDocs && options.uploadedDocs.length > 0) {

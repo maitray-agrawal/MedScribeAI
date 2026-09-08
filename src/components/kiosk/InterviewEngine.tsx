@@ -11,8 +11,13 @@ import {
 } from '../../types';
 import {
   detectEmergencySymptomPattern,
+  detectEmergencyFromFacts,
   publishEmergencyAlert,
 } from '../../utils/emergencyTriageDetector';
+import { ClinicalFact } from '../../clinical/clinicalFactModel';
+import { ClinicalFactStore } from '../../clinical/clinicalFactStore';
+import { extractCanonicalFacts } from '../../clinical/extractionPipeline';
+import { evaluateRedFlagsFromFacts } from '../../clinical/redFlagRules';
 import { EmergencyInterruptOverlay } from './EmergencyInterruptOverlay';
 import { MultilingualVoiceInput } from './MultilingualVoiceInput';
 import { SupportedLocale } from '../../speech/speechTypes';
@@ -107,6 +112,11 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
 
   // Real-Time Emergency Red-Flag Interrupt State
   const [activeEmergencyAlert, setActiveEmergencyAlert] = useState<EmergencyTriageAlert | null>(null);
+
+  // Canonical ClinicalFact Repository for encounter
+  const factStore = useRef<ClinicalFactStore>(
+    new ClinicalFactStore(initialIntake?.clinicalFacts || [])
+  );
 
   // Current Turn Engine State
   const [currentQuestionData, setCurrentQuestionData] = useState<AdaptiveInterviewTurnResponse | null>(null);
@@ -214,17 +224,31 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
   };
 
   // Live Emergency Red Flag Detector (Real-time Interrupt during data entry)
-  const checkForEmergencyRedFlags = (liveText: string): boolean => {
+  const checkForEmergencyRedFlags = (liveText: string, currentTurnFacts?: ClinicalFact[]): boolean => {
     if (!liveText || liveText.trim().length < 3 || activeEmergencyAlert) return false;
 
-    const detected = detectEmergencySymptomPattern(liveText, {
-      patientName: patientDemographics.fullName,
-      age: patientDemographics.age,
-      gender: patientDemographics.gender,
-      abhaId: patientDemographics.abhaId,
-      kioskStationId: 'Kiosk #01 (OPD Lobby)',
-      priorHistoryText: chiefComplaint,
-    });
+    const factAlert =
+      currentTurnFacts && currentTurnFacts.length > 0
+        ? detectEmergencyFromFacts(currentTurnFacts, {
+            patientName: patientDemographics.fullName,
+            age: patientDemographics.age,
+            gender: patientDemographics.gender,
+            abhaId: patientDemographics.abhaId,
+            kioskStationId: 'Kiosk #01 (OPD Lobby)',
+            priorHistoryText: chiefComplaint,
+          })
+        : null;
+
+    const detected =
+      factAlert ||
+      detectEmergencySymptomPattern(liveText, {
+        patientName: patientDemographics.fullName,
+        age: patientDemographics.age,
+        gender: patientDemographics.gender,
+        abhaId: patientDemographics.abhaId,
+        kioskStationId: 'Kiosk #01 (OPD Lobby)',
+        priorHistoryText: chiefComplaint,
+      });
 
     if (detected) {
       // 1. Cancel speech synthesis
@@ -263,8 +287,16 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
       return;
     }
 
-    // Real-Time Emergency Red-Flag detection during data entry
-    const isEmergency = checkForEmergencyRedFlags(finalAnswer);
+    // Canonical ClinicalFact Extraction from patient response (decoupled from UI rendering)
+    const turnFacts = extractCanonicalFacts(finalAnswer, {
+      sourceType: mode === 'voice' ? 'PATIENT_VOICE' : mode === 'touch_pill' ? 'PATIENT_TOUCH' : 'PATIENT_TEXT',
+      language: isHindi ? 'hi' : 'en',
+      turnIndex: turns.length + 1,
+    });
+    factStore.current.addFacts(turnFacts);
+
+    // Real-Time Emergency Red-Flag detection during data entry (evaluated from canonical facts + pattern match)
+    const isEmergency = checkForEmergencyRedFlags(finalAnswer, turnFacts);
     if (isEmergency) {
       return;
     }
@@ -440,6 +472,19 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
     finalAyush?: AYUSHHistory
   ) => {
     const activeAyush = finalAyush || ayushHistory;
+    const allFacts = factStore.current.getFacts();
+    const redFlagAlerts = evaluateRedFlagsFromFacts(allFacts);
+    const factRedFlags = redFlagAlerts.map((a) => a.title);
+    const combinedRedFlags = Array.from(new Set([...redFlags, ...factRedFlags]));
+
+    const hasEmergencyFact = allFacts.some(
+      (f) =>
+        f.assertion === 'AFFIRMED' &&
+        (f.code === 'SYM_CHEST_PAIN' ||
+          f.code === 'SYM_BREATHLESSNESS' ||
+          f.code === 'EMERG_CHEST_PAIN_DYSPNEA')
+    );
+
     const intake: StructuredPatientIntake = {
       intakeId: `INT-${Date.now()}`,
       startedAt: turns[0]?.timestamp || new Date().toLocaleTimeString(),
@@ -462,19 +507,27 @@ export const InterviewEngine: React.FC<InterviewEngineProps> = ({
       },
       reviewOfSystems: {
         cardiovascular: {
-          chestPain: finalComplaint.toLowerCase().includes('chest') || (finalHpi.character || '').includes('Pressure'),
+          chestPain:
+            allFacts.some((f) => f.code === 'SYM_CHEST_PAIN' && f.assertion === 'AFFIRMED') ||
+            finalComplaint.toLowerCase().includes('chest') ||
+            (finalHpi.character || '').includes('Pressure'),
         },
       },
-      currentMedications: [],
-      knownAllergies: [],
+      currentMedications: allFacts
+        .filter((f) => f.domain === 'MEDICATION' && f.assertion === 'AFFIRMED')
+        .map((f) => f.term),
+      knownAllergies: allFacts
+        .filter((f) => f.domain === 'ALLERGY' && f.assertion === 'AFFIRMED')
+        .map((f) => f.term),
+      clinicalFacts: allFacts,
       conversationTurns: finalTurns,
       triageClassification:
-        redFlags.length > 0 || triagePriority === 'emergency'
+        combinedRedFlags.length > 0 || hasEmergencyFact || triagePriority === 'emergency'
           ? 'Red (Immediate Emergency)'
           : triagePriority === 'urgent'
           ? 'Yellow (Priority)'
           : 'Green (Routine)',
-      redFlagsDetected: redFlags,
+      redFlagsDetected: combinedRedFlags,
       isComplete: true,
     };
 

@@ -5,6 +5,7 @@
  */
 
 import { ExtractedClinicalConcept } from '../nlp/codeSwitchingExtractor';
+import { ClinicalFact } from './clinicalFactModel';
 
 export interface RedFlagAlert {
   ruleId: string;
@@ -112,6 +113,69 @@ export function evaluateRedFlags(extractedConcepts: ExtractedClinicalConcept[]):
         recommendedImmediateAction: rule.recommendedImmediateAction,
       });
     }
+  }
+
+  return alerts;
+}
+
+/**
+ * Evaluates red-flag rules against canonical ClinicalFact[] instances.
+ * Only AFFIRMED facts trigger red-flag alerts.
+ */
+export function evaluateRedFlagsFromFacts(facts: ClinicalFact[]): RedFlagAlert[] {
+  const affirmedFacts = facts.filter((f) => f.assertion === 'AFFIRMED');
+  const affirmedCodes = new Set(affirmedFacts.map((f) => f.code));
+  const alerts: RedFlagAlert[] = [];
+
+  // 1. Acute Coronary Syndrome: Chest Pain + Dyspnea / Breathlessness
+  if (
+    affirmedCodes.has('SYM_CHEST_PAIN') &&
+    (affirmedCodes.has('SYM_BREATHLESSNESS') || affirmedCodes.has('SYM_DYSPNEA'))
+  ) {
+    alerts.push({
+      ruleId: 'RED_FLAG_ACS_DYSPNEA',
+      title: 'Possible Acute Coronary Syndrome (Chest Pain + Dyspnea)',
+      severity: 'CRITICAL',
+      clinicalSummary:
+        'Patient reports chest pain associated with breathlessness/shortness of breath. High suspicion for myocardial ischemia or infarction.',
+      matchedConcepts: ['SYM_CHEST_PAIN', 'SYM_BREATHLESSNESS'],
+      recommendedImmediateAction:
+        'Immediate triage to emergency resuscitation area. Obtain urgent 12-lead ECG, establish IV access, and alert the on-duty medical officer.',
+    });
+  } else if (affirmedCodes.has('SYM_CHEST_PAIN')) {
+    // Acute chest pain alone
+    const chestFact = affirmedFacts.find((f) => f.code === 'SYM_CHEST_PAIN');
+    alerts.push({
+      ruleId: 'RED_FLAG_CHEST_PAIN_ACUTE',
+      title: 'Acute Chest Discomfort / Pain',
+      severity: 'HIGH',
+      clinicalSummary:
+        'Patient reports acute chest pain/discomfort (सीने में दर्द). Immediate cardiovascular evaluation indicated.',
+      matchedConcepts: [`SYM_CHEST_PAIN (${chestFact?.evidence[0]?.verbatimText || chestFact?.term})`],
+      recommendedImmediateAction:
+        'Triage to priority area. Obtain STAT 12-lead ECG, check vitals, and alert on-duty physician.',
+    });
+  }
+
+  // 2. Severe Breathlessness alone
+  if (
+    (affirmedCodes.has('SYM_BREATHLESSNESS') || affirmedCodes.has('SYM_DYSPNEA')) &&
+    !affirmedCodes.has('SYM_CHEST_PAIN')
+  ) {
+    const breathFact = affirmedFacts.find(
+      (f) => f.code === 'SYM_BREATHLESSNESS' || f.code === 'SYM_DYSPNEA'
+    );
+    alerts.push({
+      ruleId: 'RED_FLAG_SEVERE_DYSPNEA',
+      title: 'Severe Breathlessness / Respiratory Distress',
+      severity: 'HIGH',
+      clinicalSummary: 'Acute dyspnea reported without relief.',
+      matchedConcepts: [
+        `SYM_BREATHLESSNESS (${breathFact?.evidence[0]?.verbatimText || breathFact?.term})`,
+      ],
+      recommendedImmediateAction:
+        'Administer supplemental oxygen to maintain SpO2 >= 94%, position patient upright, auscultate chest.',
+    });
   }
 
   return alerts;

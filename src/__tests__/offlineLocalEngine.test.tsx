@@ -14,9 +14,9 @@ describe('Offline Local Model NLP Engine', () => {
     knownAllergies: 'NKDA',
   };
 
-  it('generates structured SOAP note for malaria case offline', () => {
+  it('generates structured SOAP note for malaria case offline (demo mode)', () => {
     const transcript = 'Patient presents with high fever 39.1C, chills, rigors, and positive malaria RDT.';
-    const note = generateOfflineSOAPNote(samplePatient, transcript);
+    const note = generateOfflineSOAPNote(samplePatient, transcript, 'en', { isDemoMode: true });
 
     expect(note.subjective.chief_complaint).toContain('fever');
     expect(note.assessment.primary_diagnosis).toBe('Uncomplicated Plasmodium falciparum Malaria');
@@ -26,26 +26,26 @@ describe('Offline Local Model NLP Engine', () => {
     expect(note.documentation_confidence?.overall_score).toBeGreaterThan(0);
   });
 
-  it('generates structured SOAP note for hypertension case offline', () => {
+  it('generates structured SOAP note for hypertension case offline (demo mode)', () => {
     const transcript = 'Blood pressure screening today shows BP 152/94 mmHg, patient complains of mild morning headache.';
-    const note = generateOfflineSOAPNote(samplePatient, transcript);
+    const note = generateOfflineSOAPNote(samplePatient, transcript, 'en', { isDemoMode: true });
 
     expect(note.assessment.primary_diagnosis).toBe('Essential Primary Hypertension (Stage 2)');
     expect(note.billing_suggestions.icd_10_codes[0].code).toBe('I10');
     expect(note.plan.prescriptions.some((p) => p.medication === 'Lisinopril')).toBe(true);
   });
 
-  it('generates structured SOAP note for otitis media case offline', () => {
+  it('generates structured SOAP note for otitis media case offline (demo mode)', () => {
     const transcript = 'Right ear pain, crying, fever. Otoscopy shows bulging erythematous right tympanic membrane.';
-    const note = generateOfflineSOAPNote(samplePatient, transcript);
+    const note = generateOfflineSOAPNote(samplePatient, transcript, 'en', { isDemoMode: true });
 
     expect(note.assessment.primary_diagnosis).toContain('Otitis Media');
     expect(note.plan.prescriptions.some((p) => p.medication === 'Amoxicillin')).toBe(true);
   });
 
-  it('generates structured SOAP note for gastroenteritis case offline', () => {
+  it('generates structured SOAP note for gastroenteritis case offline (demo mode)', () => {
     const transcript = 'Watery diarrhea 5 times today, abdominal cramps, vomiting. Mild dehydration.';
-    const note = generateOfflineSOAPNote(samplePatient, transcript);
+    const note = generateOfflineSOAPNote(samplePatient, transcript, 'en', { isDemoMode: true });
 
     expect(note.assessment.primary_diagnosis).toContain('Gastroenteritis');
     expect(note.plan.prescriptions.some((p) => p.medication.includes('ORS'))).toBe(true);

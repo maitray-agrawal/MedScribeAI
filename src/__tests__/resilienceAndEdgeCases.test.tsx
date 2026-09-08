@@ -140,7 +140,7 @@ describe('Clinical AI Resilience & Edge-Case Suite', () => {
       };
       const transcript = 'Doctor: Patient complains of high blood pressure and headache. BP is 150/90.';
 
-      const note = generateOfflineSOAPNote(patientInfo, transcript);
+      const note = generateOfflineSOAPNote(patientInfo, transcript, 'en', { isDemoMode: true });
       expect(note).toBeDefined();
       expect(note.subjective.chief_complaint).toBeTruthy();
       expect(note.assessment.primary_diagnosis).toBeTruthy();

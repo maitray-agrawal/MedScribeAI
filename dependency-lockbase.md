@@ -39,3 +39,17 @@
 | `typescript` | `~5.8.2` | TypeScript language compiler |
 | `vite` | `^6.2.3` | Vite dev server CLI and build tool |
 | `vitest` | `^4.1.10` | Vite-native unit test framework |
+
+---
+
+## 3. Python Sovereign AI Backend Dependencies (`backend/requirements.txt`)
+
+> **Discipline Rule:** The sovereign Python AI-core (`backend/`) maintains zero heavy runtime bloat in baseline development (no unvetted torch, transformers, faiss, paddleocr, or ollama installs). Only minimal, stable, typed dependencies are permitted.
+
+| Package Name | Locked Specifier Version | Purpose / Description |
+| :--- | :--- | :--- |
+| `fastapi` | `>=0.115.0` | Core asynchronous web framework and OpenAPI contract layer for local clinical AI microservices |
+| `uvicorn` | `>=0.30.0` | Lightning-fast ASGI web server implementation |
+| `pydantic` | `>=2.8.0` | Strongly-typed, immutable clinical domain modeling (`ClinicalFact`, `ClinicalEvidence`, `FactProvenance`) |
+| `httpx` | `>=0.27.0` | Async HTTP client for ASGI test client and upstream communication |
+| `pytest` | `>=8.0.0` | Unit and integration test framework for deterministic clinical fact extraction |

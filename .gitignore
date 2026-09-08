@@ -7,3 +7,7 @@ coverage/
 .vscode/
 .idea/
 *.log
+# Python generated files
+__pycache__/
+*.py[cod]
+*.class

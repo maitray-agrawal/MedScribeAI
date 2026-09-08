@@ -64,7 +64,7 @@
     "conceptId": "SYM_BREATHLESSNESS",
     "category": "symptom",
     "canonicalEnglish": "shortness of breath",
-    "devanagari": ["सांस फूलना", "सांस लेने में तकलीफ", "साँस फूलना"],
+    "devanagari": ["सांस फूलना", "सांस लेने में तकलीफ", "सांस लेने में कोई तकलीफ", "साँस फूलना"],
     "romanized": ["saans phoolna", "saans lene mein takleef", "saans lene me takleef", "saans fulna", "saans lene me dikkat", "saans lene me pareshani"],
     "colloquial": ["saans nahi aa rahi", "dam ghut raha hai", "saans lene me takleef hai"],
     "asrVariants": ["sans foolna", "sans lene me takleef", "sans lene mein takleef"],

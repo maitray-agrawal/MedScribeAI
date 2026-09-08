@@ -612,6 +612,112 @@ A direct `npm run lint` (`tsc --noEmit`) audit confirmed 9 TypeScript/build issu
    - `npm test` (`vitest run`): 12 test files passed, 219 of 219 tests passing.
    - `npm run build` (`vite build && esbuild server.ts ...`): Frontend and backend production bundle compiled cleanly.
 
+---
+
+## 2026-09-09 — Sovereign Python Clinical AI Platform Core Architecture Established (Phases 0–11)
+
+### Summary of Work
+Evolved the repository from a browser/Node-centric application toward a sovereign, offline-first clinical AI platform by establishing a Python/FastAPI AI-core backend (`backend/`) while preserving 100% of the existing React + TypeScript kiosk and clinician workstation functionality.
+
+### Key Architectural Milestones
+1. **Phase 0: End-to-End Clinical Data Flow Audit**:
+   - Traced all 6 clinical data pipelines (transcript → SOAP, document OCR → structured data, browser-local NLP engine, emergency red-flag triage, FHIR R4 export, adaptive intake interview).
+   - Documented exact component boundaries: TypeScript handles interactive UI/forms, audio recording, and validation; Node `server.ts` proxies cloud Gemini calls; browser `offlineLocalEngine.ts` provides fallback pattern matching.
+   - Clarified architectural boundary to prevent LLM hallucinations by introducing an immutable, evidence-linked clinical fact extraction boundary.
+
+2. **Phase 1: Minimal Python Backend Setup**:
+   - Initialized `backend/` project structure with strict dependency discipline: `fastapi>=0.115.0`, `uvicorn>=0.30.0`, `pydantic>=2.8.0`, `httpx>=0.27.0`, `pytest>=8.0.0`.
+   - Built core settings (`backend/app/core/config.py`), structured logging (`backend/app/core/logging.py`), and domain subpackage structure (`asr/`, `ocr/`, `nlp/`, `safety/`, `clinical/`, `services/`, `api/`).
+
+3. **Phase 2: Canonical Clinical Domain Model**:
+   - Implemented Pydantic v2 immutable domain models in `backend/app/clinical/`:
+     - `ClinicalFact`: Core entity with `concept_id`, `canonical_text`, `category` (`FactCategory`: symptom, condition, medication, allergy, vital_sign, ayush_dosha, ayush_prakriti, etc.), `assertion` (`present`, `absent`, `conditional`, `not_elicited`), `temporality` (`current`, `past`, `chronic`, etc.), `experiencer` (`patient`, `family_member`, etc.), `evidence`, `source`, `confidence`, and `provenance`.
+     - `ClinicalEvidence`: Verbatim patient utterance text, exact character offsets, and negation triggers.
+     - `FactProvenance`: Source tracking (`source_id`, `source_type`, character spans).
+     - `facts.py`: High-performance utility filtering functions (`get_affirmed_facts`, `get_negated_facts`, `get_facts_by_category`).
+
+4. **Phase 3: FastAPI Service Boundary**:
+   - Built FastAPI application (`backend/app/main.py`) with clean lifespan management and CORS middleware.
+   - Implemented endpoints:
+     - `GET /health`: Healthcheck with UTC timestamp and service status.
+     - `GET /version`: Semantic version, app name, and environment.
+     - `POST /api/v1/clinical/extract`: Ingestion endpoint accepting raw clinical text, extracting structured `ClinicalFact` entities via deterministic bilingual regex matcher with clause-bounded negation scoping (`backend/app/nlp/extractor.py`).
+
+5. **Phase 4: Frontend Integration Client**:
+   - Created `src/services/clinicalAIClient.ts`: Strongly-typed TypeScript client providing `healthCheck()`, `getVersion()`, and `extractClinicalFacts()`.
+   - Handled offline network errors gracefully, returning structured fallback responses when the local Python daemon is not active.
+
+6. **Phase 5: Provider Abstraction Layer**:
+   - Created `src/services/aiProvider.ts`: Declared unified `ClinicalAIProvider` interface with concrete implementations:
+     - `LocalPythonProvider`: Dispatches requests to the local sovereign Python service.
+     - `CloudGeminiProvider`: Dispatches requests to cloud Gemini endpoints via existing `server.ts`.
+     - `HybridClinicalProvider`: Implements local-first execution with transparent cloud fallback.
+
+7. **Phase 6 & 7: Architecture Documentation & Dependency Discipline**:
+   - Authored `backend/README.md` defining the local-first sovereign target architecture, zero-hallucination safety invariants, and an explicit matrix contrasting IMPLEMENTED vs PLANNED features.
+   - Documented Python dependencies in `dependency-lockbase.md` Section 3. Zero heavy ML frameworks installed in this baseline phase.
+
+8. **Phase 8: Comprehensive Automated Testing**:
+   - `backend/tests/test_clinical_facts.py`: 7 tests verifying Pydantic validations, assertion states (`present`, `absent`, `not_elicited`), experiencer distinctions (`family_member` vs `patient`), and evidence-linking invariants.
+   - `backend/tests/test_api.py`: 4 integration tests verifying API endpoints and the critical contrastive Hindi negation case (`"BP ka problem nahi hai lekin sar dard hai"` -> `COND_HYPERTENSION` absent, `SYM_HEADACHE` present).
+   - `src/__tests__/clinicalAIClient.test.ts`: 5 frontend tests verifying health check, version fetch, fact extraction mapping, and network failure resilience.
+
+9. **Phase 9: Dual-Stack Verification Results**:
+   - Frontend TypeScript Lint (`npm run lint`): Clean pass (0 errors).
+   - Frontend Unit Tests (`npm test`): 13 test files passed, 224/224 tests passing.
+   - Frontend & Server Production Build (`npm run build`): Clean pass (Vite + esbuild).
+   - Python Test Suite (`pytest backend/tests`): 11/11 tests passed in 0.22s.
+
+---
+
+## 2026-09-09 — Phase 7B: Canonical ClinicalFact Migration & Zero-Fabrication Enforcement
+
+### Overview
+Successfully completed Phase 7B Canonical ClinicalFact Migration across MedScribeAI and MediKiosk. Consolidated 5 competing legacy representations into a single canonical `ClinicalFact[]` source of truth and eliminated all synthetic fabrication pathways (unanchored GERD/Amlapitta, fake vitals 120/80, synthetic physical exams, default NKDA, and unauthorized pre-consultation prescriptions).
+
+### 6 Core Architectural Pillars Implemented
+1. **Typed Canonical ClinicalFact Schema** (`src/clinical/clinicalFactModel.ts`):
+   - Domain-typed entities (`symptom`, `condition`, `medication`, `allergy`, `ayush`, `vital`, `lifestyle`, `exam`).
+   - Fields: `factId`, `domain`, `code`, `term`, `assertion`, `elicitation`, `evidence` (`FactEvidence[]`), `provenance` (`FactProvenance`), and domain attributes (`MedicationAttributes`, `AYUSHAttributes`).
+   - Deterministic ID generator and `createClinicalFact()` factory.
+
+2. **Strict Assertion vs. Elicitation Semantics**:
+   - `assertion`: `AFFIRMED | NEGATED | SUSPECTED | CONDITIONAL | UNKNOWN`.
+   - `elicitation`: `ELICITED | NOT_ELICITED`.
+   - Unprompted domains (such as allergies during a focused interview) are marked `UNKNOWN` + `NOT_ELICITED` with empty evidence spans, completely eliminating synthetic default NKDA assertions.
+
+3. **Headless Extraction Pipeline Outside React** (`src/clinical/extractionPipeline.ts`):
+   - Operates purely in TypeScript without React hooks or DOM dependencies.
+   - Extracts bilingual symptoms, medication attributes, AYUSH Prakriti/Agni, and explicit allergy denials with precise character spans and verbatim anchors.
+
+4. **Conservative FHIR R4 Projection** (`src/utils/fhirConverter.ts`):
+   - Pre-consultation patient medications project strictly to `MedicationStatement` with `status: 'recorded'`.
+   - `MedicationRequest` is strictly forbidden unless an authenticated clinician prescription exists.
+   - Patient-reported conditions project to `Condition` with `verificationStatus: 'unconfirmed'`.
+   - AYUSH traits map to patient-reported `Observation` resources.
+   - Zero unelicited `AllergyIntolerance` resources are created.
+
+5. **Conflict-Preserving Fact Store** (`src/clinical/clinicalFactStore.ts`):
+   - In-memory encounter fact store that accumulates facts across turns without destructive overwrites.
+   - Supports `getConflictingFacts(canonicalId)` to surface contradictory patient statements for physician review.
+
+6. **Active Evidence & Fabrication Gate** (`src/clinical/evidenceGate.ts`):
+   - `validateClinicalFact`: Rejects patient-voice facts lacking evidence spans or with confidence outside `[0, 1]`.
+   - `auditProjectionIntegrity`: Blocks unanchored GERD/Amlapitta, blocks pre-consultation prescriptions, and detects fabricated vitals.
+
+### Eradication of Synthetic Data Pathways
+- **`src/utils/intakeSummaryGenerator.ts`**: Pure projection from `ClinicalFact[]`. Zero hardcoded GERD/Amlapitta, zero fake vitals (`"Not documented"`), physical exam: `"pending attending physician consultation"`, prescriptions: `[]`, CPT: `[]`.
+- **`src/components/kiosk/DocumentUploadStep.tsx`**: Removed synthetic catch-block fallback that fabricated T2D, hyperlipidemia, and Metformin.
+- **`src/utils/offlineLocalEngine.ts`**: Isolated legacy demo presets behind `{ isDemoMode: true }`; sovereign production mode outputs empty prescriptions and unmeasured vitals.
+- **`src/components/SOAPNoteView.tsx` & `PrintPrescriptionModal.tsx`**: Removed hardcoded `NKDA` fallback; displays `"None documented / Not elicited"` when allergies were not elicited.
+- **`src/components/kiosk/InterviewEngine.tsx` & `KioskShell.tsx`**: Wired canonical extraction on every intake turn and attached `clinicalFacts` to the intake payload.
+
+### Test & Build Verification
+- **TypeScript Lint** (`npm run lint`): Clean pass (0 errors).
+- **Vitest** (`npx vitest run`): 14 test files passed, 246/246 tests passing (including 22 new integration tests in `src/__tests__/canonicalClinicalFacts.test.ts`).
+- **Python Backend** (`pytest backend/tests`): 11/11 tests passed in 0.85s.
+- **Production Build** (`npm run build`): Clean build (Vite + esbuild).
+
 
 
 

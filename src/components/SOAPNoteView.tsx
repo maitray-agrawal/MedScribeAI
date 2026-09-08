@@ -138,7 +138,7 @@ SUBJECTIVE (S):
 - History of Present Illness: ${s.history_of_present_illness}
 - Review of Systems: ${s.review_of_systems}
 - Current Medications: ${s.current_medications?.join(', ') || 'None documented'}
-- Allergies: ${s.allergies?.join(', ') || 'NKDA'}
+- Allergies: ${s.allergies?.length ? s.allergies.join(', ') : 'None documented / Not elicited'}
 
 OBJECTIVE (O):
 - Vital Signs: ${o.vital_signs}

@@ -1,4 +1,5 @@
 import { EmergencyTriageAlert } from '../types';
+import { ClinicalFact } from '../clinical/clinicalFactModel';
 
 export const TRIAGE_STORAGE_KEY = 'medscribe_triage_alerts_v1';
 
@@ -22,8 +23,8 @@ export const EMERGENCY_TRIAGE_RULES: EmergencyRule[] = [
     id: 'EMERG_CHEST_PAIN_DYSPNEA',
     category: 'Acute Cardiovascular Crisis (ACS / Myocardial Infarction)',
     patternDescription: 'Chest pain combined with shortness of breath, diaphoresis, or radiating pain',
-    primaryRegex: /\b(chest\s+pain|chest\s+pressure|crushing\s+chest|heavy\s+chest|tightness\s+in\s+chest|heart\s+attack|angina|dolor\s+de\s+pecho|presi[oó]n\s+en\s+el\s+pecho)\b/i,
-    secondaryRegex: /\b(shortness\s+of\s+breath|breathless|breathlessness|difficulty\s+breathing|can'?t\s+breathe|dyspnea|sweat|sweating|diaphoresis|left\s+arm|jaw\s+pain|radiat|dificultad\s+para\s+respirar|falta\s+de\s+aire|sudoraci[oó]n|brazo\s+izquierdo)\b/i,
+    primaryRegex: /\b(chest\s+pain|chest\s+pressure|crushing\s+chest|heavy\s+chest|tightness\s+in\s+chest|heart\s+attack|angina|dolor\s+de\s+pecho|presi[oó]n\s+en\s+el\s+pecho)\b|सीने\s*में\s*(तेज़\s*)?दर्द|छाती\s*में\s*दर्द/i,
+    secondaryRegex: /\b(shortness\s+of\s+breath|breathless|breathlessness|difficulty\s+breathing|can'?t\s+breathe|dyspnea|sweat|sweating|diaphoresis|left\s+arm|jaw\s+pain|radiat|dificultad\s+para\s+respirar|falta\s+de\s+aire|sudoraci[oó]n|brazo\s+izquierdo)\b|सांस\s*(लेने\s*में\s*तकलीफ|फूल|चढ़)|पसीना|बाएं\s*हाथ\s*में\s*दर्द/i,
     severity: 'CRITICAL_EMERGENCY',
     triageColor: 'Red',
     actionDirectives: [
@@ -37,7 +38,7 @@ export const EMERGENCY_TRIAGE_RULES: EmergencyRule[] = [
     id: 'EMERG_STROKE_FAST',
     category: 'Acute Neurological Emergency (Stroke / CVA)',
     patternDescription: 'Stroke-pattern symptoms: facial droop, unilateral weakness, or sudden speech disturbance',
-    primaryRegex: /\b(stroke|facial\s+droop|face\s+droop|drooping\s+face|slurred\s+speech|slurring|can'?t\s+speak|difficulty\s+speaking|arm\s+weakness|arm\s+drift|one\s+side\s+weak|numbness\s+on\s+one\s+side|weakness\s+on\s+one\s+side|paralysis|hemiparesis|rostro\s+ca[ií]do|dificultad\s+para\s+hablar|brazo\s+d[eé]bil|par[aá]lisis)\b/i,
+    primaryRegex: /\b(stroke|facial\s+droop|face\s+droop|drooping\s+face|slurred\s+speech|slurring|can'?t\s+speak|difficulty\s+speaking|arm\s+weakness|arm\s+drift|one\s+side\s+weak|numbness\s+on\s+one\s+side|weakness\s+on\s+one\s+side|paralysis|hemiparesis|rostro\s+ca[ií]do|dificultad\s+para\s+hablar|brazo\s+d[eé]bil|par[aá]lisis)\b|लकवा|मुंह\s*टेढ़ा|बोलने\s*में\s*दिक्कत|हाथ\s*में\s*कमजोरी/i,
     severity: 'CRITICAL_EMERGENCY',
     triageColor: 'Red',
     actionDirectives: [
@@ -179,6 +180,60 @@ export function detectEmergencySymptomPattern(
     };
 
     return alert;
+  }
+
+  return null;
+}
+
+/**
+ * Detects emergency triage conditions directly from canonical ClinicalFact[] instances.
+ * Enables emergency identification from affirmed clinical codes (e.g. SYM_CHEST_PAIN, SYM_BREATHLESSNESS)
+ * without depending solely on regex matching against English surface text.
+ */
+export function detectEmergencyFromFacts(
+  facts: ClinicalFact[],
+  context?: {
+    patientName?: string;
+    age?: number | string;
+    gender?: string;
+    abhaId?: string;
+    kioskStationId?: string;
+    priorHistoryText?: string;
+  }
+): EmergencyTriageAlert | null {
+  const affirmedCodes = new Set(
+    facts.filter((f) => f.assertion === 'AFFIRMED').map((f) => f.code)
+  );
+
+  // 1. ACS / Acute Chest Pain crisis
+  if (
+    affirmedCodes.has('SYM_CHEST_PAIN') &&
+    (affirmedCodes.has('SYM_BREATHLESSNESS') || affirmedCodes.has('SYM_DYSPNEA'))
+  ) {
+    const chestFact = facts.find((f) => f.code === 'SYM_CHEST_PAIN' && f.assertion === 'AFFIRMED');
+    const alertId = `TRG-FACT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    return {
+      id: alertId,
+      timestamp: new Date().toISOString(),
+      patientName: context?.patientName || 'Patient',
+      age: context?.age || 'Not documented',
+      gender: context?.gender || 'Not documented',
+      abhaId: context?.abhaId || 'Not documented',
+      kioskStationId: context?.kioskStationId || 'Kiosk #01 (OPD Lobby)',
+      emergencyCategory: 'Acute Cardiovascular Crisis (ACS / Myocardial Infarction)',
+      detectedPattern: 'Chest pain combined with shortness of breath (सीने में दर्द + सांस फूलना)',
+      matchedKeywords: ['SYM_CHEST_PAIN', 'SYM_BREATHLESSNESS'],
+      severity: 'CRITICAL_EMERGENCY',
+      triageColor: 'Red',
+      triggerInputText: chestFact?.evidence[0]?.verbatimText || 'SYM_CHEST_PAIN + SYM_BREATHLESSNESS',
+      status: 'active',
+      actionDirectives: [
+        'IMMEDIATE ACTION: Dispatch emergency response nurse with crash cart',
+        'Keep patient seated upright and resting at kiosk terminal #01',
+        'Prepare emergency 12-lead ECG and continuous cardiac monitoring',
+        'Check vital signs (BP, SpO2, HR) and prepare supplemental oxygen',
+      ],
+    };
   }
 
   return null;

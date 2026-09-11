@@ -38,6 +38,7 @@ import io
 import json
 import logging
 import os
+import sys
 import time
 import wave
 from typing import Any, Dict, List, Optional, Tuple
@@ -222,16 +223,34 @@ def _find_model_file() -> Optional[str]:
     """
     Search for model.int8.onnx.
     Priority:
-      1. Deployment directory  (models/asr/indic-conformer/) — runtime copy
-      2. HF cache              (~/.cache/huggingface/hub/...)  — user cache fallback
+      1. Explicit environment variable (MEDSCRIBE_ASR_MODEL_PATH or MEDSCRIBE_ASR_MODEL_DIR)
+      2. Deployment directory (models/asr/indic-conformer/) — runtime copy
+      3. Working directory or executable-relative path
+      4. HF cache (~/.cache/huggingface/hub/...) — user cache fallback
     """
+    env_path = os.environ.get("MEDSCRIBE_ASR_MODEL_PATH")
+    if env_path and os.path.isfile(env_path):
+        return env_path
+
+    env_dir = os.environ.get("MEDSCRIBE_ASR_MODEL_DIR")
+    if env_dir:
+        candidate = os.path.join(env_dir, _MODEL_FILENAME)
+        if os.path.isfile(candidate):
+            return candidate
+
+    exe_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.path.dirname(__file__)
+
     candidates = [
         os.path.join(os.path.abspath(_REPO_MODEL_DIR), _MODEL_FILENAME),
+        os.path.join(os.getcwd(), "models", "asr", "indic-conformer", _MODEL_FILENAME),
+        os.path.join(exe_dir, "..", "..", "models", "asr", "indic-conformer", _MODEL_FILENAME),
+        os.path.join(exe_dir, "models", "asr", "indic-conformer", _MODEL_FILENAME),
         os.path.join(_HF_CACHE_BASE, _MODEL_FILENAME),
     ]
     for c in candidates:
-        if os.path.isfile(c):
-            return c
+        norm = os.path.normpath(c)
+        if os.path.isfile(norm):
+            return norm
     return None
 
 

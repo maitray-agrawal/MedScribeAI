@@ -1,7 +1,5 @@
-"""Clinical fact provenance and source tracking."""
-
 from typing import Optional
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 
 class FactProvenance(BaseModel):
@@ -14,3 +12,9 @@ class FactProvenance(BaseModel):
     end_char: int = Field(..., ge=0, description="End character offset in the source text")
     matched_text: Optional[str] = Field(None, description="Exact substring matched in source")
     engine: str = Field("medscribe-deterministic-nlp", description="Extraction engine identifier")
+
+    @model_validator(mode="after")
+    def validate_offsets(self) -> "FactProvenance":
+        if self.end_char < self.start_char:
+            raise ValueError(f"Provenance end_char ({self.end_char}) cannot be less than start_char ({self.start_char}).")
+        return self

@@ -3,14 +3,24 @@
 import pytest
 import tempfile
 from pathlib import Path
-from backend.app.storage.database import (
-    init_db,
-    get_db_connection,
-    EncounterStorage,
-    ClinicalFactStorage,
-    AuditLogStorage,
-    SyncQueueStorage,
-)
+try:
+    from app.storage.database import (
+        init_db,
+        get_db_connection,
+        EncounterStorage,
+        ClinicalFactStorage,
+        AuditLogStorage,
+        SyncQueueStorage,
+    )
+except ImportError:
+    from backend.app.storage.database import (
+        init_db,
+        get_db_connection,
+        EncounterStorage,
+        ClinicalFactStorage,
+        AuditLogStorage,
+        SyncQueueStorage,
+    )
 
 
 @pytest.fixture

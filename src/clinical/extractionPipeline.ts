@@ -548,6 +548,12 @@ export function extractMedicationFacts(
       m.frequency ||
       text.match(/\b(bd|bid|tds|tid|od|qd|sos)\b/i)?.[1]?.toUpperCase();
 
+    // Check for discontinuation, cessation, or negation markers
+    const isDiscontinued = /\b(band\s+kar\s+d(?:i|iya|e|ege|ungi)|band\s+hai|rok\s+d(?:i|iya|e)|rok\s+diya|nahi\s+le\s+rah[aei]|nahin\s+le\s+rah[aei]|chhod\s+d(?:i|iya|e)|le\s+nahi\s+rah[aei]|le\s+nahin\s+rah[aei]|band\s+ki|stopped|discontinued|not\s+taking|no\s+longer\s+taking|ceased|quit)\b/i.test(text);
+
+    const assertion: FactAssertion = isDiscontinued ? 'NEGATED' : 'AFFIRMED';
+    const temporality: FactTemporality = isDiscontinued ? 'HISTORICAL' : 'CURRENT';
+
     const medAttrs: MedicationAttributes = {
       drugName: m.genericName,
       dose: rawDose,
@@ -556,33 +562,41 @@ export function extractMedicationFacts(
       frequency: freq,
       route: parsedComp.route,
       isPrescriptionOrder: false, // Patient/document mention is NEVER an order!
+      status: isDiscontinued ? 'discontinued' : 'active',
+      isDiscontinued,
     };
 
+    let evText = m.surfaceText || text.trim();
     let startOffset = 0;
     let endOffset = text.length;
-    if (m.surfaceText && text.includes(m.surfaceText)) {
+
+    if (isDiscontinued) {
+      evText = text.trim();
+      startOffset = 0;
+      endOffset = evText.length;
+    } else if (m.surfaceText && text.includes(m.surfaceText)) {
       startOffset = text.indexOf(m.surfaceText);
       endOffset = startOffset + m.surfaceText.length;
     }
 
     facts.push(
       createClinicalFact({
-        factId: generateFactId(m.canonicalId, sourceType),
+        factId: generateFactId(m.canonicalId, sourceType, isDiscontinued ? 'discontinued' : undefined),
         encounterId: context.encounterId,
         domain: 'medication',
         canonicalId: m.canonicalId,
         preferredTerm: m.genericName,
-        value: `${m.genericName}${medAttrs.dose ? ` ${medAttrs.dose}` : ''}${medAttrs.frequency ? ` ${medAttrs.frequency}` : ''}`,
+        value: `${m.genericName}${medAttrs.dose ? ` ${medAttrs.dose}` : ''}${medAttrs.frequency ? ` ${medAttrs.frequency}` : ''}${isDiscontinued ? ' (Discontinued)' : ''}`,
         attributes: medAttrs,
-        assertion: 'AFFIRMED',
+        assertion,
         elicitation: 'ELICITED',
-        temporality: 'CURRENT',
+        temporality,
         experiencer: context.experiencer || 'PATIENT',
         confidence: m.confidence,
         evidence: [
           {
-            text: m.surfaceText || text.trim(),
-            verbatimText: m.surfaceText || text.trim(),
+            text: evText,
+            verbatimText: evText,
             startOffset,
             endOffset,
             startChar: startOffset,
@@ -773,7 +787,7 @@ const KNOWN_CONDITIONS: KnownConditionDef[] = [
   {
     canonicalId: 'COND_HYPERTENSION',
     preferredTerm: 'Hypertension',
-    regex: /\b(hypertension|high\s+bp|bp\s+high|raktchap|raktadaab|bp\s+ki\s+problem|bp\s+ki\s+bimari)\b/i,
+    regex: /\b(hypertension|high\s+bp|bp\s+high|raktchap|raktadaab|bp\s+problem|bp\s+ka\s+problem|bp\s+ki\s+problem|bp\s+ki\s+bimari|blood\s+pressure)\b/i,
   },
   {
     canonicalId: 'COND_ASTHMA',

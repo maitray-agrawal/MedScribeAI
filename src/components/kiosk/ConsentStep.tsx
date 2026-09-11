@@ -38,7 +38,7 @@ interface ConsentItem {
 }
 
 export const ConsentStep: React.FC<ConsentStepProps> = ({
-  initialConsent = { voiceCapture: true, documentUpload: true, hospitalSharing: true },
+  initialConsent = { voiceCapture: false, documentUpload: false, hospitalSharing: false },
   onConsentGiven,
   onBack,
 }) => {

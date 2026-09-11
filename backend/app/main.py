@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
 from .core.logging import logger
-from .api.routes import health, clinical
+from .api.routes import health, clinical, ocr, asr
 
 
 @asynccontextmanager
@@ -33,6 +33,8 @@ app.add_middleware(
 # Register route modules
 app.include_router(health.router)
 app.include_router(clinical.router)
+app.include_router(ocr.router)
+app.include_router(asr.router)
 
 
 if __name__ == "__main__":

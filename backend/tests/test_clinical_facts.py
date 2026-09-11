@@ -56,8 +56,8 @@ def test_clinical_fact_empty_evidence_raises():
 
 def test_clinical_fact_invalid_provenance_offsets():
     """Validates that end_char < start_char is rejected."""
-    prov = FactProvenance(source_id="enc-001", start_char=20, end_char=10)
     with pytest.raises(ValidationError):
+        prov = FactProvenance(source_id="enc-001", start_char=20, end_char=10)
         ClinicalFact(
             concept_id="SYM_HEADACHE",
             canonical_text="headache",

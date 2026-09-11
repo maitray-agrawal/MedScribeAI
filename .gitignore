@@ -13,3 +13,7 @@ __pycache__/
 *.class
 *.db
 *.sqlite
+*.onnx
+src-tauri/target/
+target/
+src-tauri/binaries/*.exe

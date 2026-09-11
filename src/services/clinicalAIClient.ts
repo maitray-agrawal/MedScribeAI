@@ -44,6 +44,59 @@ export interface ClinicalExtractionResponse {
   language_detected?: string;
 }
 
+export interface OCRBlock {
+  block_id: number;
+  text: string;
+  confidence: number;
+  bbox: number[];
+}
+
+export interface OCRResult {
+  text: string;
+  language_detected: string;
+  confidence: number;
+  facts: ClinicalFact[];
+  document_type: string;
+  blocks: OCRBlock[];
+  preprocessed_stages: string[];
+}
+
+export interface ASRResult {
+  text: string;
+  language_detected: string;
+  confidence: number;
+  facts: ClinicalFact[];
+  audio_duration_ms?: number | null;
+  word_count: number;
+  latency_ms?: number | null;
+}
+
+export interface ASRStatus {
+  available: boolean;
+  engine: string;
+  model_name: string;
+  supported_languages: string[];
+  execution_provider: string;
+  device: string;
+}
+
+export interface AudioTranscribeInput {
+  audio_base64: string;
+  mime_type?: string;
+  duration_ms?: number;
+  sample_rate?: number;
+  channels?: number;
+  preferred_language?: string;
+}
+
+export interface DocumentOCRInput {
+  file_base64: string;
+  file_name: string;
+  mime_type?: string;
+  file_size_bytes?: number;
+  document_hint?: string;
+}
+
 export class ClinicalAIClient {
   private baseUrl: string;
 
@@ -111,6 +164,63 @@ export class ClinicalAIClient {
     } catch (err) {
       console.warn('FastAPI clinical extraction unavailable:', err);
       return [];
+    }
+  }
+
+  /**
+   * Transcribes patient clinical audio using sovereign local ASR.
+   */
+  async transcribeAudio(input: AudioTranscribeInput): Promise<ASRResult> {
+    const res = await fetch(`${this.baseUrl}/api/v1/asr/transcribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kind: 'audio',
+        mime_type: input.mime_type || 'audio/webm',
+        ...input,
+      }),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData?.detail?.message || `ASR HTTP error: ${res.status}`);
+    }
+
+    return res.json();
+  }
+
+  /**
+   * Performs physical OCR extraction on an uploaded medical document.
+   */
+  async extractDocumentOCR(input: DocumentOCRInput): Promise<OCRResult> {
+    const res = await fetch(`${this.baseUrl}/api/v1/ocr/extract`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kind: 'document',
+        mime_type: input.mime_type || 'image/jpeg',
+        ...input,
+      }),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData?.detail?.message || `OCR HTTP error: ${res.status}`);
+    }
+
+    return res.json();
+  }
+
+  /**
+   * Probes local ASR inference engine status and execution provider.
+   */
+  async getASRStatus(): Promise<ASRStatus | null> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/v1/asr/status`, { method: 'GET' });
+      if (!res.ok) return null;
+      return res.json();
+    } catch {
+      return null;
     }
   }
 }

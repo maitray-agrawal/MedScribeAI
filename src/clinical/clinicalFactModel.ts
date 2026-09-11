@@ -87,6 +87,8 @@ export interface MedicationAttributes {
   route?: string;
   duration?: string;
   isPrescriptionOrder?: boolean;
+  status?: 'active' | 'discontinued' | 'held' | 'completed' | string;
+  isDiscontinued?: boolean;
 }
 
 export interface AYUSHAttributes {

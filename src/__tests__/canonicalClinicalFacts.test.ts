@@ -256,6 +256,20 @@ describe('Phase 7B — Canonical ClinicalFact & Zero-Fabrication Enforcement', (
     expect(audit.violations.some((v) => v.type === 'FABRICATED_VITAL_SIGNS')).toBe(true);
   });
 
+  // 15b. Fabrication gate detects and blocks unanchored allergies
+  it('15b. auditProjectionIntegrity detects unanchored allergies', () => {
+    const facts = extractCanonicalFacts('I have a headache', { language: 'en', sourceType: 'PATIENT_VOICE' });
+    const fabricatedProjection = {
+      subjective: {
+        allergies: ['Penicillin Anaphylaxis'],
+      },
+    };
+
+    const audit = auditProjectionIntegrity(facts, fabricatedProjection);
+    expect(audit.passed).toBe(false);
+    expect(audit.violations.some((v) => v.type === 'UNANCHORED_ALLERGY')).toBe(true);
+  });
+
   // 16. Pure summary projection from ClinicalFact[]
   it('16. generateStructuredSummary produces zero unanchored GERD/Amlapitta and zero fake vitals', () => {
     const intake: StructuredPatientIntake = {

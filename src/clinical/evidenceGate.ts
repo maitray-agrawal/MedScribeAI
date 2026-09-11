@@ -119,6 +119,7 @@ export function auditProjectionIntegrity(
         diagnoses?: string[];
         vitals?: string;
         prescriptions?: any[];
+        allergies?: string[];
         facts: ClinicalFact[];
       }
     | ClinicalFact[],
@@ -129,6 +130,7 @@ export function auditProjectionIntegrity(
   let diagnoses: string[] = [];
   let vitals: string | undefined;
   let prescriptions: any[] = [];
+  let allergies: string[] = [];
   let isPreConsult = arg3?.isPreConsultationIntake ?? false;
 
   if (Array.isArray(arg1)) {
@@ -145,11 +147,13 @@ export function auditProjectionIntegrity(
     }
     vitals = proj.objective?.vital_signs || proj.vitals;
     prescriptions = proj.plan?.prescriptions || proj.prescriptions || [];
+    allergies = proj.subjective?.allergies || proj.allergies || [];
   } else {
     facts = arg1.facts || [];
     diagnoses = arg1.diagnoses || [];
     vitals = arg1.vitals;
     prescriptions = arg1.prescriptions || [];
+    allergies = arg1.allergies || [];
   }
 
   const violations: Array<{ type: string; message: string }> = [];
@@ -290,6 +294,21 @@ export function auditProjectionIntegrity(
           violations.push({ type: 'FABRICATED_VITAL_SIGNS', message: msg });
           ungrounded.push(msg);
         }
+      }
+    }
+  }
+
+  // 4. Allergy Grounding Check
+  if (allergies && allergies.length > 0) {
+    for (const alg of allergies) {
+      const a = alg.toLowerCase().trim();
+      if (!a || a.includes('not documented') || a.includes('not elicited') || a.includes('nkda') || a.includes('no known') || a.includes('none reported')) {
+        continue;
+      }
+      if (!isGroundedInFacts(alg)) {
+        const msg = `Unanchored allergy detected without grounded ClinicalFact or transcript evidence: "${alg}"`;
+        violations.push({ type: 'UNANCHORED_ALLERGY', message: msg });
+        ungrounded.push(msg);
       }
     }
   }

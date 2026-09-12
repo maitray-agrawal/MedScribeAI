@@ -477,7 +477,7 @@ export const MultilingualVoiceInput: React.FC<MultilingualVoiceInputProps> = ({
 
       {/* 4. Safety & Privacy Notice */}
       <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-800/60">
-        <span>🔒 Audio is processed for transcription only; no voice data is stored.</span>
+        <span>Audio is processed for transcription only; no voice data is stored.</span>
         <span>Kiosk clinical intake assistant (non-diagnostic)</span>
       </div>
     </div>

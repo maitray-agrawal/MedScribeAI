@@ -4,10 +4,10 @@
 
 | Component | MODEL LOADABILITY | INFERENCE | ACCURACY | PACKAGING |
 |---|---|---|---|---|
-| ASR (IndicConformer) | ✅ PROVEN | ✅ PROVEN (synthetic) | ⏳ DEFERRED | — |
-| OCR (Tesseract) | ❌ BINARY ABSENT | ❌ BLOCKED | ⏳ DEFERRED | — |
-| NLP/NER (deterministic) | ✅ N/A | ✅ PROVEN | ✅ VALIDATED | — |
-| ClinicalFact pipeline | ✅ N/A | ✅ PROVEN | ✅ VALIDATED | — |
+| ASR (IndicConformer) | PROVEN | PROVEN (synthetic) | DEFERRED | — |
+| OCR (Tesseract) | BINARY ABSENT | BLOCKED | DEFERRED | — |
+| NLP/NER (deterministic) | N/A | PROVEN | VALIDATED | — |
+| ClinicalFact pipeline | N/A | PROVEN | VALIDATED | — |
 
 ---
 
@@ -184,19 +184,19 @@ Searched production code (`backend/app/**/*.py`) for all specified clinical term
 
 | Term | Production Path | Isolated Path | Classification |
 |---|---|---|---|
-| GERD | ❌ NOT FOUND | `test_evidence_gate.py` (rejection test) | CLEAN |
-| Amlapitta | ❌ NOT FOUND | `test_evidence_gate.py` (rejection test) | CLEAN |
-| 120/80 | ❌ NOT FOUND | `test_evidence_gate.py` (rejection test) | CLEAN |
-| 38.9 | ❌ NOT FOUND | — | CLEAN |
-| 115 | ❌ NOT FOUND | — | CLEAN |
-| Pantoprazole | ❌ NOT FOUND | — | CLEAN |
+| GERD | NOT FOUND | `test_evidence_gate.py` (rejection test) | CLEAN |
+| Amlapitta | NOT FOUND | `test_evidence_gate.py` (rejection test) | CLEAN |
+| 120/80 | NOT FOUND | `test_evidence_gate.py` (rejection test) | CLEAN |
+| 38.9 | NOT FOUND | — | CLEAN |
+| 115 | NOT FOUND | — | CLEAN |
+| Pantoprazole | NOT FOUND | — | CLEAN |
 | Metformin | `benchmark_dataset.py`* | `tests/fixtures/` | CLEAN* |
-| Penicillin | ❌ NOT FOUND | `test_evidence_gate.py` (rejection test) | CLEAN |
-| NKDA | ❌ NOT FOUND | — | CLEAN |
-| Aarav Sharma | ❌ NOT FOUND | — | CLEAN |
-| Ramesh Kumar Patel | ❌ NOT FOUND | — | CLEAN |
-| Sunita Devi | ❌ NOT FOUND | — | CLEAN |
-| Kwame Mensah | ❌ NOT FOUND | — | CLEAN |
+| Penicillin | NOT FOUND | `test_evidence_gate.py` (rejection test) | CLEAN |
+| NKDA | NOT FOUND | — | CLEAN |
+| Aarav Sharma | NOT FOUND | — | CLEAN |
+| Ramesh Kumar Patel | NOT FOUND | — | CLEAN |
+| Sunita Devi | NOT FOUND | — | CLEAN |
+| Kwame Mensah | NOT FOUND | — | CLEAN |
 
 *`benchmark_dataset.py` is in `backend/app/clinical/` but is **not imported from any production route or patient-intake path**. It is only imported from `backend/tests/test_clinical_benchmark.py`. Not reachable from production patient intake.
 
@@ -272,9 +272,9 @@ npm run build (vite + esbuild): PASSED (2,142 modules transformed)
 
 ## Explicit Claims NOT Made
 
-- ❌ NOT claiming "fully offline AI" (OCR binary absent)
-- ❌ NOT claiming WER or CER (no real speech tested)
-- ❌ NOT claiming Tamil ASR support (model does not support it)
-- ❌ NOT claiming OCR validated (Tesseract binary absent)
-- ❌ NOT claiming INFERENCE_VALIDATED (synthetic audio only)
-- ❌ NOT claiming ACCURACY_VALIDATED (no real speech or documents)
+- NOT claiming "fully offline AI" (OCR binary absent)
+- NOT claiming WER or CER (no real speech tested)
+- NOT claiming Tamil ASR support (model does not support it)
+- NOT claiming OCR validated (Tesseract binary absent)
+- NOT claiming INFERENCE_VALIDATED (synthetic audio only)
+- NOT claiming ACCURACY_VALIDATED (no real speech or documents)

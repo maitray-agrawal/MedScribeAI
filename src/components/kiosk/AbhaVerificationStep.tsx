@@ -53,8 +53,8 @@ export const AbhaVerificationStep: React.FC<AbhaVerificationStepProps> = ({
 
   // Quick preset demo identities for rapid demonstration in hackathons
   const demoProfiles = [
-    { label: 'Demo Patient 1', id: '91-8765-4321-0987', name: 'Aarav Sharma', age: 44, gender: 'Male' },
-    { label: 'Demo Patient 2', id: 'sunita.devi@abdm', name: 'Sunita Devi', age: 38, gender: 'Female' },
+    { label: 'Synthetic Demo Patient 1', id: '91-2345-6789-0123', name: 'SYNTHETIC DEMO PATIENT', age: 48, gender: 'Male' },
+    { label: 'Synthetic Demo Patient 2', id: 'synthetic.demo@abdm', name: 'SYNTHETIC DEMO PATIENT (F)', age: 38, gender: 'Female' },
   ];
 
   const handleVerify = (customId?: string) => {
@@ -75,10 +75,10 @@ export const AbhaVerificationStep: React.FC<AbhaVerificationStepProps> = ({
       const matched = demoProfiles.find((p) => p.id.toLowerCase() === idToVerify.toLowerCase());
       const profile: VerifiedAbhaProfile = {
         abhaId: idToVerify,
-        fullName: matched ? matched.name : 'Ramesh Kumar Patel',
+        fullName: matched ? matched.name : 'SYNTHETIC DEMO PATIENT',
         gender: matched ? matched.gender : 'Male',
-        age: matched ? matched.age : 46,
-        mobile: '+91 98765 43210',
+        age: matched ? matched.age : 48,
+        mobile: '+91 00000 00000 (DEMO)',
         state: 'New Delhi, DL',
         verifiedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };

@@ -4,13 +4,13 @@
 
 | Check | Status |
 |---|---|
-| OpenCV preprocessing pipeline | ✅ CONFIRMED |
-| pytesseract Python bindings | ✅ INSTALLED |
-| Tesseract binary (tesseract.exe) | ❌ NOT FOUND |
-| `tesseract --version` | ❌ DEFERRED (binary absent) |
-| `tesseract --list-langs` | ❌ DEFERRED (binary absent) |
-| Raw image → text inference | ❌ DEFERRED (binary absent) |
-| Real clinical document OCR | ⏳ DEFERRED |
+| OpenCV preprocessing pipeline | CONFIRMED |
+| pytesseract Python bindings | INSTALLED |
+| Tesseract binary (tesseract.exe) | NOT FOUND |
+| `tesseract --version` | DEFERRED (binary absent) |
+| `tesseract --list-langs` | DEFERRED (binary absent) |
+| Raw image -> text inference | DEFERRED (binary absent) |
+| Real clinical document OCR | DEFERRED |
 
 ## Installation Requirement
 

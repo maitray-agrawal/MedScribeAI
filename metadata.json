@@ -1,7 +1,8 @@
 {
-  "name": "MedScribe Lite",
-  "description": "Primary Care Clinical Safety Copilot & Scribe transforming consultation transcripts into verified SOAP notes, ICD-10/CPT coding, and safety alerts.",
+  "name": "MedScribeAI",
+  "description": "Sovereign, offline-first AI patient case-taking and clinical documentation platform.",
   "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+    "MAJOR_CAPABILITY_OFFLINE_SOVEREIGN_AI",
+    "MAJOR_CAPABILITY_CLINICAL_NLP_EXTRACTION"
   ]
 }

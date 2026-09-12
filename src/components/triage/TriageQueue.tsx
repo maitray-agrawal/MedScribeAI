@@ -38,7 +38,33 @@ export const TriageQueue: React.FC<TriageQueueProps> = ({
   onNavigateToKiosk,
   onSelectPatientForConsultation,
 }) => {
-  const [alerts, setAlerts] = useState<EmergencyTriageAlert[]>(() => getLocalTriageAlerts());
+  const [alerts, setAlerts] = useState<EmergencyTriageAlert[]>(() => {
+    const local = getLocalTriageAlerts();
+    if (local.length > 0) return local;
+    return [
+      {
+        id: 'TRG-SYNTH-001',
+        timestamp: new Date().toISOString(),
+        patientName: 'SYNTHETIC DEMO PATIENT',
+        age: 48,
+        gender: 'Male',
+        abhaId: '91-2345-6789-0123 (DEMO)',
+        kioskStationId: 'Kiosk #01 (OPD Lobby)',
+        emergencyCategory: 'Acute Cardiovascular Crisis (ACS / Myocardial Infarction)',
+        detectedPattern: 'Chest pain combined with shortness of breath, diaphoresis, or radiating pain',
+        matchedKeywords: ['crushing chest pain', 'shortness of breath', 'left arm'],
+        severity: 'CRITICAL_EMERGENCY',
+        triageColor: 'Red',
+        triggerInputText: 'Patient reports severe retrosternal crushing chest pain radiating to left arm and acute shortness of breath.',
+        status: 'active',
+        actionDirectives: [
+          'IMMEDIATE ACTION: Dispatch emergency response nurse with crash cart',
+          'Keep patient seated upright and resting at kiosk terminal #01',
+          'Prepare emergency 12-lead ECG and continuous cardiac monitoring',
+        ],
+      },
+    ];
+  });
   const [isPolling, setIsPolling] = useState<boolean>(true);
   const [lastPollTime, setLastPollTime] = useState<string>(new Date().toLocaleTimeString());
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
@@ -66,7 +92,9 @@ export const TriageQueue: React.FC<TriageQueueProps> = ({
           (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
         );
 
-        setAlerts(combined);
+        if (combined.length > 0) {
+          setAlerts(combined);
+        }
         setLastPollTime(new Date().toLocaleTimeString());
 
         // Play chime if new active alert appeared
@@ -75,10 +103,19 @@ export const TriageQueue: React.FC<TriageQueueProps> = ({
           playEmergencyAlertChime();
         }
         previousActiveCountRef.current = currentActive;
+      } else {
+        const local = getLocalTriageAlerts();
+        if (local.length > 0) {
+          setAlerts(local);
+        }
+        setLastPollTime(new Date().toLocaleTimeString());
       }
     } catch {
       // Fall back to local store
-      setAlerts(getLocalTriageAlerts());
+      const local = getLocalTriageAlerts();
+      if (local.length > 0) {
+        setAlerts(local);
+      }
       setLastPollTime(new Date().toLocaleTimeString());
     }
   };
@@ -173,10 +210,10 @@ export const TriageQueue: React.FC<TriageQueueProps> = ({
     const testAlert: EmergencyTriageAlert = {
       id: `TRG-SIM-${Date.now()}`,
       timestamp: new Date().toISOString(),
-      patientName: type === 'chest_pain' ? 'Rajesh Verma' : type === 'stroke' ? 'Meera Patel' : 'Karan Singhania',
-      age: type === 'chest_pain' ? 54 : type === 'stroke' ? 68 : 41,
+      patientName: 'SYNTHETIC DEMO PATIENT',
+      age: type === 'chest_pain' ? 48 : type === 'stroke' ? 68 : 41,
       gender: type === 'stroke' ? 'Female' : 'Male',
-      abhaId: '91-4455-6677-8899',
+      abhaId: '91-2345-6789-0123 (DEMO)',
       kioskStationId: 'Kiosk #01 (OPD Lobby)',
       emergencyCategory: mockCategory,
       detectedPattern: mockPattern,

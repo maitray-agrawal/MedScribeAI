@@ -26,40 +26,64 @@ const STORAGE_KEY = 'medscribe_lite_encounters_v1';
 
 export default function App() {
   // Navigation view state: 'landing' | 'workstation' | 'kiosk' | 'triage'
-  const [currentView, setCurrentView] = useState<'landing' | 'workstation' | 'kiosk' | 'triage'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'workstation' | 'kiosk' | 'triage'>(() => {
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    if (hash === '#triage' || search.includes('view=triage')) return 'triage';
+    if (hash === '#kiosk' || search.includes('view=kiosk')) return 'kiosk';
+    if (hash === '#workstation' || search.includes('view=workstation')) return 'workstation';
+    return 'landing';
+  });
 
   // Active Emergency Triage Alert Counter
   const [activeTriageCount, setActiveTriageCount] = useState<number>(0);
 
-  // Offline local model mode state
-  const [isOfflineMode, setIsOfflineMode] = useState<boolean>(false);
-
-  // Kiosk Handoff Data for Physician Confirmation Screen
-  const [kioskHandoffData, setKioskHandoffData] = useState<KioskHandoffData | null>(null);
-
   // Default patient info
   const defaultPatientInfo: PatientInfo = {
-    name: 'Kwame Mensah',
-    age: 28,
+    name: 'SYNTHETIC DEMO PATIENT',
+    age: 48,
     sex: 'Male',
-    medicalHistory: 'No chronic illness. Prior episode of malaria 2 years ago.',
+    medicalHistory: 'Hypertension under evaluation. Prior episode of malaria 2 years ago.',
     currentMedications: 'Paracetamol 500mg PRN',
     knownAllergies: 'None documented / Not elicited',
     encounterType: 'Acute Unscheduled Visit',
     clinicLocation: 'Sub-District Health Center',
   };
 
+  // Offline local model mode state
+  const [isOfflineMode, setIsOfflineMode] = useState<boolean>(() => {
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    return search.includes('demo=') || search.includes('offline=true');
+  });
+
+  // Kiosk Handoff Data for Physician Confirmation Screen
+  const [kioskHandoffData, setKioskHandoffData] = useState<KioskHandoffData | null>(null);
+
   const [patientInfo, setPatientInfo] = useState<PatientInfo>(defaultPatientInfo);
   const [transcript, setTranscript] = useState<string>(SAMPLE_SCENARIOS[0].transcript);
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>(SAMPLE_SCENARIOS[0].id);
 
-  const [soapNote, setSoapNote] = useState<SOAPNote | null>(null);
+  const [soapNote, setSoapNote] = useState<SOAPNote | null>(() => {
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    if (search.includes('demo=')) {
+      return generateOfflineSOAPNote(defaultPatientInfo, SAMPLE_SCENARIOS[0].transcript);
+    }
+    return null;
+  });
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [approvalState, setApprovalState] = useState<'AI_DRAFT' | 'REVIEWING' | 'APPROVED'>('AI_DRAFT');
+  const [approvalState, setApprovalState] = useState<'AI_DRAFT' | 'REVIEWING' | 'APPROVED'>(() => {
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    if (search.includes('demo=approved') || search.includes('demo=fhir')) return 'APPROVED';
+    return 'AI_DRAFT';
+  });
 
   // Modals state
-  const [activeModal, setActiveModal] = useState<'history' | 'analytics' | 'print' | 'fhir' | null>(null);
+  const [activeModal, setActiveModal] = useState<'history' | 'analytics' | 'print' | 'fhir' | null>(() => {
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    if (search.includes('demo=fhir')) return 'fhir';
+    return null;
+  });
 
   // Saved encounters history in localStorage
   const [encounters, setEncounters] = useState<EncounterRecord[]>(() => {
@@ -83,12 +107,31 @@ export default function App() {
   // Listen for route hash or query parameters (e.g. #triage, #kiosk)
   useEffect(() => {
     const handleHashChange = () => {
-      if (window.location.hash === '#triage' || window.location.search.includes('view=triage')) {
+      const search = window.location.search;
+      const params = new URLSearchParams(search);
+      if (window.location.hash === '#triage' || search.includes('view=triage')) {
         setCurrentView('triage');
-      } else if (window.location.hash === '#kiosk' || window.location.search.includes('view=kiosk')) {
+      } else if (window.location.hash === '#kiosk' || search.includes('view=kiosk')) {
         setCurrentView('kiosk');
-      } else if (window.location.hash === '#workstation' || window.location.search.includes('view=workstation')) {
+      } else if (window.location.hash === '#workstation' || search.includes('view=workstation')) {
         setCurrentView('workstation');
+      }
+
+      if (params.get('demo') === 'generated') {
+        const note = generateOfflineSOAPNote(defaultPatientInfo, SAMPLE_SCENARIOS[0].transcript);
+        setSoapNote(note);
+        setIsOfflineMode(true);
+      } else if (params.get('demo') === 'approved') {
+        const note = generateOfflineSOAPNote(defaultPatientInfo, SAMPLE_SCENARIOS[0].transcript);
+        setSoapNote(note);
+        setIsOfflineMode(true);
+        setApprovalState('APPROVED');
+      } else if (params.get('demo') === 'fhir') {
+        const note = generateOfflineSOAPNote(defaultPatientInfo, SAMPLE_SCENARIOS[0].transcript);
+        setSoapNote(note);
+        setIsOfflineMode(true);
+        setApprovalState('APPROVED');
+        setActiveModal('fhir');
       }
     };
     handleHashChange();
@@ -518,7 +561,7 @@ Action Directives: ${alert.actionDirectives.join('; ')}.`);
                   <div className="p-2.5 rounded-xl bg-slate-950/60 border border-indigo-900/60">
                     <span className="text-[10px] uppercase font-bold text-indigo-300 block">Kiosk Terminal Memory</span>
                     <span className="text-teal-300 font-medium flex items-center gap-1 mt-0.5 text-[11px]">
-                      <span>✓</span> Wiped immediately on submission
+                      <CheckCircle2 className="w-3.5 h-3.5 text-teal-400 shrink-0" /> Wiped immediately on submission
                     </span>
                   </div>
                 </div>

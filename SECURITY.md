@@ -2,20 +2,22 @@
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
+| Version | Supported |
+| ------- | --------- |
+| 2.x     | Yes       |
+| 1.x     | Legacy    |
 
 ## Reporting a Vulnerability
 
-Security is paramount for clinical software. If you discover a security vulnerability or potential data privacy concern within MedScribe Lite:
+Security is paramount for clinical software. If you discover a security vulnerability or potential data privacy concern within MedScribeAI:
 
-1. **Do NOT open a public GitHub issue.**
-2. Send a detailed report to security@medscribelite.com including:
+1. **Do not open a public GitHub issue.**
+2. Report vulnerabilities privately via GitHub Security Advisories or by emailing the project maintainers directly.
+3. Reports should include:
    - Description of the vulnerability
    - Steps to reproduce
    - Potential impact
-3. We will acknowledge receipt within 24 hours and provide regular updates on remediation.
+4. The maintenance team will acknowledge receipt within 24 hours and coordinate remediation.
 
 ---
 

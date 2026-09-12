@@ -253,11 +253,11 @@ export function generatePhysicianReadyIntakeSummary(
         const ptStatus = patientClaim.assertion === 'AFFIRMED' ? 'currently taking' : 'denied';
         const docStatus = (docClaim.attributes as any)?.isDiscontinued || docClaim.assertion === 'NEGATED' ? 'discontinued' : 'active';
         conflictWarnings.push(
-          `⚠️ CLINICAL CONFLICT DETECTED: Patient reports ${ptStatus} ${patientClaim.preferredTerm}, but Uploaded Document indicates ${docClaim.preferredTerm} is ${docStatus}. Requires attending clinician reconciliation.`
+          `[CLINICAL CONFLICT DETECTED]: Patient reports ${ptStatus} ${patientClaim.preferredTerm}, but Uploaded Document indicates ${docClaim.preferredTerm} is ${docStatus}. Requires attending clinician reconciliation.`
         );
       } else {
         conflictWarnings.push(
-          `⚠️ CLINICAL CONFLICT DETECTED for ${confFacts[0].preferredTerm}: Multiple contradictory assertions recorded across encounter sources. Requires attending clinician reconciliation.`
+          `[CLINICAL CONFLICT DETECTED] for ${confFacts[0].preferredTerm}: Multiple contradictory assertions recorded across encounter sources. Requires attending clinician reconciliation.`
         );
       }
     }

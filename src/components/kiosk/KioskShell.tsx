@@ -120,13 +120,31 @@ export const KioskShell: React.FC<KioskShellProps> = ({
   onCompleteIntakeHandoff,
 }) => {
   const { language, setLanguage } = useTranslation();
-  const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
+  const [currentStepIndex, setCurrentStepIndex] = useState<number>(() => {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('step') === 'consent') return 1;
+    return 0;
+  });
   const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
   const [showExitConfirm, setShowExitConfirm] = useState<boolean>(false);
   const [inactivitySeconds, setInactivitySeconds] = useState<number>(120);
 
   // Kiosk Session State (strictly ephemeral - cleared on reset or submission)
-  const [verifiedProfile, setVerifiedProfile] = useState<VerifiedAbhaProfile | null>(null);
+  const [verifiedProfile, setVerifiedProfile] = useState<VerifiedAbhaProfile | null>(() => {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('step') === 'consent') {
+      return {
+        abhaId: '91-2345-6789-0123',
+        fullName: 'SYNTHETIC DEMO PATIENT',
+        gender: 'Male',
+        age: 48,
+        mobile: '+91 00000 00000 (DEMO)',
+        state: 'New Delhi, DL',
+        verifiedAt: '10:30 AM',
+      };
+    }
+    return null;
+  });
   const [consent, setConsent] = useState<ConsentPreferences | null>(null);
   const [clinicalDepartment, setClinicalDepartment] = useState<'Allopathic' | 'Ayurveda (AYUSH)'>('Allopathic');
   const [structuredIntake, setStructuredIntake] = useState<StructuredPatientIntake | null>(null);

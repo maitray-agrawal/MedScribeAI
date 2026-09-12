@@ -9,6 +9,7 @@ Implements zero-fabrication clinical persistence:
 
 import sqlite3
 import json
+import uuid
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 from pathlib import Path
@@ -140,7 +141,7 @@ class EncounterStorage:
                 (physician_id, now, now, encounter_id),
             )
             # Log to audit
-            audit_id = f"audit-{int(datetime.now().timestamp())}"
+            audit_id = f"audit-{int(datetime.now().timestamp() * 1000)}-{uuid.uuid4().hex[:8]}"
             self.conn.execute(
                 """
                 INSERT INTO audit_log (id, encounter_id, actor_type, actor_id, action, details_json, timestamp)
@@ -170,7 +171,7 @@ class EncounterStorage:
                 """,
                 (now, encounter_id),
             )
-            audit_id = f"audit-exp-{int(datetime.now().timestamp())}"
+            audit_id = f"audit-exp-{int(datetime.now().timestamp() * 1000)}-{uuid.uuid4().hex[:8]}"
             self.conn.execute(
                 """
                 INSERT INTO audit_log (id, encounter_id, actor_type, actor_id, action, details_json, timestamp)
@@ -269,7 +270,7 @@ class AuditLogStorage:
         details: Optional[Dict[str, Any]] = None,
     ) -> None:
         now = datetime.now(timezone.utc).isoformat()
-        audit_id = f"audit-{int(datetime.now().timestamp())}-{actor_id[:4]}"
+        audit_id = f"audit-{int(datetime.now().timestamp() * 1000)}-{actor_id[:4]}-{uuid.uuid4().hex[:8]}"
         with self.conn:
             self.conn.execute(
                 """

@@ -4,18 +4,18 @@
 
 | Check | Status | Evidence / Location |
 |---|---|---|
-| Model file exists | ✅ CONFIRMED | `models/asr/indic-conformer/model.int8.onnx` |
-| File size (196,977,855 bytes / 188 MB) | ✅ CONFIRMED | Physical file on disk |
-| SHA-256 verified | ✅ CONFIRMED | `b99a01834cd1a72cd9be682a0b9543df6b152ef7dfceba88d3dbf59fbb77075d` |
-| ONNX session loads | ✅ CONFIRMED | `onnxruntime` INT8 CPU Execution Provider |
-| Tensor contract verified | ✅ CONFIRMED | Inputs: `processed_signal`, `processed_signal_length`; Outputs: `log_probs`, `output_length` |
-| Synthetic smoke inference | ✅ CONFIRMED | Forward pass executes, `log_probs` shape `(1, T, 5633)` |
-| Bilingual NLP extraction benchmark | ✅ CONFIRMED | `backend/tests/test_human_asr_benchmark.py` (7 tests passed) |
-| **Real acoustic human inference** | ⏳ **DEFERRED** | Awaiting IRB-compliant real-patient acoustic dataset |
-| **WER on real speech** | ⏳ **DEFERRED** | No synthetic WER claims; empirical testing deferred |
-| **CER on real speech** | ⏳ **DEFERRED** | No synthetic CER claims; empirical testing deferred |
-| **Clinical entity recall** | ⏳ **DEFERRED** | Tested on transcribed texts; acoustic testing deferred |
-| **Negation preservation** | ⏳ **DEFERRED** | Verified on text level; acoustic verification deferred |
+| Model file exists | CONFIRMED | `models/asr/indic-conformer/model.int8.onnx` |
+| File size (196,977,855 bytes / 188 MB) | CONFIRMED | Physical file on disk |
+| SHA-256 verified | CONFIRMED | `b99a01834cd1a72cd9be682a0b9543df6b152ef7dfceba88d3dbf59fbb77075d` |
+| ONNX session loads | CONFIRMED | `onnxruntime` INT8 CPU Execution Provider |
+| Tensor contract verified | CONFIRMED | Inputs: `processed_signal`, `processed_signal_length`; Outputs: `log_probs`, `output_length` |
+| Synthetic smoke inference | CONFIRMED | Forward pass executes, `log_probs` shape `(1, T, 5633)` |
+| Bilingual NLP extraction benchmark | CONFIRMED | `backend/tests/test_human_asr_benchmark.py` (7 tests passed) |
+| **Real acoustic human inference** | **DEFERRED** | Awaiting IRB-compliant real-patient acoustic dataset |
+| **WER on real speech** | **DEFERRED** | No synthetic WER claims; empirical testing deferred |
+| **CER on real speech** | **DEFERRED** | No synthetic CER claims; empirical testing deferred |
+| **Clinical entity recall** | **DEFERRED** | Tested on transcribed texts; acoustic testing deferred |
+| **Negation preservation** | **DEFERRED** | Verified on text level; acoustic verification deferred |
 
 ## Model Provenance
 
@@ -45,7 +45,7 @@ ASR inference supports **8 languages**:
 | `ks` | Kashmiri |
 | `mr` | Marathi |
 
-> ⚠️ **Tamil (`ta`) is NOT supported by this ASR model.**
+> **Note:** Tamil (`ta`) is NOT supported by this ASR model.
 > Tamil support is available only through the deterministic NLP/NER extractor.
 
 ## Language Coverage Separation

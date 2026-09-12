@@ -184,9 +184,9 @@ export const FHIRExportModal: React.FC<FHIRExportModalProps> = ({
             <div>
               <span className="font-bold text-white">
                 {!isApproved
-                  ? '⚠️ Blocked: Physician Approval Required (AI Draft)'
+                  ? 'Blocked: Physician Approval Required (AI Draft)'
                   : !hasHospitalSharingConsent
-                  ? '🔒 Blocked: Hospital Sharing Consent Not Granted'
+                  ? 'Blocked: Hospital Sharing Consent Not Granted'
                   : isPushing
                   ? 'Transmitting Bundle to ABDM / HIS Gateway...'
                   : abdmReceipt?.success

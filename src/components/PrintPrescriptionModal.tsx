@@ -130,7 +130,7 @@ export const PrintPrescriptionModal: React.FC<PrintPrescriptionModalProps> = ({
         {/* Approval Warning if unapproved */}
         {!isApproved && (
           <div id="print-approval-gate-warning" className="mx-6 mt-4 p-3 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-200 text-xs font-semibold flex items-center space-x-2">
-            <span>⚠️ Physician Approval Gate Active: This prescription slip is an unapproved AI draft. Official printing and dispensing are restricted until physician sign-off.</span>
+            <span>Physician Approval Gate Active: This prescription slip is an unapproved AI draft. Official printing and dispensing are restricted until physician sign-off.</span>
           </div>
         )}
 

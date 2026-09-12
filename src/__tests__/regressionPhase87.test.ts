@@ -19,6 +19,8 @@ import { evaluateRedFlags } from '../clinical/redFlagRules';
 import { detectEmergencyFromFacts } from '../utils/emergencyTriageDetector';
 import { exportToFHIRBundle } from '../utils/fhirConverter';
 import { PatientInfo, SOAPNote } from '../types';
+import { ConsentPreferences } from '../components/kiosk/ConsentStep';
+import { ExtractedClinicalConcept } from '../nlp/codeSwitchingExtractor';
 
 describe('Phase 8.7 — Real-World Modality & Hardening Regression Suite', () => {
   const dummyPatient: PatientInfo = {
@@ -27,11 +29,6 @@ describe('Phase 8.7 — Real-World Modality & Hardening Regression Suite', () =>
     sex: 'Male',
     encounterType: 'OPD Consultation',
     clinicLocation: 'Room 101',
-    consent: {
-      voiceCapture: true,
-      documentUpload: false,
-      hospitalSharing: false,
-    },
   };
 
   const dummySoap: SOAPNote = {
@@ -56,6 +53,7 @@ describe('Phase 8.7 — Real-World Modality & Hardening Regression Suite', () =>
       prescriptions: [
         { medication: 'Paracetamol', dosage: '500mg', frequency: 'TDS', instructions: 'After meals' },
       ],
+      diagnostic_tests_ordered: [],
       patient_education: 'Hydration and rest.',
       follow_up: '1 week',
     },
@@ -199,28 +197,26 @@ describe('Phase 8.7 — Real-World Modality & Hardening Regression Suite', () =>
 
   // 12. Emergency red flag triggering
   it('12. Category: Emergency red flag — sudden severe chest pain + dyspnea triggers triage interruption', () => {
-    const concepts = [
+    const concepts: ExtractedClinicalConcept[] = [
       {
         conceptId: 'SYM_CHEST_PAIN',
-        canonicalEnglish: 'chest pain',
-        category: 'symptom' as const,
-        assertion: 'affirmed' as const,
-        matchType: 'exact' as const,
-        matchedPhrase: 'chest pain',
+        category: 'symptom',
+        surfaceText: 'seene mein tez dard',
+        language: 'hi',
+        assertion: 'affirmed',
         evidence: 'sudden severe chest pain',
         confidence: 0.95,
-        source: 'voice' as const,
+        source: 'patient_voice',
       },
       {
         conceptId: 'SYM_BREATHLESSNESS',
-        canonicalEnglish: 'breathlessness',
-        category: 'symptom' as const,
-        assertion: 'affirmed' as const,
-        matchType: 'exact' as const,
-        matchedPhrase: 'breathlessness',
+        category: 'symptom',
+        surfaceText: 'saans phoolna',
+        language: 'hi',
+        assertion: 'affirmed',
         evidence: 'and breathlessness',
         confidence: 0.95,
-        source: 'voice' as const,
+        source: 'patient_voice',
       },
     ];
 
@@ -232,28 +228,26 @@ describe('Phase 8.7 — Real-World Modality & Hardening Regression Suite', () =>
 
   // 13. Non-emergency false positive resistance
   it('13. Category: False positive resistance — negated chest pain does NOT trigger cardiac red flags', () => {
-    const concepts = [
+    const concepts: ExtractedClinicalConcept[] = [
       {
         conceptId: 'SYM_CHEST_PAIN',
-        canonicalEnglish: 'chest pain',
-        category: 'symptom' as const,
-        assertion: 'negated' as const,
-        matchType: 'exact' as const,
-        matchedPhrase: 'sine me dard nahi hai',
+        category: 'symptom',
+        surfaceText: 'sine me dard nahi hai',
+        language: 'hi',
+        assertion: 'negated',
         evidence: 'sine me dard nahi hai',
         confidence: 0.95,
-        source: 'voice' as const,
+        source: 'patient_voice',
       },
       {
         conceptId: 'SYM_HEADACHE',
-        canonicalEnglish: 'headache',
-        category: 'symptom' as const,
-        assertion: 'affirmed' as const,
-        matchType: 'exact' as const,
-        matchedPhrase: 'sir dard hai',
+        category: 'symptom',
+        surfaceText: 'sir dard hai',
+        language: 'hi',
+        assertion: 'affirmed',
         evidence: 'sir dard hai',
         confidence: 0.95,
-        source: 'voice' as const,
+        source: 'patient_voice',
       },
     ];
 
@@ -295,16 +289,13 @@ describe('Phase 8.7 — Real-World Modality & Hardening Regression Suite', () =>
 
   // 16. Consent gate — hospitalSharing=false prevents external synchronization
   it('16. Category: Consent gate — hospitalSharing=false blocks external sharing', () => {
-    const patientWithoutConsent: PatientInfo = {
-      ...dummyPatient,
-      consent: {
-        voiceCapture: true,
-        documentUpload: true,
-        hospitalSharing: false, // Explicitly denied
-      },
+    const patientConsent: ConsentPreferences = {
+      voiceCapture: true,
+      documentUpload: true,
+      hospitalSharing: false, // Explicitly denied
     };
 
-    expect(patientWithoutConsent.consent?.hospitalSharing).toBe(false);
+    expect(patientConsent.hospitalSharing).toBe(false);
   });
 
   // 17. Approval state transition — material edits invalidate approval

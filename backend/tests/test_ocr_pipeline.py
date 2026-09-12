@@ -127,15 +127,43 @@ class TestOCRSyntheticRenderedImages:
 
     def test_tesseract_deep_status_when_available(self):
         """
-        deep=True must run OCR on a minimal rendered image.
-        inference_smoke_tested must be True if languages are present.
+        deep=True derivation test handling three states:
+        (a) Tesseract not found -> skip
+        (b) Tesseract found but required language packs missing ->
+            assert inference_smoke_tested is False and required_languages_present is False
+        (c) Tesseract found and all required languages present ->
+            assert inference_smoke_tested is True and required_languages_present is True
         """
         status = check_ocr_status(deep=True)
         if not status.is_available:
             pytest.skip(f"Tesseract UNAVAILABLE: {status.reason}")
-        assert status.inference_smoke_tested is True, (
-            "inference_smoke_tested must be True after deep check with real Tesseract"
-        )
+
+        if not status.required_languages_present:
+            assert status.required_languages_present is False
+            assert status.inference_smoke_tested is False, (
+                "inference_smoke_tested must be False when required language packs are missing"
+            )
+        else:
+            assert status.required_languages_present is True
+            assert status.inference_smoke_tested is True, (
+                "inference_smoke_tested must be True when all required language packs are present"
+            )
+
+    def test_tesseract_deep_status_when_languages_missing_mock(self, monkeypatch):
+        """
+        State (b) regression test: When Tesseract binary is present but required
+        language packs ('hin') are missing, deep check MUST report
+        required_languages_present=False and inference_smoke_tested=False.
+        """
+        import app.ocr.pipeline as pipeline
+        monkeypatch.setattr(pipeline, "find_tesseract_binary", lambda: r"C:\fake\tesseract.exe")
+        monkeypatch.setattr(pipeline, "get_tesseract_version", lambda b: "tesseract v5.4.0")
+        monkeypatch.setattr(pipeline, "list_tesseract_langs", lambda b: ["eng", "osd"])
+
+        status = pipeline.check_ocr_status(deep=True)
+        assert status.is_available is True
+        assert status.required_languages_present is False
+        assert status.inference_smoke_tested is False
 
     # ---- Image decode and preprocessing ----------------------------------
 

@@ -780,6 +780,22 @@ Implemented complete Phase 8 sovereign, offline-first clinical pipeline with `Cl
       - Pytest (`python -m pytest backend/tests`): 5 test files, 24/24 tests passing in 1.15s.
       - Build (`npm run build`): Clean production bundle.
 
+11. **Phase 8.7 Real-World Modality Validation, Offline E2E & Release Hardening (2026-09-12)**:
+    - **Tauri Sidecar Process Lifecycle Management**: Implemented `Arc<Mutex<Option<CommandChild>>>` in `src-tauri/src/main.rs`. Spawns `medscribe-backend` on startup and hooks `WindowEvent::Destroyed` and `RunEvent::ExitRequested` to guarantee clean SIGTERM/process kill, eliminating orphan backend processes upon desktop window close.
+    - **Physician Approval State Machine & Consent Gating**: Threaded `approvalState` (`AI_DRAFT` -> `REVIEWING` -> `APPROVED`) across `SOAPNoteHeader.tsx`, `SOAPNoteView.tsx`, and `App.tsx`. Gated `btn-print-rx` and `btn-export-fhir` behind approval. Enforced `hospitalSharing: false` blocking outbound sync across Kiosk and SOAP views.
+    - **Eradication of Production Fabrication Defaults**: Replaced `knownAllergies || 'NKDA'` with `'None documented / Not elicited'` in `server.ts` and `App.tsx`. Removed unanchored GERD from differential diagnoses in `src/utils/offlineLocalEngine.ts`.
+    - **Type Safety & Mock Structure Alignment**:
+      - Fixed `regressionPhase87.test.ts`: `PatientInfo` does not track consent directly; consent is managed via `ConsentPreferences` from `ConsentStep.tsx`. Updated test 16 to instantiate `ConsentPreferences` explicitly.
+      - Added required `diagnostic_tests_ordered: []` to `dummySoap.plan` conforming to `Plan` interface with zero fabrication.
+      - Added typed `surfaceText` and `language: 'hi'` with `source: 'patient_voice'` to `ExtractedClinicalConcept` mocks in tests 12 and 13.
+      - Verified `npx tsc --noEmit` / `npm run lint` passes with 0 errors.
+    - **OCR Deep-Status Three-State Architecture**:
+      - Updated `test_tesseract_deep_status_when_available` in `backend/tests/test_ocr_pipeline.py` to properly handle three distinct states: (a) Tesseract missing -> skip, (b) Tesseract present but required language packs (`hin`) missing -> assert `required_languages_present is False` and `inference_smoke_tested is False`, (c) Tesseract present with all language packs -> assert `inference_smoke_tested is True`.
+      - Added `test_tesseract_deep_status_when_languages_missing_mock` verifying state (b) behavior.
+    - **Mandatory Process Gate**:
+      - `npm run lint` (`tsc --noEmit`) is now formally codified as a mandatory, separately-reported gate in every release verification report alongside Vitest, Pytest, Vite build, and Cargo check. Full console output must be displayed.
+
+
 
 
 

@@ -274,50 +274,7 @@ export function extractAllergyFacts(
     return facts;
   }
 
-  // 2. Specific drug allergy mention (e.g. penicillin allergy, sulfa allergy)
-  const allergyMentionRegex = /\b(allergic\s+to\s+([a-z0-9]+)|([a-z0-9]+)\s+allergy)\b/i;
-  const posMatch = text.match(allergyMentionRegex);
-  if (posMatch) {
-    const allergen = posMatch[2] || posMatch[3];
-    if (allergen && !['no', 'nahi', 'not'].includes(allergen.toLowerCase())) {
-      facts.push(
-        createClinicalFact({
-          factId: generateFactId(`ALLERGY_${allergen.toUpperCase()}`, sourceType),
-          encounterId: context.encounterId,
-          domain: 'allergy',
-          canonicalId: `ALLERGY_${allergen.toUpperCase()}`,
-          preferredTerm: `Allergy to ${allergen}`,
-          value: allergen,
-          assertion: 'AFFIRMED',
-          elicitation: 'ELICITED',
-          temporality: 'CHRONIC',
-          experiencer: context.experiencer || 'PATIENT',
-          evidence: [
-            {
-              text: posMatch[0],
-              verbatimText: posMatch[0],
-              startOffset: posMatch.index,
-              endOffset:
-                posMatch.index !== undefined ? posMatch.index + posMatch[0].length : undefined,
-              startChar: posMatch.index,
-              endChar:
-                posMatch.index !== undefined ? posMatch.index + posMatch[0].length : undefined,
-            },
-          ],
-          provenance: {
-            sourceType,
-            sourceId: context.sourceId,
-            language: context.language || 'en',
-            extractionEngine: 'allergyPatternMatcher',
-            confidence: 0.95,
-            timestamp: new Date().toISOString(),
-          },
-        })
-      );
-    }
-  }
-
-  // 3. Explicit patient uncertainty: "I don't know" / "not sure" / "pata nahi" -> UNKNOWN + ELICITED
+  // 2. Explicit patient uncertainty: "I don't know" / "not sure" / "pata nahi" -> UNKNOWN + ELICITED
   const allergyUncertaintyRegex = /\b(don'?t\s+know(\s+if|\s+about)?\s+allerg(?:y|ies)?|not\s+sure\s+about\s+allerg(?:y|ies)?|allergy.*(pata\s+nahi|maloom\s+nahi|yaad\s+nahi)|(pata\s+nahi|maloom\s+nahi).*allergy)\b/i;
   const uncertMatch = text.match(allergyUncertaintyRegex);
   if (uncertMatch) {
@@ -352,6 +309,55 @@ export function extractAllergyFacts(
         },
       })
     );
+    return facts;
+  }
+
+  // 3. Specific drug allergy mention (e.g. penicillin allergy, sulfa allergy, पेनिसिलिन से एलर्जी)
+  const allergyMentionRegex = /(?:\b(allergic\s+to\s+([a-z0-9\u0900-\u097F]+)|([a-z0-9\u0900-\u097F]+)\s*(?:se\s*)?(?:allergy|allergies|एलर्जी))\b|([a-z0-9\u0900-\u097F]+)\s*से\s*एलर्जी)/i;
+  const posMatch = text.match(allergyMentionRegex);
+  if (posMatch) {
+    let allergen = posMatch[2] || posMatch[3] || posMatch[4];
+    const stopWords = ['no', 'nahi', 'nahin', 'not', 'kisi', 'about', 'any', 'my', 'the', 'ko', 'have', 'has'];
+    if (allergen && !stopWords.includes(allergen.toLowerCase())) {
+      let canonicalId = allergen.toUpperCase();
+      if (allergen.includes('पेनिसिलिन')) {
+        canonicalId = 'PENICILLIN';
+      }
+      facts.push(
+        createClinicalFact({
+          factId: generateFactId(`ALLERGY_${canonicalId}`, sourceType),
+          encounterId: context.encounterId,
+          domain: 'allergy',
+          canonicalId: `ALLERGY_${canonicalId}`,
+          preferredTerm: `Allergy to ${allergen}`,
+          value: allergen,
+          assertion: 'AFFIRMED',
+          elicitation: 'ELICITED',
+          temporality: 'CHRONIC',
+          experiencer: context.experiencer || 'PATIENT',
+          evidence: [
+            {
+              text: posMatch[0],
+              verbatimText: posMatch[0],
+              startOffset: posMatch.index,
+              endOffset:
+                posMatch.index !== undefined ? posMatch.index + posMatch[0].length : undefined,
+              startChar: posMatch.index,
+              endChar:
+                posMatch.index !== undefined ? posMatch.index + posMatch[0].length : undefined,
+            },
+          ],
+          provenance: {
+            sourceType,
+            sourceId: context.sourceId,
+            language: context.language || 'en',
+            extractionEngine: 'allergyPatternMatcher',
+            confidence: 0.95,
+            timestamp: new Date().toISOString(),
+          },
+        })
+      );
+    }
   }
 
   return facts;
@@ -782,12 +788,12 @@ const KNOWN_CONDITIONS: KnownConditionDef[] = [
   {
     canonicalId: 'COND_DIABETES',
     preferredTerm: 'Diabetes Mellitus',
-    regex: /\b(diabetes|madhumeh|sugar\s+ki\s+bimari|shugar|sugar)\b/i,
+    regex: /(?:\b(diabetes|madhumeh|sugar\s+ki\s+bimari|shugar|sugar)\b|डायबिटीज|मधुमेह|शुगर)/i,
   },
   {
     canonicalId: 'COND_HYPERTENSION',
     preferredTerm: 'Hypertension',
-    regex: /\b(hypertension|high\s+bp|bp\s+high|raktchap|raktadaab|bp\s+problem|bp\s+ka\s+problem|bp\s+ki\s+problem|bp\s+ki\s+bimari|blood\s+pressure)\b/i,
+    regex: /(?:\b(hypertension|high\s+bp|bp\s+high|raktchap|raktadaab|bp\s+problem|bp\s+ka\s+problem|bp\s+ki\s+problem|bp\s+ki\s+bimari|blood\s+pressure)\b|हाई\s*बीपी|रक्तचाप)/i,
   },
   {
     canonicalId: 'COND_ASTHMA',
@@ -829,8 +835,8 @@ export function extractTemporalConditionFacts(
   const sourceType: FactSourceType = context.sourceType || 'PATIENT_VOICE';
   const lowerText = text.toLowerCase();
 
-  // Experiencer check (e.g. "Mother had asthma", "Father had hypertension")
-  const familyMatch = text.match(/\b(mother|mummy|maa|mataji|father|papa|pitaji|brother|bhai|sister|behan|parents|family)\b/i);
+  // Experiencer check (e.g. "Mother had asthma", "Father had hypertension", "मेरी माताजी को डायबिटीज है")
+  const familyMatch = text.match(/(?:\b(mother|mummy|maa|mataji|father|papa|pitaji|brother|bhai|sister|behan|parents|family)\b|माताजी|माँ|माता|पिताजी|पिता|भाई|बहन|परिवार|आई|वडील)/i);
   const experiencer: FactExperiencer = familyMatch ? 'FAMILY_MEMBER' : (context.experiencer || 'PATIENT');
 
   // Uncertainty check (e.g. "Shayad pathri hai", "Maybe diabetes")

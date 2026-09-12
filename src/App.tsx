@@ -44,7 +44,7 @@ export default function App() {
     sex: 'Male',
     medicalHistory: 'No chronic illness. Prior episode of malaria 2 years ago.',
     currentMedications: 'Paracetamol 500mg PRN',
-    knownAllergies: 'NKDA',
+    knownAllergies: 'None documented / Not elicited',
     encounterType: 'Acute Unscheduled Visit',
     clinicLocation: 'Sub-District Health Center',
   };
@@ -56,6 +56,7 @@ export default function App() {
   const [soapNote, setSoapNote] = useState<SOAPNote | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [approvalState, setApprovalState] = useState<'AI_DRAFT' | 'REVIEWING' | 'APPROVED'>('AI_DRAFT');
 
   // Modals state
   const [activeModal, setActiveModal] = useState<'history' | 'analytics' | 'print' | 'fhir' | null>(null);
@@ -141,7 +142,7 @@ export default function App() {
       sex: 'Male',
       medicalHistory: '',
       currentMedications: '',
-      knownAllergies: 'NKDA',
+      knownAllergies: 'None documented / Not elicited',
       encounterType: 'Primary Care Consultation',
       clinicLocation: 'Primary Care Clinic',
     });
@@ -554,9 +555,28 @@ Action Directives: ${alert.actionDirectives.join('; ')}.`);
               soapNote={soapNote}
               isGenerating={isGenerating}
               isOfflineMode={isOfflineMode}
-              onUpdateSOAP={(updated) => setSoapNote(updated)}
-              onOpenPrintPrescription={() => setActiveModal('print')}
-              onOpenFHIR={() => setActiveModal('fhir')}
+              approvalState={approvalState}
+              onApprove={() => setApprovalState('APPROVED')}
+              onUpdateSOAP={(updated) => {
+                setSoapNote(updated);
+                if (approvalState === 'APPROVED') {
+                  setApprovalState('REVIEWING');
+                }
+              }}
+              onOpenPrintPrescription={() => {
+                if (approvalState !== 'APPROVED') {
+                  alert('Physician Approval Required: Prescriptions can only be printed after physician review and approval.');
+                  return;
+                }
+                setActiveModal('print');
+              }}
+              onOpenFHIR={() => {
+                if (approvalState !== 'APPROVED') {
+                  alert('Physician Approval Required: FHIR bundle export is restricted until clinical review is approved.');
+                  return;
+                }
+                setActiveModal('fhir');
+              }}
               onSaveEncounter={handleSaveEncounter}
             />
 
@@ -595,6 +615,7 @@ Action Directives: ${alert.actionDirectives.join('; ')}.`);
             key="print-modal"
             patientInfo={patientInfo}
             soapNote={soapNote}
+            isApproved={approvalState === 'APPROVED'}
             onClose={() => setActiveModal(null)}
           />
         )}
@@ -604,6 +625,8 @@ Action Directives: ${alert.actionDirectives.join('; ')}.`);
             key="fhir-modal"
             patientInfo={patientInfo}
             soapNote={soapNote}
+            isApproved={approvalState === 'APPROVED'}
+            hasHospitalSharingConsent={Boolean((patientInfo as any).consent?.hospitalSharing ?? false)}
             onClose={() => setActiveModal(null)}
           />
         )}

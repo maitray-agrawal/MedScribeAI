@@ -9,6 +9,7 @@ import {
   Printer,
   Save,
   FileCode,
+  ShieldCheck,
 } from 'lucide-react';
 
 import { DocumentationConfidence } from '../../types';
@@ -20,6 +21,8 @@ interface SOAPNoteHeaderProps {
   isReadingAloud: boolean;
   documentationConfidence?: DocumentationConfidence;
   isOfflineMode?: boolean;
+  approvalState?: 'AI_DRAFT' | 'REVIEWING' | 'APPROVED';
+  onApprove?: () => void;
   onEdit: () => void;
   onSaveEdits: () => void;
   onCancelEdits: () => void;
@@ -36,6 +39,8 @@ export const SOAPNoteHeader: React.FC<SOAPNoteHeaderProps> = ({
   isReadingAloud,
   documentationConfidence,
   isOfflineMode = false,
+  approvalState = 'AI_DRAFT',
+  onApprove,
   onEdit,
   onSaveEdits,
   onCancelEdits,
@@ -59,6 +64,19 @@ export const SOAPNoteHeader: React.FC<SOAPNoteHeaderProps> = ({
             <span className="badge-success">
               {t.soapView.verifiedBadge}
             </span>
+            {approvalState === 'APPROVED' ? (
+              <span id="badge-approval-status" className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                <ShieldCheck className="w-3 h-3 mr-1 text-emerald-600" /> Physician Approved
+              </span>
+            ) : approvalState === 'REVIEWING' ? (
+              <span id="badge-approval-status" className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
+                Reviewing (Unapproved)
+              </span>
+            ) : (
+              <span id="badge-approval-status" className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                AI Draft (Unapproved)
+              </span>
+            )}
             {isOfflineMode && (
               <span id="badge-offline-engine" className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-300">
                 {t.soapView.offlineBadge}
@@ -83,6 +101,18 @@ export const SOAPNoteHeader: React.FC<SOAPNoteHeaderProps> = ({
       <div className="flex flex-wrap items-center space-x-2 text-xs">
         {!isEditing ? (
           <>
+            {onApprove && approvalState !== 'APPROVED' && (
+              <button
+                id="btn-approve-note"
+                onClick={onApprove}
+                className="py-2 px-3 text-xs rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center space-x-1 shadow-xs cursor-pointer"
+                title="Physician Approval: Sign off on verified clinical documentation"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Approve Note</span>
+              </button>
+            )}
+
             <button
               id="btn-edit-soap"
               onClick={onEdit}
@@ -115,9 +145,15 @@ export const SOAPNoteHeader: React.FC<SOAPNoteHeaderProps> = ({
 
             <button
               id="btn-print-rx"
-              onClick={onOpenPrintPrescription}
-              className="btn-secondary py-2 px-3 text-xs"
-              title={t.soapView.printRx}
+              onClick={() => {
+                if (approvalState !== 'APPROVED') {
+                  alert('Physician Approval Required: Prescriptions can only be printed after physician review and approval.');
+                  return;
+                }
+                onOpenPrintPrescription();
+              }}
+              className={`btn-secondary py-2 px-3 text-xs ${approvalState !== 'APPROVED' ? 'opacity-60 cursor-not-allowed' : ''}`}
+              title={approvalState !== 'APPROVED' ? 'Physician Approval Required before Printing Prescription' : t.soapView.printRx}
             >
               <Printer className="w-3.5 h-3.5 text-indigo-600" />
               <span>{t.soapView.printRx}</span>
@@ -126,9 +162,15 @@ export const SOAPNoteHeader: React.FC<SOAPNoteHeaderProps> = ({
             {onOpenFHIR && (
               <button
                 id="btn-export-fhir"
-                onClick={onOpenFHIR}
-                className="btn-secondary py-2 px-3 text-xs"
-                title={t.soapView.exportFhir}
+                onClick={() => {
+                  if (approvalState !== 'APPROVED') {
+                    alert('Physician Approval Required: FHIR bundle export is restricted until clinical review is approved.');
+                    return;
+                  }
+                  onOpenFHIR();
+                }}
+                className={`btn-secondary py-2 px-3 text-xs ${approvalState !== 'APPROVED' ? 'opacity-60 cursor-not-allowed' : ''}`}
+                title={approvalState !== 'APPROVED' ? 'Physician Approval Required before FHIR Export' : t.soapView.exportFhir}
               >
                 <FileCode className="w-3.5 h-3.5 text-teal-600" />
                 <span>{t.soapView.exportFhir}</span>

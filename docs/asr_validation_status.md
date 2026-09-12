@@ -1,20 +1,21 @@
-# ASR Validation Status — Phase 8.6
+# ASR Validation Status — Phase 8.7 (SIH Hardening)
 
-## Overall Status: PARTIALLY VALIDATED
+## Overall Status: PARTIALLY VALIDATED (Technical ONNX Inference Verified; Human Corpus Benchmark Deferred)
 
-| Check | Status |
-|---|---|
-| Model file exists | ✅ CONFIRMED |
-| File size (196,977,855 bytes) | ✅ CONFIRMED |
-| SHA-256 verified | ✅ CONFIRMED (`b99a01834cd1a72cd9be682a0b9543df6b152ef7dfceba88d3dbf59fbb77075d`) |
-| ONNX session loads | ✅ CONFIRMED |
-| Tensor contract verified | ✅ CONFIRMED (inputs/outputs match manifest) |
-| Synthetic smoke inference | ✅ CONFIRMED (forward pass executes, log_probs shape `(1, T, 5633)`) |
-| **Real acoustic inference** | ⏳ **DEFERRED** |
-| **WER on real speech** | ⏳ **DEFERRED** |
-| **CER on real speech** | ⏳ **DEFERRED** |
-| **Clinical entity recall** | ⏳ **DEFERRED** |
-| **Negation preservation** | ⏳ **DEFERRED** |
+| Check | Status | Evidence / Location |
+|---|---|---|
+| Model file exists | ✅ CONFIRMED | `models/asr/indic-conformer/model.int8.onnx` |
+| File size (196,977,855 bytes / 188 MB) | ✅ CONFIRMED | Physical file on disk |
+| SHA-256 verified | ✅ CONFIRMED | `b99a01834cd1a72cd9be682a0b9543df6b152ef7dfceba88d3dbf59fbb77075d` |
+| ONNX session loads | ✅ CONFIRMED | `onnxruntime` INT8 CPU Execution Provider |
+| Tensor contract verified | ✅ CONFIRMED | Inputs: `processed_signal`, `processed_signal_length`; Outputs: `log_probs`, `output_length` |
+| Synthetic smoke inference | ✅ CONFIRMED | Forward pass executes, `log_probs` shape `(1, T, 5633)` |
+| Bilingual NLP extraction benchmark | ✅ CONFIRMED | `backend/tests/test_human_asr_benchmark.py` (7 tests passed) |
+| **Real acoustic human inference** | ⏳ **DEFERRED** | Awaiting IRB-compliant real-patient acoustic dataset |
+| **WER on real speech** | ⏳ **DEFERRED** | No synthetic WER claims; empirical testing deferred |
+| **CER on real speech** | ⏳ **DEFERRED** | No synthetic CER claims; empirical testing deferred |
+| **Clinical entity recall** | ⏳ **DEFERRED** | Tested on transcribed texts; acoustic testing deferred |
+| **Negation preservation** | ⏳ **DEFERRED** | Verified on text level; acoustic verification deferred |
 
 ## Model Provenance
 

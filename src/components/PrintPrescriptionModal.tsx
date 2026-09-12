@@ -6,12 +6,14 @@ import { Printer, X } from 'lucide-react';
 interface PrintPrescriptionModalProps {
   patientInfo: PatientInfo;
   soapNote: SOAPNote;
+  isApproved?: boolean;
   onClose: () => void;
 }
 
 export const PrintPrescriptionModal: React.FC<PrintPrescriptionModalProps> = ({
   patientInfo,
   soapNote,
+  isApproved = true,
   onClose,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -101,8 +103,16 @@ export const PrintPrescriptionModal: React.FC<PrintPrescriptionModalProps> = ({
           </div>
           <div className="flex items-center space-x-2">
             <button
-              onClick={handlePrint}
-              className="btn-teal focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+              id="btn-print-now"
+              onClick={() => {
+                if (!isApproved) {
+                  alert('Physician Approval Required: Unapproved draft prescriptions cannot be printed.');
+                  return;
+                }
+                handlePrint();
+              }}
+              disabled={!isApproved}
+              className={`btn-teal focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-900 ${!isApproved ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Print Now</span>
@@ -116,6 +126,13 @@ export const PrintPrescriptionModal: React.FC<PrintPrescriptionModalProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Approval Warning if unapproved */}
+        {!isApproved && (
+          <div id="print-approval-gate-warning" className="mx-6 mt-4 p-3 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-200 text-xs font-semibold flex items-center space-x-2">
+            <span>⚠️ Physician Approval Gate Active: This prescription slip is an unapproved AI draft. Official printing and dispensing are restricted until physician sign-off.</span>
+          </div>
+        )}
 
         {/* Printable Document Sheet Container */}
         <div className="p-6 overflow-y-auto bg-slate-950 text-slate-100 space-y-6 print-container text-xs sm:text-sm">
@@ -200,7 +217,9 @@ export const PrintPrescriptionModal: React.FC<PrintPrescriptionModalProps> = ({
             <div className="text-right space-y-1">
               <div className="w-48 h-10 border-b border-slate-600 border-dashed"></div>
               <p className="font-semibold text-slate-300">Attending Clinician Signature</p>
-              <p className="text-slate-500 text-[10px]">MedScribe Lite Generated & Physician Approved</p>
+              <p className="text-slate-500 text-[10px]">
+                {isApproved ? 'MedScribe Lite Generated & Physician Approved' : 'AI DRAFT - NOT SIGNED OR APPROVED'}
+              </p>
             </div>
           </div>
         </div>

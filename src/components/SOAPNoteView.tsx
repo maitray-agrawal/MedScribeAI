@@ -16,6 +16,8 @@ interface SOAPNoteViewProps {
   soapNote?: SOAPNote | null;
   isGenerating?: boolean;
   isOfflineMode?: boolean;
+  approvalState?: 'AI_DRAFT' | 'REVIEWING' | 'APPROVED';
+  onApprove?: () => void;
   onUpdateSOAP: (updatedNote: SOAPNote) => void;
   onOpenPrintPrescription: () => void;
   onOpenFHIR?: () => void;
@@ -26,6 +28,8 @@ export const SOAPNoteView: React.FC<SOAPNoteViewProps> = ({
   soapNote,
   isGenerating = false,
   isOfflineMode = false,
+  approvalState = 'AI_DRAFT',
+  onApprove,
   onUpdateSOAP,
   onOpenPrintPrescription,
   onOpenFHIR,
@@ -242,6 +246,8 @@ BILLING CODES:
         isReadingAloud={isReadingAloud}
         documentationConfidence={editedNote.documentation_confidence}
         isOfflineMode={isOfflineMode}
+        approvalState={approvalState}
+        onApprove={onApprove}
         onEdit={() => setIsEditing(true)}
         onSaveEdits={handleSaveEdits}
         onCancelEdits={handleCancelEdits}

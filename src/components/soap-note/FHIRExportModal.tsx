@@ -7,22 +7,39 @@ import { exportToFHIRBundle, pushFHIRBundleToABDM, FHIRBundle, ABDMPushReceipt }
 interface FHIRExportModalProps {
   patientInfo: PatientInfo;
   soapNote: SOAPNote;
+  isApproved?: boolean;
+  hasHospitalSharingConsent?: boolean;
   onClose: () => void;
 }
 
-export const FHIRExportModal: React.FC<FHIRExportModalProps> = ({ patientInfo, soapNote, onClose }) => {
+export const FHIRExportModal: React.FC<FHIRExportModalProps> = ({
+  patientInfo,
+  soapNote,
+  isApproved = true,
+  hasHospitalSharingConsent = false,
+  onClose,
+}) => {
   const [copied, setCopied] = useState<boolean>(false);
   const [fhirBundle, setFhirBundle] = useState<FHIRBundle | null>(null);
   const [isPushing, setIsPushing] = useState<boolean>(false);
   const [abdmReceipt, setAbdmReceipt] = useState<ABDMPushReceipt | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Generate bundle on mount and auto-push to mocked ABDM/HIS endpoint
+  // Generate bundle on mount and push only when approved AND consent given
   useEffect(() => {
     const bundle = exportToFHIRBundle(patientInfo, soapNote);
     setFhirBundle(bundle);
 
-    // Automatic push immediately to mocked ABDM / HIS endpoint
+    // Gated ABDM / HIS transmission
+    if (!isApproved) {
+      console.warn('FHIR ABDM push blocked: Encounter is in unapproved AI draft state.');
+      return;
+    }
+    if (!hasHospitalSharingConsent) {
+      console.info('FHIR ABDM push suppressed: Patient has not granted hospital sharing consent.');
+      return;
+    }
+
     let isMounted = true;
     const performAutoPush = async () => {
       setIsPushing(true);
@@ -48,7 +65,7 @@ export const FHIRExportModal: React.FC<FHIRExportModalProps> = ({ patientInfo, s
     return () => {
       isMounted = false;
     };
-  }, [patientInfo, soapNote]);
+  }, [patientInfo, soapNote, isApproved, hasHospitalSharingConsent]);
 
   // Keyboard trap & Escape listener
   useEffect(() => {
@@ -72,6 +89,14 @@ export const FHIRExportModal: React.FC<FHIRExportModalProps> = ({ patientInfo, s
 
   const handleManualRePush = async () => {
     if (!fhirBundle) return;
+    if (!isApproved) {
+      alert('Physician Approval Required: Unapproved clinical drafts cannot be pushed to ABDM / HIS.');
+      return;
+    }
+    if (!hasHospitalSharingConsent) {
+      alert('Patient Consent Required: Hospital sharing consent has not been granted by the patient.');
+      return;
+    }
     setIsPushing(true);
     try {
       const receipt = await pushFHIRBundleToABDM({
@@ -158,7 +183,11 @@ export const FHIRExportModal: React.FC<FHIRExportModalProps> = ({ patientInfo, s
             )}
             <div>
               <span className="font-bold text-white">
-                {isPushing
+                {!isApproved
+                  ? '⚠️ Blocked: Physician Approval Required (AI Draft)'
+                  : !hasHospitalSharingConsent
+                  ? '🔒 Blocked: Hospital Sharing Consent Not Granted'
+                  : isPushing
                   ? 'Transmitting Bundle to ABDM / HIS Gateway...'
                   : abdmReceipt?.success
                   ? 'Auto-Pushed to Mock ABDM / HIS Gateway'
@@ -210,10 +239,13 @@ export const FHIRExportModal: React.FC<FHIRExportModalProps> = ({ patientInfo, s
             </button>
 
             <button
+              id="btn-push-abdm"
               onClick={handleManualRePush}
-              disabled={isPushing}
+              disabled={!isApproved || !hasHospitalSharingConsent || isPushing}
               className={`inline-flex items-center space-x-1.5 px-4 py-2 text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer ${
-                abdmReceipt?.success
+                !isApproved || !hasHospitalSharingConsent
+                  ? 'bg-slate-700 text-slate-400 opacity-50 cursor-not-allowed'
+                  : abdmReceipt?.success
                   ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
                   : 'bg-teal-600 hover:bg-teal-700 text-white'
               }`}

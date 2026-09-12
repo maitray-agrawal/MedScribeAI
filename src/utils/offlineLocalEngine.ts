@@ -392,7 +392,7 @@ function generateHindiOfflineSOAPNote(
     diffDiags = ['Viral Syndrome', 'Functional Disorder'];
     if (hasPresent('SYM_CHEST_PAIN')) {
       primaryDiag = 'Acute Retrosternal Chest Pain (Rule out Angina / ACS)';
-      diffDiags = ['Gastroesophageal Reflux Disease (GERD)', 'Musculoskeletal Chest Wall Pain', 'Costochondritis'];
+      diffDiags = ['Musculoskeletal Chest Wall Pain', 'Costochondritis', 'Pleuritic etiology'];
       prescriptions = [
         {
           medication: 'Aspirin (Dispersible)',

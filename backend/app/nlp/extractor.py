@@ -298,6 +298,27 @@ CLINICAL_DICTIONARY: List[Dict[str, Any]] = [
             r"एमोक्सिसिलिन",
         ],
     },
+    {
+        "concept_id": "ALG_PENICILLIN",
+        "canonical_text": "penicillin allergy",
+        "category": FactCategory.ALLERGY,
+        "patterns": [
+            r"\bpenicillin\s+allergy\b",
+            r"\ballergic\s+to\s+penicillin\b",
+            r"\bpenicillin\s+se\s+allergy\b",
+            r"पेनिसिलिन\s*(?:से\s*)?एलर्जी",
+        ],
+    },
+    {
+        "concept_id": "ALG_SULFA",
+        "canonical_text": "sulfa allergy",
+        "category": FactCategory.ALLERGY,
+        "patterns": [
+            r"\bsulfa\s+allergy\b",
+            r"\ballergic\s+to\s+sulfa\b",
+            r"सल्फा\s*(?:से\s*)?एलर्जी",
+        ],
+    },
 ]
 
 # Multilingual Post-Negation patterns

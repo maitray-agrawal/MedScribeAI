@@ -167,7 +167,7 @@ PATIENT INFORMATION:
 - Sex: ${patientInfo?.sex || 'Unspecified'}
 - Known Medical History: ${patientInfo?.medicalHistory || 'None documented'}
 - Known Current Medications: ${patientInfo?.currentMedications || 'None documented'}
-- Known Allergies: ${patientInfo?.knownAllergies || 'NKDA'}
+- Known Allergies: ${patientInfo?.knownAllergies || 'None documented / Not elicited'}
 - Encounter Type: ${patientInfo?.encounterType || 'Primary Care Consultation'}
 - Clinic Location: ${patientInfo?.clinicLocation || 'Primary Care Center'}
 </patient_demographics>

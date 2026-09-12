@@ -186,27 +186,31 @@ export const KioskShell: React.FC<KioskShellProps> = ({
       });
       setCachedFhirBundle(bundle);
 
-      // Automatic push immediately on kiosk-flow completion to mocked ABDM / HIS endpoint
-      setIsPushingABDM(true);
-      pushFHIRBundleToABDM({
-        fhirBundle: bundle,
-        patientInfo: summaryResult.patientInfo,
-        abhaId: verifiedProfile?.abhaId,
-        department: clinicalDepartment,
-        kioskStationId: 'KIOSK-TER-01',
-        structuredSummary: summaryResult,
-      })
-        .then((receipt) => {
-          setAbdmPushReceipt(receipt);
+      // Automatic push immediately on kiosk-flow completion ONLY IF consent granted
+      if (consent?.hospitalSharing) {
+        setIsPushingABDM(true);
+        pushFHIRBundleToABDM({
+          fhirBundle: bundle,
+          patientInfo: summaryResult.patientInfo,
+          abhaId: verifiedProfile?.abhaId,
+          department: clinicalDepartment,
+          kioskStationId: 'KIOSK-TER-01',
+          structuredSummary: summaryResult,
         })
-        .catch((err) => {
-          console.error('Kiosk auto ABDM push error:', err);
-        })
-        .finally(() => {
-          setIsPushingABDM(false);
-        });
+          .then((receipt) => {
+            setAbdmPushReceipt(receipt);
+          })
+          .catch((err) => {
+            console.error('Kiosk auto ABDM push error:', err);
+          })
+          .finally(() => {
+            setIsPushingABDM(false);
+          });
+      } else {
+        console.info('Kiosk auto ABDM push suppressed: hospitalSharing consent not granted by patient.');
+      }
     }
-  }, [currentStep.id, structuredIntake, verifiedProfile, clinicalDepartment, uploadedDocs]);
+  }, [currentStep.id, structuredIntake, verifiedProfile, clinicalDepartment, uploadedDocs, consent]);
 
   const handleNext = () => {
     if (currentStepIndex < STEPS.length - 1) {
@@ -268,27 +272,39 @@ export const KioskShell: React.FC<KioskShellProps> = ({
         canonicalFacts: summary.clinicalFacts,
       });
 
-    const receipt: ABDMPushReceipt = abdmPushReceipt || {
-      success: true,
-      transactionId: `ABDM-MOCK-TX-${Date.now()}-AUTO`,
-      status: 'ACCEPTED_BY_HIS',
-      mockGateway: 'National Health Stack / ABDM Health Information Exchange (Mock Gateway)',
-      disclaimer:
-        'Simulated ABDM/HIS gateway for Smart India Hackathon 26047 testing. No live NHA ABDM production credentials claimed.',
-      timestamp: new Date().toISOString(),
-      bundleId: bundle.id,
-      resourceCounts: {
-        Patient: 1,
-        Encounter: 1,
-        Composition: 1,
-        Condition: summary.soapNote.billing_suggestions?.icd_10_codes?.length || 2,
-        MedicationRequest: summary.soapNote.plan?.prescriptions?.length || 0,
-        Observation: uploadedDocs.reduce(
-          (acc, d) => acc + (d.extractedData?.investigations?.length || 0),
-          0
-        ),
-      },
-    };
+    const receipt: ABDMPushReceipt = consent?.hospitalSharing
+      ? (abdmPushReceipt || {
+          success: true,
+          transactionId: `ABDM-MOCK-TX-${Date.now()}-AUTO`,
+          status: 'ACCEPTED_BY_HIS',
+          mockGateway: 'National Health Stack / ABDM Health Information Exchange (Mock Gateway)',
+          disclaimer:
+            'Simulated ABDM/HIS gateway for Smart India Hackathon 26047 testing. No live NHA ABDM production credentials claimed.',
+          timestamp: new Date().toISOString(),
+          bundleId: bundle.id,
+          resourceCounts: {
+            Patient: 1,
+            Encounter: 1,
+            Composition: 1,
+            Condition: summary.soapNote.billing_suggestions?.icd_10_codes?.length || 2,
+            MedicationRequest: summary.soapNote.plan?.prescriptions?.length || 0,
+            Observation: uploadedDocs.reduce(
+              (acc, d) => acc + (d.extractedData?.investigations?.length || 0),
+              0
+            ),
+          },
+        })
+      : {
+          success: false,
+          transactionId: 'LOCAL-ONLY-NO-CONSENT',
+          status: 'BLOCKED_BY_PATIENT_CONSENT',
+          mockGateway: 'Local Clinical Storage (External ABDM Sync Suppressed)',
+          disclaimer:
+            'Patient withheld hospitalSharing consent. Digital health record kept sovereign and on-device only.',
+          timestamp: new Date().toISOString(),
+          bundleId: bundle.id,
+          resourceCounts: {},
+        };
 
     if (onCompleteIntakeHandoff) {
       onCompleteIntakeHandoff({

@@ -1,16 +1,29 @@
-# MedScribe Lite — Primary Care AI Clinical Assistant & Safety Copilot
+# MedScribeAI — Sovereign Clinical Documentation & Case-Taking Platform
 
-> **Empowering rural health posts and low-resource primary care clinics with real-time consultation transcribing, AI clinical safety guardrails, drug interaction checking, documentation confidence scoring, and HL7 FHIR export.**
+> **Sovereign, offline-first clinical case-taking and safety copilot empowering rural health posts, OPD clinics, and low-resource health centers with deterministic multilingual clinical NLP, zero-fabrication safety gates, offline sidecar architecture, and HL7 FHIR / ABDM compliance.**
+
+---
+
+## 🏛️ System Architecture & Phase 8.7 Hardening
+
+MedScribeAI operates as a **sovereign desktop application (Tauri + Rust)** managing a **bundled Python FastAPI clinical sidecar process** on `127.0.0.1:8000`:
+- **Offline-First Isolation:** Zero required cloud services. Full functionality in physical airplane mode (see [`docs/network_audit.md`](docs/network_audit.md)).
+- **Universal Zero-Fabrication Evidence Gate:** Rejects unanchored diagnoses (GERD, Amlapitta), fake vitals (120/80), or unauthorized prescriptions.
+- **Physician Approval State Machine:** Clinical notes follow an immutable state progression: `AI_DRAFT` ➔ `REVIEWING` ➔ `APPROVED`. Material edits invalidate approval. Printing prescriptions and FHIR exports are hard-gated behind physician approval.
+- **Granular Consent Gating:** Patient consent (`hospitalSharing: false`) hard-blocks outbound synchronization and external ABDM dispatch.
+- **Sidecar Lifecycle Management:** Tauri Rust layer automatically spawns `medscribe-backend` on startup and cleanly terminates the process on exit (zero orphan processes).
+- **SIH 2026 Readiness Matrix:** See [`docs/sih_capability_matrix.md`](docs/sih_capability_matrix.md) for full empirical status of all 20 capabilities.
 
 ---
 
 ## 🌟 Key Features
 
+- **Multilingual Clinical NLP**: Deterministic entity extraction across Hindi, Marathi, Gujarati, English, and code-switched Hinglish.
 - **Clinical Consultation Scribing**: Transforms patient dictations or live consultation transcripts into structured, audit-ready SOAP notes (Subjective, Objective, Assessment, Plan).
 - **Clinical Safety Copilot Guardrails**: Audits consultation notes in real-time against medical safety guidelines, flagging clinical uncertainties and dosage risks.
 - **Deterministic Drug Interaction Engine**: Detects high- and medium-severity drug-drug interactions, drug-condition contraindications, and documented allergy conflicts offline.
 - **Documentation Confidence Scoring**: Assigns overall and per-section completeness metrics with rationale popovers and missing information checklists.
-- **HL7 FHIR R4 JSON Export**: Interoperable standard export (`Patient`, `Encounter`, `Condition` with ICD-10, `MedicationRequest`, and `Composition` with LOINC codes) for seamless EHR integration.
+- **HL7 FHIR R4 JSON Export**: Interoperable standard export (`Patient`, `Encounter`, `Condition` with ICD-10, `MedicationStatement`, and `Composition` with LOINC codes) for seamless EHR integration.
 - **Offline / Local Model Mode**: Browser-native clinical NLP fallback engine allowing 100% functionality without internet connection or backend API availability.
 - **ICD-10 & CPT Billing Suggestions**: Automatic coding recommendations to streamline clinic reimbursement.
 

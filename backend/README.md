@@ -46,9 +46,9 @@ React (TypeScript Kiosk & Workstation)
 | **Local SQLite & Sync Engine** | **IMPLEMENTED** | `backend/app/storage/database.py` with `encounters`, `clinical_facts`, `fact_evidence`, `audit_log`, `sync_queue`, and physician approval gate (`AI_DRAFT` -> `REVIEWING` -> `APPROVED` -> `EXPORTED`). |
 | **TypeScript Client Adapter** | **IMPLEMENTED** | `src/services/clinicalAIClient.ts` with graceful fallback cascade. |
 | **Provider Abstraction** | **IMPLEMENTED** | `src/services/aiProvider.ts`, `src/speech/asrProvider.ts`, `src/ocr/ocrProvider.ts`. |
-| **Local Offline ASR (Whisper.cpp)** | **PLANNED / HOST-DEPENDENT** | Provider inspects host `whisper-cli`/`whisper.cpp`; returns honest `UNAVAILABLE` state when missing rather than silent cloud fallback. |
-| **Local Document OCR (Tesseract)** | **PLANNED / HOST-DEPENDENT** | Provider inspects host `tesseract`; returns honest `UNAVAILABLE` state when missing; synthetic fallbacks eradicated. |
-| **Local Quantized LLM (SLM/Ollama)** | **PLANNED** | Sovereign local model for clinical summary drafting. |
+| **Local Offline ASR (IndicConformer)** | **PARTIALLY VALIDATED** | Model `models/asr/indic-conformer/model.int8.onnx` (188 MB, SHA-256: `b99a0183...`) runtime verified; human speech benchmark deferred pending real clinical audio corpus. |
+| **Local Document OCR (Tesseract)** | **UNAVAILABLE (DECLARED)** | System probes host binary; cleanly returns HTTP 422 `OCR_UNAVAILABLE` when binary is missing; zero synthetic fallbacks. |
+| **Evidence & Fabrication Gate** | **IMPLEMENTED** | `backend/app/clinical/evidence_gate.py` rejecting unanchored diagnoses, ungrounded vitals, and unauthorized prescriptions. |
 
 ---
 

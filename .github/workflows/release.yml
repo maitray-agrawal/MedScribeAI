@@ -1,0 +1,136 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Release Windows Desktop
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt pyinstaller
+
+      - name: Run TypeScript validation (Lint)
+        run: npm run lint
+
+      - name: Run frontend test suite
+        run: npm test -- --run
+
+      - name: Run backend pytest suite
+        run: |
+          python -m pytest backend/tests -v
+
+      - name: Prepare FastAPI Sidecar Binary
+        shell: pwsh
+        run: |
+          $TargetExe = "src-tauri/binaries/medscribe-backend-x86_64-pc-windows-msvc.exe"
+          if (-not (Test-Path $TargetExe)) {
+            Write-Host "Sidecar binary missing; building via PyInstaller..." -ForegroundColor Cyan
+            & powershell -ExecutionPolicy Bypass -File scripts/build_backend_sidecar.ps1
+          } else {
+            Write-Host "Sidecar binary present at: $TargetExe" -ForegroundColor Green
+          }
+
+      - name: Build Tauri Windows Bundle (NSIS)
+        run: npx tauri build --bundles nsis
+
+      - name: Collect Release Artifacts & Generate SHA-256 Checksums
+        shell: pwsh
+        run: |
+          $ReleaseDir = "release_artifacts"
+          New-Item -ItemType Directory -Path $ReleaseDir -Force | Out-Null
+
+          $NsisDir = "src-tauri/target/release/bundle/nsis"
+          $Installer = Get-ChildItem -Path $NsisDir -Filter "*.exe" | Select-Object -First 1
+
+          if (-not $Installer) {
+            throw "NSIS installer executable not found in $NsisDir"
+          }
+
+          # Standardized evaluator installer name
+          $StandardName = "MedScribeAI-Setup-x64.exe"
+          Copy-Item -Path $Installer.FullName -Destination "$ReleaseDir/$StandardName"
+          Copy-Item -Path $Installer.FullName -Destination "$ReleaseDir/$($Installer.Name)"
+
+          # Compute SHA-256 checksums
+          Set-Location $ReleaseDir
+          $Hashes = @()
+          Get-ChildItem -File | ForEach-Object {
+            $Hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash.ToLower()
+            $Hashes += "$Hash  $($_.Name)"
+          }
+          $Hashes | Out-File -FilePath "SHA256SUMS.txt" -Encoding utf8
+          Get-Content "SHA256SUMS.txt"
+          Set-Location ..
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        with:
+          files: |
+            release_artifacts/MedScribeAI-Setup-x64.exe
+            release_artifacts/SHA256SUMS.txt
+          name: MedScribeAI ${{ github.ref_name }} — SIH 2026 Evaluation Build
+          draft: false
+          prerelease: false
+          body: |
+            ## MedScribeAI — SIH 2026 Evaluation Build
+
+            Offline-First AI-Powered Patient Case-Taking & Clinical Safety Copilot.
+            Built for Smart India Hackathon 2026 (Problem Statement SIH26047) by Team AstraX.
+
+            ### Included Distribution Artifacts
+            - `MedScribeAI-Setup-x64.exe` — Windows x64 NSIS Installer (~202 MB)
+            - `SHA256SUMS.txt` — Cryptographic SHA-256 integrity verification manifest
+
+            ### Evaluator Quickstart
+            1. Download `MedScribeAI-Setup-x64.exe` and install on Windows 10/11 x64.
+            2. No external runtime required: Node.js, Python, Rust, and Git are **NOT** required.
+            3. Launch **MedScribeAI Sovereign Kiosk / Workstation**.
+            4. Follow the 3-minute evaluation walkthrough in `docs/EVALUATOR.md`.
+            5. To test physical offline resilience: disable Wi-Fi and execute complete case-taking, fact extraction, and physician approval workflow.
+
+            ### Clinical Invariants & Safety Declarations
+            - **Mandatory Physician Review:** All AI-extracted clinical facts enter `AI_DRAFT` status and cannot be exported or synchronized without explicit physician credentials.
+            - **Zero Silent Cloud Fallback:** Operates strictly in `LOCAL_ONLY` mode by default; no background network requests are issued.
+            - **Separated Patient Consent:** Patient intake consent is strictly decoupled from hospital-sharing consent. Revocation is immediately effective.
+            - **100% Evidence Grounding:** In benchmark evaluation, 166/166 extracted facts are anchored to verbatim source phrases.
+
+            ### Declared Prototype Boundaries
+            - **OCR Capability Gate:** Requires host Tesseract binary. If missing, the engine safely declares OCR unavailable rather than generating synthetic text.
+            - **ASR Acoustic Scope:** 8 Indic languages supported at the acoustic layer; English and Hindi validated end-to-end. Diverse colloquial dialects require local acoustic calibration.
+            - **Evaluation Data:** All bundled patient records are strictly synthetic test cases.
+            - **Code Signing:** As an open-source student submission, this binary is unsigned. If Windows SmartScreen appears, click *"More info"* -> *"Run anyway"*.

@@ -11,6 +11,48 @@ MedScribeAI is an offline-first, AI-assisted patient case-taking and clinical do
 
 ---
 
+## Run MedScribeAI
+
+### Option 1 — Web Demo
+[Try the Web Demo](https://medscribe-ai.pages.dev) *(Evaluator deployment placeholder on Cloudflare Pages)*
+
+> **Notice:** The web demo is an interactive, browser-based demonstration featuring pre-loaded synthetic clinical scenarios. It is designed for rapid evaluator previews and mobile review, and does not replace the sovereign offline desktop application.
+
+### Option 2 — Windows Desktop (Primary Offline Runtime)
+[Download Latest Windows Build (GitHub Releases)](https://github.com/maitray-agrawal/MedScribeAI/releases)
+
+1. Download the installer: `MedScribeAI-Setup-x64.exe` (or `MedScribeAI_1.0.0_x64-setup.exe`).
+2. Run the installer on Windows 10/11 x64. (No Node.js, Python, or Rust required on the host).
+3. If prompted by Windows SmartScreen (unsigned binary notice), click **More info** -> **Run anyway**.
+4. Launch **MedScribeAI**.
+5. Select a `SYNTHETIC DEMO PATIENT` scenario and follow the step-by-step evaluator instructions in [docs/EVALUATOR.md](docs/EVALUATOR.md) and [DEMO.md](DEMO.md).
+6. To test physical offline resilience: disconnect Wi-Fi and execute complete case-taking, fact extraction, and approval.
+
+### Option 3 — Build from Source
+[GitHub Repository](https://github.com/maitray-agrawal/MedScribeAI)
+
+```powershell
+# Clone repository
+git clone https://github.com/maitray-agrawal/MedScribeAI.git
+cd MedScribeAI
+
+# Install dependencies
+npm ci
+pip install -r backend/requirements.txt pyinstaller
+
+# Run frontend tests & validation
+npm run lint
+npm test -- --run
+
+# Run backend tests
+python -m pytest backend/tests -v
+
+# Run local development server
+npm run dev
+```
+
+---
+
 ## Screenshots
 
 All screenshots depict the sovereign application executing locally with synthetic patient data (`SYNTHETIC DEMO PATIENT`).

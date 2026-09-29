@@ -17,28 +17,24 @@ export const AssessmentSection: React.FC<AssessmentSectionProps> = ({
   onChange,
 }) => {
   return (
-    <div id="soap-section-assessment" className="vx-card p-5 space-y-4">
-      <div className="flex items-center justify-between border-b border-[var(--vx-border)] pb-3">
-        <div className="flex items-center space-x-2.5">
-          <span className="w-2 h-5 bg-[var(--vx-secondary)] rounded-xs shrink-0"></span>
-          <h3 className="font-serif font-semibold text-[var(--vx-text)] tracking-wide text-xs uppercase flex items-center space-x-2">
+    <div id="soap-section-assessment" className="card-base space-y-4">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="flex items-center space-x-2">
+          <span className="w-2 h-6 bg-indigo-500 rounded-full shrink-0"></span>
+          <h3 className="font-bold text-slate-800 uppercase tracking-wider text-xs flex items-center space-x-2">
             <span>Assessment (A)</span>
           </h3>
         </div>
         <div className="flex items-center space-x-2">
           <DocumentationConfidenceBadge sectionName="Assessment (A)" confidence={confidence} />
-          <span className="text-[10px] uppercase font-mono font-medium tracking-wider px-2 py-0.5 rounded-sm bg-[var(--vx-secondary-soft)] text-[var(--vx-secondary)] border border-[var(--vx-secondary)]/20">
-            Diagnosis & Evaluation
-          </span>
+          <span className="text-[10px] text-indigo-800 bg-indigo-50 px-2.5 py-0.5 rounded-lg border border-indigo-200 font-bold">Diagnosis & Evaluation</span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 space-y-3.5">
+        <div className="md:col-span-2 space-y-3">
           <div>
-            <label className="block text-[var(--vx-text-muted)] text-[10px] font-mono uppercase tracking-wider mb-1">
-              Primary Diagnosis:
-            </label>
+            <label className="block text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Primary Diagnosis:</label>
             {isEditing ? (
               <input
                 type="text"
@@ -49,12 +45,12 @@ export const AssessmentSection: React.FC<AssessmentSectionProps> = ({
                     primary_diagnosis: e.target.value,
                   })
                 }
-                className="w-full bg-[var(--vx-surface)] border border-[var(--vx-border-strong)] rounded-sm p-2.5 text-[var(--vx-text)] text-xs font-semibold focus:border-[var(--vx-primary)] focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 text-xs font-bold focus:bg-white"
               />
             ) : (
-              <div className="bg-[var(--vx-surface-muted)] border border-[var(--vx-secondary)]/30 text-[var(--vx-text)] font-semibold p-3.5 rounded-sm text-sm flex items-center justify-between">
-                <span className="text-base font-serif">{assessment.primary_diagnosis || 'Unspecified'}</span>
-                <span className="text-[10px] font-mono uppercase tracking-wider font-semibold px-2 py-0.5 bg-[var(--vx-secondary)] text-white rounded-xs">
+              <div className="bg-indigo-50/70 border border-indigo-200 text-indigo-950 font-bold p-3.5 rounded-xl text-sm flex items-center justify-between">
+                <span className="text-base">{assessment.primary_diagnosis || 'Unspecified'}</span>
+                <span className="text-xs font-extrabold px-2.5 py-1 bg-indigo-600 text-white rounded-lg">
                   Working Impression
                 </span>
               </div>
@@ -62,9 +58,7 @@ export const AssessmentSection: React.FC<AssessmentSectionProps> = ({
           </div>
 
           <div>
-            <label className="block text-[var(--vx-text-muted)] text-[10px] font-mono uppercase tracking-wider mb-1">
-              Clinical Synthesis Summary:
-            </label>
+            <label className="block text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Clinical Synthesis Summary:</label>
             {isEditing ? (
               <textarea
                 rows={3}
@@ -75,10 +69,10 @@ export const AssessmentSection: React.FC<AssessmentSectionProps> = ({
                     clinical_summary: e.target.value,
                   })
                 }
-                className="w-full bg-[var(--vx-surface)] border border-[var(--vx-border-strong)] rounded-sm p-2.5 text-[var(--vx-text)] text-xs focus:border-[var(--vx-primary)] focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 text-xs font-medium focus:bg-white"
               />
             ) : (
-              <p className="text-[var(--vx-text)] font-normal bg-[var(--vx-surface-muted)] p-3.5 rounded-sm border border-[var(--vx-border)] leading-relaxed text-xs">
+              <p className="text-slate-700 font-medium bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 leading-relaxed">
                 {assessment.clinical_summary || 'No clinical summary provided.'}
               </p>
             )}
@@ -86,25 +80,18 @@ export const AssessmentSection: React.FC<AssessmentSectionProps> = ({
         </div>
 
         <div>
-          <label className="block text-[var(--vx-text-muted)] text-[10px] font-mono uppercase tracking-wider mb-1">
-            Differential Diagnoses:
-          </label>
+          <label className="block text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Differential Diagnoses:</label>
           {assessment.differential_diagnoses?.length > 0 ? (
             <ul className="space-y-2">
               {assessment.differential_diagnoses.map((diff, idx) => (
-                <li
-                  key={idx}
-                  className="bg-[var(--vx-surface-muted)] p-2.5 rounded-sm border border-[var(--vx-border)] text-[var(--vx-text)] font-medium text-xs flex items-center space-x-2"
-                >
-                  <ChevronRight className="w-3.5 h-3.5 text-[var(--vx-secondary)] shrink-0" />
+                <li key={idx} className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-slate-800 font-semibold text-xs flex items-center space-x-2">
+                  <ChevronRight className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                   <span>{diff}</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-[var(--vx-text-subtle)] italic bg-[var(--vx-surface-muted)] p-3 rounded-sm border border-[var(--vx-border)] text-xs">
-              No secondary differentials noted.
-            </p>
+            <p className="text-slate-400 italic bg-slate-50 p-3 rounded-xl border border-slate-200">No secondary differentials noted.</p>
           )}
         </div>
       </div>

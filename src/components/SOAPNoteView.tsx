@@ -12,13 +12,10 @@ import {
   PlanSection,
 } from './soap-note';
 
-import { SupportedLanguage } from '../i18n';
-
 interface SOAPNoteViewProps {
   soapNote?: SOAPNote | null;
   isGenerating?: boolean;
   isOfflineMode?: boolean;
-  recordLanguage?: SupportedLanguage;
   onUpdateSOAP: (updatedNote: SOAPNote) => void;
   onOpenPrintPrescription: () => void;
   onOpenFHIR?: () => void;
@@ -29,7 +26,6 @@ export const SOAPNoteView: React.FC<SOAPNoteViewProps> = ({
   soapNote,
   isGenerating = false,
   isOfflineMode = false,
-  recordLanguage,
   onUpdateSOAP,
   onOpenPrintPrescription,
   onOpenFHIR,
@@ -52,85 +48,64 @@ export const SOAPNoteView: React.FC<SOAPNoteViewProps> = ({
 
   if (isGenerating) {
     return (
-      <div id="soap-note-skeleton-card" className="vx-card p-6 space-y-6">
-        <div className="flex items-center justify-between border-b border-[var(--vx-border)] pb-4">
+      <div id="soap-note-skeleton-card" className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <div className="flex items-center space-x-3">
-            <span className="w-2.5 h-6 bg-[var(--vx-primary)] rounded-xs shrink-0"></span>
-            <div className="flex items-center space-x-2.5">
-              <RefreshCw className="w-4 h-4 text-[var(--vx-primary)] animate-spin" />
-              <h3 className="font-serif font-semibold text-sm text-[var(--vx-text)]">
-                Structuring Sovereign Clinical Intelligence...
-              </h3>
+            <span className="w-2.5 h-6 bg-blue-600 rounded-full shrink-0"></span>
+            <div className="flex items-center space-x-2">
+              <RefreshCw className="w-4 h-4 text-blue-600 animate-spin" />
+              <h3 className="font-bold text-sm text-slate-800">Generating Clinical Bento SOAP Note...</h3>
             </div>
           </div>
-          <span className="text-[10px] font-mono uppercase tracking-wider font-semibold px-2.5 py-1 rounded-sm bg-[var(--vx-primary-soft)] text-[var(--vx-primary)] border border-[var(--vx-primary)]/20 animate-pulse">
-            Active Inference Engine
-          </span>
-        </div>
-
-        {/* Astra Inference Pipeline Steps */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 py-2">
-          {['OBSERVE & EXTRACT', 'STRUCTURING CONTEXT', 'EVIDENCE GROUNDING', 'AWAITING PHYSICIAN REVIEW'].map((step, idx) => (
-            <div
-              key={idx}
-              className={`p-2.5 rounded-sm border text-center transition-all ${
-                idx <= 1
-                  ? 'bg-[var(--vx-primary-soft)] border-[var(--vx-primary)]/30 text-[var(--vx-primary)]'
-                  : 'bg-[var(--vx-surface-muted)] border-[var(--vx-border)] text-[var(--vx-text-subtle)]'
-              }`}
-            >
-              <div className="text-[9px] font-mono tracking-widest block uppercase font-medium">Step 0{idx + 1}</div>
-              <div className="text-[11px] font-mono font-semibold tracking-tight truncate mt-0.5">{step}</div>
-            </div>
-          ))}
+          <span className="badge-brand animate-pulse">Gemini 3.6 Engine</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Skeleton Card 1: Subjective */}
           <motion.div
-            className="p-5 rounded-sm bg-[var(--vx-surface-muted)] border border-[var(--vx-border)] space-y-3"
-            animate={{ opacity: [0.4, 0.85, 0.4] }}
-            transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+            className="p-5 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-3"
+            animate={{ opacity: [0.4, 0.9, 0.4] }}
+            transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
           >
-            <div className="h-4 w-32 bg-[var(--vx-primary)]/20 rounded-xs"></div>
-            <div className="h-3 w-full bg-[var(--vx-border)] rounded-xs"></div>
-            <div className="h-3 w-4/5 bg-[var(--vx-border)] rounded-xs"></div>
-            <div className="h-3 w-3/5 bg-[var(--vx-border)] rounded-xs"></div>
+            <div className="h-4 w-32 bg-blue-200/70 rounded-md"></div>
+            <div className="h-3 w-full bg-slate-200/80 rounded-md"></div>
+            <div className="h-3 w-4/5 bg-slate-200/80 rounded-md"></div>
+            <div className="h-3 w-3/5 bg-slate-200/80 rounded-md"></div>
           </motion.div>
 
           {/* Skeleton Card 2: Objective */}
           <motion.div
-            className="p-5 rounded-sm bg-[var(--vx-surface-muted)] border border-[var(--vx-border)] space-y-3"
-            animate={{ opacity: [0.4, 0.85, 0.4] }}
-            transition={{ repeat: Infinity, duration: 1.6, delay: 0.2, ease: 'easeInOut' }}
+            className="p-5 rounded-2xl bg-emerald-50/50 border border-emerald-100 space-y-3"
+            animate={{ opacity: [0.4, 0.9, 0.4] }}
+            transition={{ repeat: Infinity, duration: 1.4, delay: 0.2, ease: 'easeInOut' }}
           >
-            <div className="h-4 w-32 bg-[var(--vx-primary)]/20 rounded-xs"></div>
-            <div className="h-3 w-full bg-[var(--vx-border)] rounded-xs"></div>
-            <div className="h-3 w-3/4 bg-[var(--vx-border)] rounded-xs"></div>
-            <div className="h-3 w-5/6 bg-[var(--vx-border)] rounded-xs"></div>
+            <div className="h-4 w-32 bg-emerald-200/70 rounded-md"></div>
+            <div className="h-3 w-full bg-slate-200/80 rounded-md"></div>
+            <div className="h-3 w-3/4 bg-slate-200/80 rounded-md"></div>
+            <div className="h-3 w-5/6 bg-slate-200/80 rounded-md"></div>
           </motion.div>
 
           {/* Skeleton Card 3: Assessment */}
           <motion.div
-            className="p-5 rounded-sm bg-[var(--vx-surface-muted)] border border-[var(--vx-border)] space-y-3"
-            animate={{ opacity: [0.4, 0.85, 0.4] }}
-            transition={{ repeat: Infinity, duration: 1.6, delay: 0.4, ease: 'easeInOut' }}
+            className="p-5 rounded-2xl bg-indigo-50/50 border border-indigo-100 space-y-3"
+            animate={{ opacity: [0.4, 0.9, 0.4] }}
+            transition={{ repeat: Infinity, duration: 1.4, delay: 0.4, ease: 'easeInOut' }}
           >
-            <div className="h-4 w-36 bg-[var(--vx-secondary)]/20 rounded-xs"></div>
-            <div className="h-3 w-full bg-[var(--vx-border)] rounded-xs"></div>
-            <div className="h-3 w-2/3 bg-[var(--vx-border)] rounded-xs"></div>
+            <div className="h-4 w-36 bg-indigo-200/70 rounded-md"></div>
+            <div className="h-3 w-full bg-slate-200/80 rounded-md"></div>
+            <div className="h-3 w-2/3 bg-slate-200/80 rounded-md"></div>
           </motion.div>
 
           {/* Skeleton Card 4: Plan */}
           <motion.div
-            className="p-5 rounded-sm bg-[var(--vx-surface-muted)] border border-[var(--vx-border)] space-y-3"
-            animate={{ opacity: [0.4, 0.85, 0.4] }}
-            transition={{ repeat: Infinity, duration: 1.6, delay: 0.6, ease: 'easeInOut' }}
+            className="p-5 rounded-2xl bg-teal-50/50 border border-teal-100 space-y-3"
+            animate={{ opacity: [0.4, 0.9, 0.4] }}
+            transition={{ repeat: Infinity, duration: 1.4, delay: 0.6, ease: 'easeInOut' }}
           >
-            <div className="h-4 w-28 bg-[var(--vx-primary)]/20 rounded-xs"></div>
-            <div className="h-3 w-full bg-[var(--vx-border)] rounded-xs"></div>
-            <div className="h-3 w-4/5 bg-[var(--vx-border)] rounded-xs"></div>
-            <div className="h-3 w-1/2 bg-[var(--vx-border)] rounded-xs"></div>
+            <div className="h-4 w-28 bg-teal-200/70 rounded-md"></div>
+            <div className="h-3 w-full bg-slate-200/80 rounded-md"></div>
+            <div className="h-3 w-4/5 bg-slate-200/80 rounded-md"></div>
+            <div className="h-3 w-1/2 bg-slate-200/80 rounded-md"></div>
           </motion.div>
         </div>
       </div>
@@ -259,7 +234,7 @@ BILLING CODES:
   };
 
   return (
-    <div id="soap-note-card" className="vx-card overflow-hidden space-y-0">
+    <div id="soap-note-card" className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xs space-y-0">
       {/* Top Header & Actions Bar */}
       <SOAPNoteHeader
         isEditing={isEditing}
@@ -267,7 +242,6 @@ BILLING CODES:
         isReadingAloud={isReadingAloud}
         documentationConfidence={editedNote.documentation_confidence}
         isOfflineMode={isOfflineMode}
-        recordLanguage={recordLanguage}
         onEdit={() => setIsEditing(true)}
         onSaveEdits={handleSaveEdits}
         onCancelEdits={handleCancelEdits}

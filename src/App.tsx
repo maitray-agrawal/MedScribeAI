@@ -12,31 +12,17 @@ import { EncounterHistoryModal } from './components/EncounterHistoryModal';
 import { ClinicAnalyticsModal } from './components/ClinicAnalyticsModal';
 import { SAMPLE_SCENARIOS } from './data/sampleScenarios';
 import { PatientInfo, SOAPNote, EncounterRecord } from './types';
-import { Sparkles, AlertCircle, FileText, CheckCircle2, RotateCcw, ShieldCheck, Lock, Activity } from 'lucide-react';
+import { Sparkles, AlertCircle, FileText, CheckCircle2, RotateCcw, HeartPulse } from 'lucide-react';
 
 import { checkDrugInteractions } from './utils/drugInteractionChecker';
 import { generateOfflineSOAPNote } from './utils/offlineLocalEngine';
-import { detectTranscriptLanguage } from './utils/languageDetector';
-import { useTranslation } from './i18n';
 import { FHIRExportModal } from './components/soap-note';
-import {
-  AstraSutra,
-  ClinicalStage,
-  EvidencePanel,
-  EvidenceItem,
-  AstraFamilyPage,
-  VaidhyaMark,
-  AstraAttribution,
-  AstraSeal,
-} from './design/components';
 
 const STORAGE_KEY = 'medscribe_lite_encounters_v1';
 
 export default function App() {
-  const { t } = useTranslation();
-
-  // Navigation view state: 'landing' | 'workstation' | 'astrax'
-  const [currentView, setCurrentView] = useState<'landing' | 'workstation' | 'astrax'>('landing');
+  // Navigation view state: 'landing' | 'workstation'
+  const [currentView, setCurrentView] = useState<'landing' | 'workstation'>('landing');
 
   // Offline local model mode state
   const [isOfflineMode, setIsOfflineMode] = useState<boolean>(false);
@@ -174,9 +160,6 @@ export default function App() {
   const handleSaveEncounter = () => {
     if (!soapNote) return;
 
-    const activeScenario = SAMPLE_SCENARIOS.find((sc) => sc.id === selectedScenarioId);
-    const activeRecordLang = activeScenario?.language || (transcript.trim() ? detectTranscriptLanguage(transcript) : undefined);
-
     const newRecord: EncounterRecord = {
       id: `enc-${Date.now()}`,
       timestamp: new Date().toISOString(),
@@ -184,7 +167,6 @@ export default function App() {
       transcript,
       soapNote,
       status: 'finalized',
-      language: activeRecordLang,
     };
 
     setEncounters((prev) => [newRecord, ...prev]);
@@ -212,115 +194,21 @@ export default function App() {
     }
   };
 
-  // Determine current clinical stage for AstraSutra
-  const currentStage: ClinicalStage = (() => {
-    if (soapNote) return 'review';
-    if (isGenerating) return 'structuring';
-    if (transcript.trim().length > 0) return 'transcription';
-    return 'intake';
-  })();
-
-  // Generate grounded evidence items dynamically from consultation context
-  const evidenceItems: EvidenceItem[] = (() => {
-    const items: EvidenceItem[] = [];
-
-    if (patientInfo.knownAllergies && patientInfo.knownAllergies !== 'NKDA') {
-      items.push({
-        id: 'ev-allergies',
-        source: 'Patient Clinical Baseline',
-        type: 'Risk Factor',
-        excerpt: `Reported allergy to: ${patientInfo.knownAllergies}. Cross-referenced against proposed prescription formulary.`,
-        confidence: 98,
-        verificationState: 'verified',
-        groundingReference: 'Intake Record: Allergies',
-      });
-    }
-
-    if (soapNote?.subjective?.chief_complaint) {
-      items.push({
-        id: 'ev-complaint',
-        source: 'Consultation Transcript',
-        type: 'Chief Complaint',
-        excerpt: `Patient stated chief symptom: "${soapNote.subjective.chief_complaint}"`,
-        confidence: 96,
-        verificationState: 'verified',
-        groundingReference: 'Transcript Audio / Text Stream',
-      });
-    }
-
-    if (soapNote?.objective?.vital_signs) {
-      items.push({
-        id: 'ev-vitals',
-        source: 'Clinical Examination',
-        type: 'Vital Sign',
-        excerpt: `Triage parameters observed: ${soapNote.objective.vital_signs}`,
-        confidence: 95,
-        verificationState: 'verified',
-        groundingReference: 'Physical Exam: Vitals Log',
-      });
-    }
-
-    if (soapNote?.assessment?.primary_diagnosis) {
-      items.push({
-        id: 'ev-diagnosis',
-        source: 'Synthesized Reasoning',
-        type: 'Symptom',
-        excerpt: `Working clinical diagnosis established: ${soapNote.assessment.primary_diagnosis}. Differential coverage confirmed.`,
-        confidence: 92,
-        verificationState: 'physician-confirmed',
-        groundingReference: 'ICD-10 Mapped Diagnostic Criteria',
-      });
-    }
-
-    if (soapNote?.plan?.prescriptions && soapNote.plan.prescriptions.length > 0) {
-      items.push({
-        id: 'ev-rx',
-        source: 'Therapeutic Orders',
-        type: 'Medication',
-        excerpt: `Prescriptions ordered: ${soapNote.plan.prescriptions.map((r) => `${r.medication} ${r.dosage}`).join(', ')}`,
-        confidence: 94,
-        verificationState: 'physician-confirmed',
-        groundingReference: 'Formulary Safe Dosing Check',
-      });
-    }
-
-    return items;
-  })();
-
-  // 1. Dedicated AstraX Family Page View
-  if (currentView === 'astrax') {
-    return <AstraFamilyPage onBackToVaidhya={() => setCurrentView('workstation')} />;
-  }
-
-  // 2. Landing Page View
   if (currentView === 'landing') {
-    return (
-      <LandingPage
-        onLaunchWorkstation={() => setCurrentView('workstation')}
-        onNavigateToAstrax={() => setCurrentView('astrax')}
-      />
-    );
+    return <LandingPage onLaunchWorkstation={() => setCurrentView('workstation')} />;
   }
 
-  // 3. Workstation Clinical View
   return (
-    <div
-      id="app-root"
-      className="min-h-screen bg-[var(--vx-bg)] text-[var(--vx-text)] flex flex-col font-sans selection:bg-[var(--vx-primary)] selection:text-white transition-colors duration-300"
-    >
+    <div id="app-root" className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
       {/* Top Navigation Bar */}
       <Header
         onOpenHistory={() => setActiveModal('history')}
         onOpenAnalytics={() => setActiveModal('analytics')}
-        onSelectSampleScenario={(scenarioId) => {
-          if (scenarioId) {
-            handleSelectScenario(scenarioId);
-          } else {
-            handleSelectScenario(SAMPLE_SCENARIOS[0].id);
-          }
+        onSelectSampleScenario={() => {
+          // Cycle or open first scenario
+          handleSelectScenario(SAMPLE_SCENARIOS[0].id);
         }}
         onNavigateToLanding={() => setCurrentView('landing')}
-        onNavigateToAstrax={() => setCurrentView('astrax')}
         totalEncountersCount={encounters.length}
         safetyAlertsCount={soapNote?.safety_alerts?.length || 0}
         isOfflineMode={isOfflineMode}
@@ -329,62 +217,34 @@ export default function App() {
 
       {/* Main Workspace Body */}
       <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Sovereign Clinical Workflow Progression Bar (Astra Sutra) */}
-        <AstraSutra
-          currentStage={currentStage}
-          onSelectStage={(stage) => {
-            if (stage === 'intake') {
-              const el = document.getElementById('patient-form-container');
-              el?.scrollIntoView({ behavior: 'smooth' });
-            } else if (stage === 'transcription') {
-              const el = document.getElementById('transcript-input-container');
-              el?.scrollIntoView({ behavior: 'smooth' });
-            } else if (stage === 'review' || stage === 'evidence' || stage === 'approval') {
-              const el = document.getElementById('soap-result-anchor');
-              el?.scrollIntoView({ behavior: 'smooth' });
-            }
-          }}
-        />
-
-        {/* Sovereign Instrument Status Banner */}
-        <div
-          id="intro-banner"
-          className="vx-card p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-        >
+        {/* Banner / Low Resource Primary Care Intro */}
+        <div id="intro-banner" className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center space-x-2.5">
-              <span className="w-2 h-2 rotate-45 bg-[var(--vx-primary)]"></span>
-              <h2 className="font-serif font-bold text-base text-[var(--vx-text)] tracking-tight">
-                {t.banner.vaidhyaTitle}
-              </h2>
-              <span className="text-[9px] font-mono uppercase tracking-widest text-[var(--vx-primary)] border border-[var(--vx-primary)]/20 bg-[var(--vx-primary-soft)] px-2 py-0.5 rounded-xs">
-                {isOfflineMode ? t.banner.offlineEngine : t.banner.activeInference}
-              </span>
+            <div className="flex items-center space-x-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
+              <h2 className="font-bold text-base text-slate-800 tracking-tight">Clinical Documentation & Safety Engine</h2>
             </div>
-            <p className="text-xs text-[var(--vx-text-muted)] max-w-2xl leading-relaxed">
-              {t.banner.vaidhyaSubtitle}
+            <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">
+              Transform consultation transcripts into verified SOAP notes, ICD-10/CPT coding, and safety alerts. Built for low-resource primary care clinics.
             </p>
           </div>
 
-          <div className="flex items-center space-x-2 text-[11px] font-mono text-[var(--vx-secondary)] bg-[var(--vx-surface-muted)] px-3 py-1.5 rounded-xs border border-[var(--vx-border)]">
-            <Lock className="w-3.5 h-3.5 text-[var(--vx-secondary)] shrink-0" />
-            <span>{t.banner.vaultNotice}</span>
+          <div className="flex items-center space-x-2 text-xs text-blue-700 bg-blue-50 px-3 py-2 rounded-xl border border-blue-100 font-semibold">
+            <HeartPulse className="w-4 h-4 text-blue-600 shrink-0" />
+            <span>100% Fact Extraction Guardrails</span>
           </div>
         </div>
 
         {/* Error Alert Message */}
         {errorMessage && (
-          <div
-            id="error-banner"
-            className="bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 p-4 rounded-sm text-xs flex items-center justify-between shadow-xs font-mono"
-          >
+          <div id="error-banner" className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-2xl text-xs flex items-center justify-between shadow-xs">
             <div className="flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
-              <span>{errorMessage}</span>
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+              <span className="font-medium">{errorMessage}</span>
             </div>
             <button
               onClick={() => setErrorMessage(null)}
-              className="text-red-600 dark:text-red-400 hover:underline uppercase text-[10px] tracking-wider cursor-pointer"
+              className="text-red-700 hover:text-red-900 font-bold"
             >
               Dismiss
             </button>
@@ -445,20 +305,11 @@ export default function App() {
               soapNote={soapNote}
               isGenerating={isGenerating}
               isOfflineMode={isOfflineMode}
-              recordLanguage={
-                SAMPLE_SCENARIOS.find((sc) => sc.id === selectedScenarioId)?.language ||
-                (transcript.trim() ? detectTranscriptLanguage(transcript) : undefined)
-              }
               onUpdateSOAP={(updated) => setSoapNote(updated)}
               onOpenPrintPrescription={() => setActiveModal('print')}
               onOpenFHIR={() => setActiveModal('fhir')}
               onSaveEncounter={handleSaveEncounter}
             />
-
-            {/* Evidence Grounding & Signal Provenance Panel */}
-            {soapNote && evidenceItems.length > 0 && (
-              <EvidencePanel evidenceItems={evidenceItems} />
-            )}
 
             {/* Billing & Coding Suggestions Panel */}
             {soapNote && (
@@ -468,46 +319,23 @@ export default function App() {
             )}
           </div>
         ) : (
-          <div
-            id="empty-state-card"
-            className="vx-card p-10 text-center space-y-3"
-          >
-            <div className="w-10 h-10 rotate-45 border border-[var(--vx-border-strong)] flex items-center justify-center mx-auto mb-2">
-              <div className="w-3.5 h-3.5 rotate-45 bg-[var(--vx-secondary)]"></div>
+          <div id="empty-state-card" className="bg-white border border-slate-200 rounded-2xl p-8 text-center space-y-3 shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mx-auto">
+              <Sparkles className="w-6 h-6" />
             </div>
-            <h3 className="font-serif font-bold text-base text-[var(--vx-text)]">
-              {t.emptyState.title}
-            </h3>
-            <p className="text-xs text-[var(--vx-text-muted)] max-w-md mx-auto leading-relaxed">
-              {t.emptyState.text}
+            <h3 className="font-bold text-slate-800 text-sm">Clinical Safety Copilot Ready</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+              Enter or dictate a patient consultation transcript above, or click one of the pre-loaded clinical scenarios (e.g. Malaria, Diabetes, Pediatrics) to generate verified SOAP notes with automatic drug interaction and clinical safety guardrail auditing.
             </p>
           </div>
         )}
       </main>
 
-      {/* Institutional AstraX Footer */}
-      <footer
-        id="app-footer"
-        className="border-t border-[var(--vx-border)] bg-[var(--vx-surface)] py-6 mt-10 text-xs text-[var(--vx-text-muted)]"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-3">
-            <VaidhyaMark size={24} />
-            <div>
-              <p className="font-serif font-semibold text-[var(--vx-text)]">
-                {t.footer.brandTag}
-              </p>
-              <p className="text-[10px] font-mono tracking-wider text-[var(--vx-text-subtle)]">
-                {t.footer.mathGrammar}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <AstraAttribution onClick={() => setCurrentView('astrax')} variant="minimal" />
-            <span className="text-[var(--vx-text-subtle)]">·</span>
-            <AstraSeal size={28} />
-          </div>
+      {/* Footer */}
+      <footer id="app-footer" className="border-t border-slate-200 bg-white py-4 mt-8 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p>© MedScribe Lite • Primary Care AI Clinical Assistant</p>
+          <p className="text-[11px] text-slate-400 font-medium">Powered by Gemini 3.6 Flash • Bento Grid Edition</p>
         </div>
       </footer>
 

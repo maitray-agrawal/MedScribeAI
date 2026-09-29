@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { EncounterRecord } from '../types';
 import { History, X, Search, Trash2, ExternalLink, Calendar, FileText } from 'lucide-react';
-import { useTranslation, SUPPORTED_LANGUAGES_META } from '../i18n';
 
 interface EncounterHistoryModalProps {
   encounters: EncounterRecord[];
@@ -19,7 +18,6 @@ export const EncounterHistoryModal: React.FC<EncounterHistoryModalProps> = ({
   onClearAll,
   onClose,
 }) => {
-  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -76,7 +74,7 @@ export const EncounterHistoryModal: React.FC<EncounterHistoryModalProps> = ({
   return (
     <motion.div
       id="encounter-history-overlay"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+      className="modal-overlay"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -92,58 +90,58 @@ export const EncounterHistoryModal: React.FC<EncounterHistoryModalProps> = ({
         aria-modal="true"
         aria-labelledby="encounter-history-title"
         tabIndex={-1}
-        className="vx-card max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl focus:outline-none focus:ring-1 focus:ring-[var(--vx-primary)]"
-        initial={{ opacity: 0, scale: 0.97, y: 8 }}
+        className="modal-container max-w-3xl max-h-[85vh] focus:outline-none focus:ring-2 focus:ring-teal-400/50"
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.97, y: 8 }}
+        exit={{ opacity: 0, scale: 0.96, y: 8 }}
         transition={{ duration: 0.15 }}
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-[var(--vx-border)] flex items-center justify-between bg-[var(--vx-surface)]">
-          <div className="flex items-center space-x-2.5">
-            <History className="w-4 h-4 text-[var(--vx-primary)]" />
-            <h3 id="encounter-history-title" className="font-serif font-semibold text-sm text-[var(--vx-text)]">
-              {t.modals.historyTitle}
+        <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-800/80">
+          <div className="flex items-center space-x-2">
+            <History className="w-5 h-5 text-teal-400" />
+            <h3 id="encounter-history-title" className="font-bold text-base text-slate-100">
+              Saved Clinical Encounters History
             </h3>
-            <span className="text-[10px] font-mono uppercase tracking-wider font-semibold px-2 py-0.5 rounded-xs bg-[var(--vx-primary-soft)] text-[var(--vx-primary)] border border-[var(--vx-primary)]/20">
-              {encounters.length} Records
+            <span className="text-xs bg-teal-950 text-teal-300 px-2 py-0.5 rounded border border-teal-800 font-bold">
+              {encounters.length} Saved
             </span>
           </div>
 
           <button
             onClick={onClose}
-            aria-label={t.modals.close}
-            className="p-1.5 rounded-sm hover:bg-[var(--vx-surface-muted)] text-[var(--vx-text-muted)] hover:text-[var(--vx-text)] cursor-pointer transition-colors"
+            aria-label="Close modal"
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-900 transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Search Bar */}
-        <div className="p-4 bg-[var(--vx-surface-muted)] border-b border-[var(--vx-border)] flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="p-4 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="w-3.5 h-3.5 text-[var(--vx-text-subtle)] absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder={t.modals.searchPlaceholder}
+              placeholder="Search by patient name, diagnosis, or date..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[var(--vx-surface)] border border-[var(--vx-border-strong)] rounded-sm pl-8 pr-3 py-1.5 text-[var(--vx-text)] text-xs focus:outline-none focus:border-[var(--vx-primary)] transition-all font-mono placeholder:font-sans placeholder:text-[var(--vx-text-subtle)]"
+              className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-slate-100 focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30 transition-all"
             />
           </div>
 
           {encounters.length > 0 && (
             <button
               onClick={onClearAll}
-              className="text-[11px] font-mono uppercase tracking-wider text-rose-600 dark:text-rose-400 hover:text-rose-700 bg-rose-500/10 border border-rose-500/30 px-2.5 py-1.5 rounded-xs transition-colors cursor-pointer"
+              className="text-xs text-rose-400 hover:text-rose-300 bg-rose-950/40 border border-rose-800/50 px-3 py-2 rounded-lg transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-500/50"
             >
-              {t.modals.clearAll}
+              Clear All Encounters
             </button>
           )}
         </div>
 
         {/* Encounters List */}
-        <div className="p-4 overflow-y-auto space-y-3 flex-1 bg-[var(--vx-surface)]">
+        <div className="p-4 overflow-y-auto space-y-3 flex-1 bg-slate-950/50">
           {filtered.length > 0 ? (
             filtered.map((enc) => {
               const formattedDate = new Date(enc.timestamp).toLocaleString('en-US', {
@@ -157,30 +155,23 @@ export const EncounterHistoryModal: React.FC<EncounterHistoryModalProps> = ({
               return (
                 <div
                   key={enc.id}
-                  className="bg-[var(--vx-surface-muted)] border border-[var(--vx-border)] hover:border-[var(--vx-border-strong)] rounded-sm p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs transition-colors"
+                  className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs transition-colors shadow-sm"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">
-                      <span className="font-serif font-semibold text-sm text-[var(--vx-text)]">
-                        {enc.patientInfo?.name || 'Unspecified Patient'}
-                      </span>
-                      <span className="text-[10px] font-mono text-[var(--vx-primary)] bg-[var(--vx-primary-soft)] px-2 py-0.5 rounded-xs border border-[var(--vx-primary)]/20 font-semibold">
+                      <span className="font-bold text-sm text-slate-100">{enc.patientInfo?.name || 'Unspecified Patient'}</span>
+                      <span className="text-[11px] text-teal-300 bg-teal-950 px-2 py-0.5 rounded border border-teal-800/60 font-semibold">
                         {enc.patientInfo?.age}y {enc.patientInfo?.sex}
                       </span>
-                      {enc.language && (
-                        <span className="text-[10px] font-mono text-[var(--vx-secondary)] bg-[var(--vx-surface)] px-1.5 py-0.5 rounded-xs border border-[var(--vx-border)] font-bold">
-                          {SUPPORTED_LANGUAGES_META[enc.language]?.code || enc.language.toUpperCase()}
-                        </span>
-                      )}
                     </div>
 
-                    <p className="text-[var(--vx-secondary)] font-medium text-xs">
+                    <p className="text-amber-300 font-semibold">
                       Diagnosis: {enc.soapNote?.assessment?.primary_diagnosis || 'Unspecified'}
                     </p>
 
-                    <div className="flex items-center space-x-3 text-[var(--vx-text-muted)] text-[11px] font-mono">
+                    <div className="flex items-center space-x-3 text-slate-400 text-[11px]">
                       <span className="flex items-center space-x-1">
-                        <Calendar className="w-3 h-3 text-[var(--vx-text-subtle)]" />
+                        <Calendar className="w-3 h-3 text-slate-500" />
                         <span>{formattedDate}</span>
                       </span>
                       <span>•</span>
@@ -191,16 +182,15 @@ export const EncounterHistoryModal: React.FC<EncounterHistoryModalProps> = ({
                   <div className="flex items-center space-x-2 self-end sm:self-auto">
                     <button
                       onClick={() => onLoadEncounter(enc)}
-                      className="vx-btn-secondary py-1.5 px-3 text-xs flex items-center space-x-1.5"
+                      className="btn-teal focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-900"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      <span>{t.modals.loadNote}</span>
-                      <span className="sr-only">Load Note</span>
+                      <span>Load Note</span>
                     </button>
 
                     <button
                       onClick={() => onDeleteEncounter(enc.id)}
-                      className="p-1.5 rounded-xs hover:bg-rose-500/10 text-[var(--vx-text-muted)] hover:text-rose-500 border border-[var(--vx-border)] cursor-pointer transition-colors"
+                      className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-400 border border-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-400"
                       title="Delete saved encounter"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -210,12 +200,10 @@ export const EncounterHistoryModal: React.FC<EncounterHistoryModalProps> = ({
               );
             })
           ) : (
-            <div className="text-center py-12 text-[var(--vx-text-muted)] space-y-2">
-              <FileText className="w-8 h-8 text-[var(--vx-text-subtle)] mx-auto" />
-              <p className="font-medium text-xs">{t.modals.noEncounters}</p>
-              <p className="text-[11px] text-[var(--vx-text-subtle)]">
-                Generated SOAP notes saved to your clinic device will appear here.
-              </p>
+            <div className="text-center py-12 text-slate-500 space-y-2">
+              <FileText className="w-8 h-8 text-slate-600 mx-auto" />
+              <p className="text-slate-400 font-medium">No clinical encounters match your search.</p>
+              <p className="text-xs text-slate-600">Generated SOAP notes saved to your clinic device will appear here.</p>
             </div>
           )}
         </div>

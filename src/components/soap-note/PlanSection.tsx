@@ -23,35 +23,31 @@ export const PlanSection: React.FC<PlanSectionProps> = ({
   onRemovePrescription,
 }) => {
   return (
-    <div id="soap-section-plan" className="vx-card p-5 space-y-4">
-      <div className="flex items-center justify-between border-b border-[var(--vx-border)] pb-3">
-        <div className="flex items-center space-x-2.5">
-          <span className="w-2 h-5 bg-[var(--vx-primary)] rounded-xs shrink-0"></span>
-          <h3 className="font-serif font-semibold text-[var(--vx-text)] tracking-wide text-xs uppercase flex items-center space-x-2">
+    <div id="soap-section-plan" className="bg-slate-900 text-white border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xs">
+      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="flex items-center space-x-2">
+          <span className="w-2 h-6 bg-emerald-400 rounded-full shrink-0"></span>
+          <h3 className="font-bold text-white uppercase tracking-wider text-xs flex items-center space-x-2">
             <span>Plan (P) & Treatment Prescriptions</span>
           </h3>
         </div>
         <div className="flex items-center space-x-2">
           <DocumentationConfidenceBadge sectionName="Plan (P)" confidence={confidence} />
-          <span className="text-[10px] uppercase font-mono font-medium tracking-wider px-2 py-0.5 rounded-sm bg-[var(--vx-primary-soft)] text-[var(--vx-primary)] border border-[var(--vx-primary)]/20">
-            Actionable Orders
-          </span>
+          <span className="text-[10px] text-emerald-300 bg-emerald-950/80 px-2.5 py-0.5 rounded-lg border border-emerald-800/80 font-bold">Actionable Orders</span>
         </div>
       </div>
 
       {/* Prescriptions Table */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[var(--vx-text)] font-semibold text-xs flex items-center space-x-2 font-mono uppercase tracking-wider">
+          <span className="text-slate-200 font-bold text-xs flex items-center space-x-2">
             <span>Prescribed Medications</span>
-            <span className="text-[var(--vx-text-subtle)] font-normal text-[11px]">
-              ({plan.prescriptions?.length || 0})
-            </span>
+            <span className="text-slate-400 font-semibold text-[11px]">({plan.prescriptions?.length || 0})</span>
           </span>
           {isEditing && (
             <button
               onClick={onAddPrescription}
-              className="text-xs text-[var(--vx-primary)] hover:text-white bg-[var(--vx-primary-soft)] hover:bg-[var(--vx-primary)] px-2.5 py-1 rounded-sm border border-[var(--vx-primary)]/30 flex items-center space-x-1 font-mono uppercase tracking-wider font-semibold cursor-pointer transition-colors"
+              className="text-xs text-emerald-300 hover:text-white bg-emerald-950 px-2.5 py-1 rounded-lg border border-emerald-800 flex items-center space-x-1 font-bold cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Drug</span>
@@ -60,10 +56,10 @@ export const PlanSection: React.FC<PlanSectionProps> = ({
         </div>
 
         {plan.prescriptions?.length > 0 ? (
-          <div className="overflow-x-auto rounded-sm border border-[var(--vx-border)]">
+          <div className="overflow-x-auto rounded-xl border border-slate-800">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-[var(--vx-surface-muted)] text-[var(--vx-text-muted)] border-b border-[var(--vx-border)] font-mono font-semibold uppercase text-[10px] tracking-wider">
+                <tr className="bg-slate-950 text-slate-400 border-b border-slate-800 font-bold uppercase text-[10px]">
                   <th className="p-2.5">Medication</th>
                   <th className="p-2.5">Dosage</th>
                   <th className="p-2.5">Frequency</th>
@@ -71,52 +67,52 @@ export const PlanSection: React.FC<PlanSectionProps> = ({
                   {isEditing && <th className="p-2.5 w-10">Action</th>}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--vx-border)] bg-[var(--vx-surface)]">
+              <tbody className="divide-y divide-slate-800/80 bg-slate-900/80">
                 {plan.prescriptions.map((rx, idx) => (
-                  <tr key={idx} className="hover:bg-[var(--vx-surface-muted)] transition-colors">
-                    <td className="p-2.5 font-semibold text-[var(--vx-primary)] font-mono">
+                  <tr key={idx} className="hover:bg-slate-800">
+                    <td className="p-2.5 font-bold text-emerald-300">
                       {isEditing ? (
                         <input
                           type="text"
                           value={rx.medication}
                           onChange={(e) => onPrescriptionChange(idx, 'medication', e.target.value)}
-                          className="w-full bg-[var(--vx-surface)] border border-[var(--vx-border-strong)] rounded-xs p-1 text-[var(--vx-text)] font-semibold"
+                          className="w-full bg-slate-950 border border-slate-700 rounded p-1 text-slate-100 font-semibold"
                         />
                       ) : (
                         rx.medication
                       )}
                     </td>
-                    <td className="p-2.5 text-[var(--vx-text)] font-medium">
+                    <td className="p-2.5 text-slate-200 font-medium">
                       {isEditing ? (
                         <input
                           type="text"
                           value={rx.dosage}
                           onChange={(e) => onPrescriptionChange(idx, 'dosage', e.target.value)}
-                          className="w-full bg-[var(--vx-surface)] border border-[var(--vx-border-strong)] rounded-xs p-1 text-[var(--vx-text)]"
+                          className="w-full bg-slate-950 border border-slate-700 rounded p-1 text-slate-100"
                         />
                       ) : (
                         rx.dosage
                       )}
                     </td>
-                    <td className="p-2.5 text-[var(--vx-text-muted)] font-medium">
+                    <td className="p-2.5 text-slate-300 font-medium">
                       {isEditing ? (
                         <input
                           type="text"
                           value={rx.frequency}
                           onChange={(e) => onPrescriptionChange(idx, 'frequency', e.target.value)}
-                          className="w-full bg-[var(--vx-surface)] border border-[var(--vx-border-strong)] rounded-xs p-1 text-[var(--vx-text)]"
+                          className="w-full bg-slate-950 border border-slate-700 rounded p-1 text-slate-100"
                         />
                       ) : (
                         rx.frequency
                       )}
                     </td>
-                    <td className="p-2.5 text-[var(--vx-text-subtle)] italic">
+                    <td className="p-2.5 text-slate-400 italic">
                       {isEditing ? (
                         <input
                           type="text"
                           value={rx.instructions}
                           onChange={(e) => onPrescriptionChange(idx, 'instructions', e.target.value)}
-                          className="w-full bg-[var(--vx-surface)] border border-[var(--vx-border-strong)] rounded-xs p-1 text-[var(--vx-text)]"
+                          className="w-full bg-slate-950 border border-slate-700 rounded p-1 text-slate-100"
                         />
                       ) : (
                         rx.instructions
@@ -126,7 +122,7 @@ export const PlanSection: React.FC<PlanSectionProps> = ({
                       <td className="p-2.5 text-center">
                         <button
                           onClick={() => onRemovePrescription(idx)}
-                          className="text-[var(--vx-text-muted)] hover:text-red-500 cursor-pointer"
+                          className="text-slate-500 hover:text-red-400"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -138,18 +134,14 @@ export const PlanSection: React.FC<PlanSectionProps> = ({
             </table>
           </div>
         ) : (
-          <p className="text-[var(--vx-text-subtle)] italic bg-[var(--vx-surface-muted)] p-3 rounded-sm border border-[var(--vx-border)] text-xs">
-            No prescriptions recorded for this encounter.
-          </p>
+          <p className="text-slate-500 italic bg-slate-950 p-3 rounded-xl border border-slate-800">No prescriptions recorded for this encounter.</p>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
         <div>
-          <label className="block text-[var(--vx-text-muted)] text-[10px] font-mono uppercase tracking-wider mb-1">
-            Diagnostic Tests Ordered:
-          </label>
-          <div className="bg-[var(--vx-surface-muted)] p-3 rounded-sm border border-[var(--vx-border)] text-[var(--vx-text)] font-medium">
+          <label className="block text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Diagnostic Tests Ordered:</label>
+          <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-slate-200 font-medium">
             {plan.diagnostic_tests_ordered?.length > 0 ? (
               <ul className="list-disc list-inside space-y-1 text-xs">
                 {plan.diagnostic_tests_ordered.map((t, idx) => (
@@ -157,15 +149,13 @@ export const PlanSection: React.FC<PlanSectionProps> = ({
                 ))}
               </ul>
             ) : (
-              <span className="text-[var(--vx-text-subtle)] italic text-xs">None ordered</span>
+              <span className="text-slate-500 italic">None ordered</span>
             )}
           </div>
         </div>
 
         <div>
-          <label className="block text-[var(--vx-text-muted)] text-[10px] font-mono uppercase tracking-wider mb-1">
-            Patient Education & Lifestyle:
-          </label>
+          <label className="block text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Patient Education & Lifestyle:</label>
           {isEditing ? (
             <textarea
               rows={3}
@@ -176,19 +166,17 @@ export const PlanSection: React.FC<PlanSectionProps> = ({
                   patient_education: e.target.value,
                 })
               }
-              className="w-full bg-[var(--vx-surface)] border border-[var(--vx-border-strong)] rounded-sm p-2 text-[var(--vx-text)] text-xs focus:border-[var(--vx-primary)] focus:outline-none"
+              className="w-full bg-slate-950 border border-slate-700 rounded p-2 text-slate-100 text-xs"
             />
           ) : (
-            <p className="text-[var(--vx-text)] bg-[var(--vx-surface-muted)] p-3 rounded-sm border border-[var(--vx-border)] leading-relaxed font-normal text-xs">
+            <p className="text-slate-300 bg-slate-950 p-3 rounded-xl border border-slate-800 leading-relaxed font-medium">
               {plan.patient_education || 'Standard health education provided.'}
             </p>
           )}
         </div>
 
         <div>
-          <label className="block text-[var(--vx-text-muted)] text-[10px] font-mono uppercase tracking-wider mb-1">
-            Follow-up & Safety Netting:
-          </label>
+          <label className="block text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Follow-up & Safety Netting:</label>
           {isEditing ? (
             <textarea
               rows={3}
@@ -199,10 +187,10 @@ export const PlanSection: React.FC<PlanSectionProps> = ({
                   follow_up: e.target.value,
                 })
               }
-              className="w-full bg-[var(--vx-surface)] border border-[var(--vx-border-strong)] rounded-sm p-2 text-[var(--vx-text)] text-xs focus:border-[var(--vx-primary)] focus:outline-none"
+              className="w-full bg-slate-950 border border-slate-700 rounded p-2 text-slate-100 text-xs"
             />
           ) : (
-            <p className="text-[var(--vx-primary)] bg-[var(--vx-surface-muted)] p-3 rounded-sm border border-[var(--vx-border)] leading-relaxed font-semibold text-xs">
+            <p className="text-emerald-300 bg-slate-950 p-3 rounded-xl border border-slate-800 leading-relaxed font-bold">
               {plan.follow_up || 'Return as needed if symptoms worsen.'}
             </p>
           )}

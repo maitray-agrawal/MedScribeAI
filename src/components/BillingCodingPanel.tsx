@@ -26,16 +26,16 @@ ${cptList.map((c) => `- ${c.code}: ${c.description}\n  Rationale: ${c.rationale}
   };
 
   return (
-    <div id="billing-coding-card" className="bg-white border border-slate-200/80 rounded-3xl p-5 overflow-hidden shadow-xs space-y-4">
+    <div id="billing-coding-card" className="vx-card p-5 overflow-hidden space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+      <div className="flex items-center justify-between pb-3.5 border-b border-[var(--vx-border)]">
         <div className="flex items-center space-x-3">
-          <span className="w-2 h-6 bg-slate-800 rounded-full shrink-0"></span>
-          <div className="flex items-center space-x-2">
-            <Receipt className="w-5 h-5 text-slate-800" />
-            <h3 className="font-bold text-sm text-slate-800 flex items-center space-x-2">
+          <span className="w-2 h-5 bg-[var(--vx-secondary)] rounded-xs shrink-0"></span>
+          <div className="flex items-center space-x-2.5">
+            <Receipt className="w-4 h-4 text-[var(--vx-secondary)]" />
+            <h3 className="font-serif font-semibold text-sm text-[var(--vx-text)] flex items-center space-x-2">
               <span>Automated Billing & Coding Suggestions</span>
-              <span className="text-[10px] bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-lg border border-slate-200 font-bold">
+              <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-xs bg-[var(--vx-surface-muted)] text-[var(--vx-text-muted)] border border-[var(--vx-border)]">
                 ICD-10 & CPT
               </span>
             </h3>
@@ -44,20 +44,20 @@ ${cptList.map((c) => `- ${c.code}: ${c.description}\n  Rationale: ${c.rationale}
 
         <button
           onClick={handleCopyCodes}
-          className="btn-secondary py-1.5 px-3 text-xs"
+          className="vx-btn-ghost py-1.5 px-3 text-xs"
           title="Copy billing codes to clipboard"
         >
-          {copiedCodes ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
-          <span>{copiedCodes ? 'Copied!' : 'Copy Codes'}</span>
+          {copiedCodes ? <Check className="w-3.5 h-3.5 text-[var(--vx-primary)]" /> : <Copy className="w-3.5 h-3.5 text-[var(--vx-text-muted)]" />}
+          <span>{copiedCodes ? 'Copied' : 'Copy Codes'}</span>
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
         {/* ICD-10 Section */}
         <div className="space-y-2.5">
-          <h4 className="font-bold text-slate-700 text-xs flex items-center justify-between uppercase tracking-wider">
+          <h4 className="font-mono text-xs text-[var(--vx-text-muted)] uppercase tracking-wider flex items-center justify-between font-semibold">
             <span>Suggested ICD-10 Diagnostic Codes</span>
-            <span className="text-slate-400 font-medium">({icd10List.length})</span>
+            <span className="text-[var(--vx-text-subtle)] font-normal">({icd10List.length})</span>
           </h4>
 
           {icd10List.length > 0 ? (
@@ -65,18 +65,20 @@ ${cptList.map((c) => `- ${c.code}: ${c.description}\n  Rationale: ${c.rationale}
               {icd10List.map((item, idx) => {
                 const conf = item.confidence?.toLowerCase();
                 return (
-                  <div key={idx} className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 flex items-start justify-between gap-2 shadow-2xs">
+                  <div key={idx} className="bg-[var(--vx-surface-muted)] p-3 rounded-sm border border-[var(--vx-border)] flex items-start justify-between gap-2">
                     <div className="space-y-1">
-                      <span className="font-extrabold font-mono text-blue-700 text-sm bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">{item.code}</span>
-                      <p className="text-slate-800 font-semibold">{item.description}</p>
+                      <span className="font-mono font-bold text-xs text-[var(--vx-primary)] bg-[var(--vx-primary-soft)] px-2 py-0.5 rounded-xs border border-[var(--vx-primary)]/20">
+                        {item.code}
+                      </span>
+                      <p className="text-[var(--vx-text)] font-medium text-xs mt-1">{item.description}</p>
                     </div>
                     <span
-                      className={`shrink-0 ${
+                      className={`text-[9px] font-mono uppercase font-bold tracking-widest px-2 py-0.5 rounded-xs shrink-0 ${
                         conf === 'high'
-                          ? 'badge-success'
+                          ? 'bg-[var(--vx-primary-soft)] text-[var(--vx-primary)] border border-[var(--vx-primary)]/20'
                           : conf === 'medium'
-                          ? 'badge-warning'
-                          : 'badge-brand text-slate-600 bg-slate-100 border-slate-200'
+                          ? 'bg-amber-500/20 text-amber-800 dark:text-amber-200 border border-amber-500/30'
+                          : 'bg-[var(--vx-surface)] text-[var(--vx-text-muted)] border border-[var(--vx-border)]'
                       }`}
                     >
                       {item.confidence}
@@ -86,28 +88,34 @@ ${cptList.map((c) => `- ${c.code}: ${c.description}\n  Rationale: ${c.rationale}
               })}
             </div>
           ) : (
-            <p className="text-slate-400 italic bg-slate-50 p-3.5 rounded-2xl border border-slate-200">No ICD-10 codes suggested.</p>
+            <p className="text-[var(--vx-text-subtle)] italic bg-[var(--vx-surface-muted)] p-3 rounded-sm border border-[var(--vx-border)] text-xs">
+              No ICD-10 codes suggested.
+            </p>
           )}
         </div>
 
         {/* CPT Section */}
         <div className="space-y-2.5">
-          <h4 className="font-bold text-slate-700 text-xs flex items-center justify-between uppercase tracking-wider">
+          <h4 className="font-mono text-xs text-[var(--vx-text-muted)] uppercase tracking-wider flex items-center justify-between font-semibold">
             <span>CPT Evaluation & Management (E/M) Codes</span>
-            <span className="text-slate-400 font-medium">({cptList.length})</span>
+            <span className="text-[var(--vx-text-subtle)] font-normal">({cptList.length})</span>
           </h4>
 
           {cptList.length > 0 ? (
             <div className="space-y-2">
               {cptList.map((item, idx) => (
-                <div key={idx} className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-1.5 shadow-2xs">
+                <div key={idx} className="bg-[var(--vx-surface-muted)] p-3 rounded-sm border border-[var(--vx-border)] space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="font-extrabold font-mono text-indigo-700 text-sm bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">{item.code}</span>
-                    <span className="text-[10px] text-slate-600 bg-slate-200/70 font-bold px-2 py-0.5 rounded-md">E&M Level</span>
+                    <span className="font-mono font-bold text-xs text-[var(--vx-secondary)] bg-[var(--vx-secondary-soft)] px-2 py-0.5 rounded-xs border border-[var(--vx-secondary)]/20">
+                      {item.code}
+                    </span>
+                    <span className="text-[9px] font-mono text-[var(--vx-text-subtle)] uppercase tracking-widest font-semibold">
+                      E&M Level
+                    </span>
                   </div>
-                  <p className="text-slate-800 font-semibold">{item.description}</p>
+                  <p className="text-[var(--vx-text)] font-medium text-xs">{item.description}</p>
                   {item.rationale && (
-                    <p className="text-slate-600 text-[11px] font-medium italic bg-white p-2.5 rounded-xl border border-slate-200/60 leading-relaxed">
+                    <p className="text-[var(--vx-text-muted)] text-[11px] font-normal italic bg-[var(--vx-surface)] p-2 rounded-xs border border-[var(--vx-border)] leading-relaxed">
                       Rationale: {item.rationale}
                     </p>
                   )}
@@ -115,7 +123,9 @@ ${cptList.map((c) => `- ${c.code}: ${c.description}\n  Rationale: ${c.rationale}
               ))}
             </div>
           ) : (
-            <p className="text-slate-400 italic bg-slate-50 p-3.5 rounded-2xl border border-slate-200">No CPT codes suggested.</p>
+            <p className="text-[var(--vx-text-subtle)] italic bg-[var(--vx-surface-muted)] p-3 rounded-sm border border-[var(--vx-border)] text-xs">
+              No CPT codes suggested.
+            </p>
           )}
         </div>
       </div>

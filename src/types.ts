@@ -107,6 +107,7 @@ export interface EncounterRecord {
   soapNote: SOAPNote;
   status: 'draft' | 'finalized';
   notesEdited?: boolean;
+  language?: 'en' | 'hi' | 'mr' | 'ta' | 'es';
 }
 
 export interface SampleScenario {
@@ -116,4 +117,5 @@ export interface SampleScenario {
   description: string;
   patientInfo: PatientInfo;
   transcript: string;
+  language?: 'en' | 'hi' | 'mr' | 'ta' | 'es';
 }

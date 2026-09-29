@@ -1,0 +1,160 @@
+@import "./colors.css";
+@import "./typography.css";
+@import "./motion.css";
+@import "./geometry.css";
+@import "./themes.css";
+
+/* Base Body Styles */
+body {
+  background-color: var(--vx-bg);
+  color: var(--vx-text);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  transition: var(--vx-transition-colors);
+}
+
+/* AstraX Mathematical Grid Background */
+.bg-astra-grid {
+  background-image: 
+    linear-gradient(to right, var(--vx-grid-color) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--vx-grid-color) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Thin Construction Rules */
+.rule-astra-horizontal {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--vx-border-strong) 25%, var(--vx-border-strong) 75%, transparent 100%);
+  border: none;
+}
+
+.rule-astra-accent {
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent 0%, var(--vx-secondary) 50%, transparent 100%);
+  border: none;
+}
+
+/* Card Surface Tokens */
+.vx-card {
+  background-color: var(--vx-surface);
+  border: 1px solid var(--vx-border);
+  border-radius: var(--vx-radius-md);
+  box-shadow: var(--vx-shadow-sm);
+  transition: var(--vx-transition);
+}
+
+.vx-card-elevated {
+  background-color: var(--vx-surface-elevated);
+  border: 1px solid var(--vx-border-strong);
+  border-radius: var(--vx-radius-md);
+  box-shadow: var(--vx-shadow);
+  transition: var(--vx-transition);
+}
+
+.vx-card-interactive {
+  background-color: var(--vx-surface);
+  border: 1px solid var(--vx-border);
+  border-radius: var(--vx-radius-md);
+  box-shadow: var(--vx-shadow-sm);
+  transition: var(--vx-transition);
+}
+.vx-card-interactive:hover {
+  border-color: var(--vx-border-accent);
+  box-shadow: var(--vx-shadow);
+}
+
+/* Institutional Button System */
+.vx-btn-primary {
+  background-color: var(--vx-primary);
+  color: var(--vx-primary-text);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.01em;
+  padding: 0.5rem 1rem;
+  border-radius: var(--vx-radius-sm);
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: var(--vx-transition);
+}
+.vx-btn-primary:hover {
+  background-color: var(--vx-primary-hover);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.vx-btn-secondary {
+  background-color: var(--vx-secondary-soft);
+  color: var(--vx-secondary);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--vx-radius-sm);
+  border: 1px solid var(--vx-border-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  cursor: pointer;
+  transition: var(--vx-transition);
+}
+.vx-btn-secondary:hover {
+  background-color: var(--vx-secondary);
+  color: var(--vx-secondary-text);
+}
+
+.vx-btn-outline {
+  background-color: transparent;
+  color: var(--vx-text-secondary);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  padding: 0.4375rem 0.8125rem;
+  border-radius: var(--vx-radius-sm);
+  border: 1px solid var(--vx-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  cursor: pointer;
+  transition: var(--vx-transition);
+}
+.vx-btn-outline:hover {
+  background-color: var(--vx-surface-muted);
+  color: var(--vx-text);
+  border-color: var(--vx-border-strong);
+}
+
+/* Institutional Status Badges */
+.vx-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--vx-radius-xs);
+  line-height: 1;
+}
+.vx-badge-primary {
+  background-color: var(--vx-primary-soft);
+  color: var(--vx-primary);
+  border: 1px solid rgba(22, 101, 52, 0.25);
+}
+.vx-badge-copper {
+  background-color: var(--vx-secondary-soft);
+  color: var(--vx-secondary);
+  border: 1px solid var(--vx-border-accent);
+}
+.vx-badge-neutral {
+  background-color: var(--vx-surface-muted);
+  color: var(--vx-text-secondary);
+  border: 1px solid var(--vx-border);
+}

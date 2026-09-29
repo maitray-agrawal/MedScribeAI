@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { SOAPNote, PatientInfo } from '../types';
 import { Printer, X } from 'lucide-react';
+import { VaidhyaMark } from '../design/components/VaidhyaMark';
 
 interface PrintPrescriptionModalProps {
   patientInfo: PatientInfo;
@@ -69,7 +70,7 @@ export const PrintPrescriptionModal: React.FC<PrintPrescriptionModalProps> = ({
   return (
     <motion.div
       id="print-prescription-overlay"
-      className="modal-overlay"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -85,122 +86,158 @@ export const PrintPrescriptionModal: React.FC<PrintPrescriptionModalProps> = ({
         aria-modal="true"
         aria-labelledby="print-prescription-title"
         tabIndex={-1}
-        className="modal-container focus:outline-none focus:ring-2 focus:ring-teal-400/50"
-        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        className="vx-card max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl focus:outline-none focus:ring-1 focus:ring-[var(--vx-primary)]"
+        initial={{ opacity: 0, scale: 0.97, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+        exit={{ opacity: 0, scale: 0.97, y: 8 }}
         transition={{ duration: 0.15 }}
       >
         {/* Modal Header */}
-        <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-800/80">
-          <div className="flex items-center space-x-2">
-            <Printer className="w-5 h-5 text-teal-400" />
-            <h3 id="print-prescription-title" className="font-bold text-base text-slate-100">
+        <div className="px-5 py-4 border-b border-[var(--vx-border)] flex items-center justify-between bg-[var(--vx-surface)]">
+          <div className="flex items-center space-x-2.5">
+            <Printer className="w-4 h-4 text-[var(--vx-primary)]" />
+            <h3 id="print-prescription-title" className="font-serif font-semibold text-sm text-[var(--vx-text)]">
               Print Patient Prescription & Advice Slip
             </h3>
           </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={handlePrint}
-              className="btn-teal focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+              className="vx-btn-primary py-1.5 px-3 text-xs flex items-center space-x-1.5"
             >
               <Printer className="w-3.5 h-3.5" />
-              <span>Print Now</span>
+              <span>Print Record</span>
             </button>
             <button
               onClick={onClose}
               aria-label="Close modal"
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-900 transition-colors"
+              className="p-1.5 rounded-sm hover:bg-[var(--vx-surface-muted)] text-[var(--vx-text-muted)] hover:text-[var(--vx-text)] cursor-pointer transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* Printable Document Sheet Container */}
-        <div className="p-6 overflow-y-auto bg-slate-950 text-slate-100 space-y-6 print-container text-xs sm:text-sm">
+        <div className="p-6 overflow-y-auto bg-[var(--vx-surface)] text-[var(--vx-text)] space-y-5 print-container text-xs print:bg-white print:text-black">
           {/* Printable Sheet Header */}
-          <div className="border-b-2 border-teal-500 pb-4 text-center sm:text-left flex flex-col sm:flex-row justify-between items-start gap-4">
-            <div>
-              <h2 className="text-lg font-bold text-teal-400 tracking-tight">COMMUNITY HEALTH OUTREACH CLINIC</h2>
-              <p className="text-slate-400 text-xs">Primary Care & Maternal-Child Health Department</p>
-              <p className="text-slate-500 text-[11px]">{patientInfo.clinicLocation || 'Central Primary Care Facility'}</p>
+          <div className="border-b border-[var(--vx-border)] pb-4 flex flex-col sm:flex-row justify-between items-start gap-4">
+            <div className="flex items-start space-x-3">
+              <VaidhyaMark size={40} />
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h2 className="font-serif font-bold text-base text-[var(--vx-text)] tracking-tight print:text-black">
+                    VAIDHYA
+                  </h2>
+                  <span className="text-[9px] font-mono uppercase tracking-widest text-[var(--vx-primary)] border border-[var(--vx-primary)]/30 px-1.5 py-0.2 rounded-xs">
+                    CLINICAL INTELLIGENCE
+                  </span>
+                </div>
+                <p className="text-[var(--vx-text-muted)] text-xs font-medium mt-0.5 print:text-gray-600">
+                  {patientInfo.clinicLocation || 'Outpatient Clinical Consultation Unit'}
+                </p>
+                <p className="text-[var(--vx-text-subtle)] text-[10px] font-mono tracking-wider print:text-gray-500">
+                  MEMBER OF THE ASTRAX FAMILY
+                </p>
+              </div>
             </div>
-            <div className="text-right text-xs text-slate-400">
-              <p className="font-semibold text-slate-200">Date: {currentDate}</p>
-              <p>Rx #: RX-{Math.floor(100000 + Math.random() * 900000)}</p>
+            <div className="text-right text-xs text-[var(--vx-text-muted)] font-mono">
+              <p className="font-semibold text-[var(--vx-text)] print:text-black">Date: {currentDate}</p>
+              <p className="text-[10px] text-[var(--vx-text-subtle)] mt-0.5">
+                ENCOUNTER ID: VX-{Math.floor(100000 + Math.random() * 900000)}
+              </p>
             </div>
           </div>
 
           {/* Patient Details */}
-          <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div className="bg-[var(--vx-surface-muted)] p-3.5 rounded-sm border border-[var(--vx-border)] grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs print:bg-gray-50 print:border-gray-300">
             <div>
-              <span className="text-slate-400 block font-semibold">Patient Name:</span>
-              <span className="font-bold text-slate-100">{patientInfo.name || 'Unspecified'}</span>
+              <span className="text-[var(--vx-text-subtle)] block text-[10px] font-mono uppercase tracking-wider font-semibold">
+                Patient Name:
+              </span>
+              <span className="font-semibold text-[var(--vx-text)] print:text-black">{patientInfo.name || 'Unspecified'}</span>
             </div>
             <div>
-              <span className="text-slate-400 block font-semibold">Age / Sex:</span>
-              <span className="text-slate-200">{patientInfo.age} yrs ({patientInfo.sex})</span>
+              <span className="text-[var(--vx-text-subtle)] block text-[10px] font-mono uppercase tracking-wider font-semibold">
+                Age / Sex:
+              </span>
+              <span className="text-[var(--vx-text)] print:text-black">{patientInfo.age} yrs ({patientInfo.sex})</span>
             </div>
             <div>
-              <span className="text-slate-400 block font-semibold">Known Allergies:</span>
-              <span className="text-rose-300 font-semibold">{patientInfo.knownAllergies || 'NKDA'}</span>
+              <span className="text-[var(--vx-text-subtle)] block text-[10px] font-mono uppercase tracking-wider font-semibold">
+                Known Allergies:
+              </span>
+              <span className="text-rose-600 dark:text-rose-400 font-semibold print:text-red-700">
+                {patientInfo.knownAllergies || 'NKDA'}
+              </span>
             </div>
             <div>
-              <span className="text-slate-400 block font-semibold">Diagnosis:</span>
-              <span className="text-amber-300 font-bold">{soapNote.assessment.primary_diagnosis || 'Primary Care Consultation'}</span>
+              <span className="text-[var(--vx-text-subtle)] block text-[10px] font-mono uppercase tracking-wider font-semibold">
+                Diagnosis:
+              </span>
+              <span className="text-[var(--vx-primary)] font-bold print:text-black">
+                {soapNote.assessment.primary_diagnosis || 'Primary Care Consultation'}
+              </span>
             </div>
           </div>
 
           {/* Prescriptions Section */}
           <div className="space-y-2">
-            <h4 className="font-bold text-sm text-teal-300 uppercase tracking-wider flex items-center space-x-2 border-b border-slate-800 pb-1">
-              <span className="text-lg font-serif">Rx</span>
-              <span>Prescribed Medications</span>
+            <h4 className="font-serif font-semibold text-xs text-[var(--vx-text)] uppercase tracking-wider flex items-center space-x-2 border-b border-[var(--vx-border)] pb-1.5">
+              <span className="text-sm font-serif italic text-[var(--vx-secondary)]">Rx</span>
+              <span>Prescribed Medications & Posology</span>
             </h4>
 
             {soapNote.plan.prescriptions?.length > 0 ? (
               <div className="space-y-2">
                 {soapNote.plan.prescriptions.map((rx, idx) => (
-                  <div key={idx} className="bg-slate-900/80 p-3 rounded-lg border border-slate-800 flex items-start justify-between">
+                  <div key={idx} className="bg-[var(--vx-surface-muted)] p-3 rounded-sm border border-[var(--vx-border)] flex items-start justify-between print:bg-white print:border-gray-300">
                     <div>
-                      <p className="font-bold text-teal-300 text-sm">
-                        {idx + 1}. {rx.medication} <span className="text-slate-200 font-normal">({rx.dosage})</span>
+                      <p className="font-semibold text-[var(--vx-primary)] text-xs print:text-black">
+                        {idx + 1}. {rx.medication} <span className="text-[var(--vx-text-muted)] font-normal">({rx.dosage})</span>
                       </p>
-                      <p className="text-slate-300 mt-0.5">Take {rx.frequency}</p>
+                      <p className="text-[var(--vx-text)] text-xs mt-0.5 font-medium">Take {rx.frequency}</p>
                       {rx.instructions && (
-                        <p className="text-slate-400 italic text-xs mt-1">Note: {rx.instructions}</p>
+                        <p className="text-[var(--vx-text-muted)] italic text-[11px] mt-0.5">Instructions: {rx.instructions}</p>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-slate-500 italic p-3 bg-slate-900 rounded border border-slate-800">No oral or topical prescriptions ordered.</p>
+              <p className="text-[var(--vx-text-subtle)] italic p-3 bg-[var(--vx-surface-muted)] rounded-sm border border-[var(--vx-border)] text-xs">
+                No oral or topical prescriptions ordered.
+              </p>
             )}
           </div>
 
           {/* Patient Instructions */}
-          <div className="space-y-2">
-            <h4 className="font-bold text-xs text-slate-300 uppercase tracking-wider border-b border-slate-800 pb-1">
-              Patient Care & Home Advice
+          <div className="space-y-1.5">
+            <h4 className="font-serif font-semibold text-xs text-[var(--vx-text)] uppercase tracking-wider border-b border-[var(--vx-border)] pb-1">
+              Patient Care & Clinical Advice
             </h4>
-            <p className="text-slate-200 bg-slate-900/80 p-3 rounded-lg border border-slate-800 leading-relaxed">
-              {soapNote.plan.patient_education || 'Please take medications as instructed and stay well hydrated.'}
+            <p className="text-[var(--vx-text)] bg-[var(--vx-surface-muted)] p-3 rounded-sm border border-[var(--vx-border)] leading-relaxed text-xs print:bg-white print:border-gray-300">
+              {soapNote.plan.patient_education || 'Please take medications as instructed and maintain adequate hydration.'}
             </p>
           </div>
 
           {/* Follow-up & Doctor Signature Box */}
-          <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-end gap-6 text-xs">
+          <div className="pt-4 border-t border-[var(--vx-border)] flex flex-col sm:flex-row justify-between items-end gap-6 text-xs">
             <div>
-              <span className="text-slate-400 font-semibold block">Follow-up Schedule:</span>
-              <span className="text-amber-300 font-bold">{soapNote.plan.follow_up || 'Return as needed'}</span>
+              <span className="text-[var(--vx-text-subtle)] text-[10px] font-mono uppercase tracking-wider block font-semibold">
+                Follow-up Schedule:
+              </span>
+              <span className="text-[var(--vx-secondary)] font-semibold text-xs mt-0.5 block print:text-black">
+                {soapNote.plan.follow_up || 'Return as needed'}
+              </span>
             </div>
 
             <div className="text-right space-y-1">
-              <div className="w-48 h-10 border-b border-slate-600 border-dashed"></div>
-              <p className="font-semibold text-slate-300">Attending Clinician Signature</p>
-              <p className="text-slate-500 text-[10px]">MedScribe Lite Generated & Physician Approved</p>
+              <div className="w-48 h-8 border-b border-[var(--vx-border-strong)] border-dashed"></div>
+              <p className="font-semibold text-[var(--vx-text)] text-xs print:text-black">Attending Clinician Signature</p>
+              <p className="text-[var(--vx-text-subtle)] text-[10px] font-mono tracking-wider">
+                VAIDHYA Sovereign Clinical Intelligence · Physician Approved
+              </p>
             </div>
           </div>
         </div>

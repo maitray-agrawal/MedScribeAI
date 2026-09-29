@@ -5,6 +5,7 @@ export const SAMPLE_SCENARIOS: SampleScenario[] = [
     id: 'malaria-fever',
     title: 'Acute Febrile Illness / Suspected Malaria',
     category: 'Infectious Disease',
+    language: 'en',
     description: 'Rural primary care visit for high fever, rigors, headache, and fatigue in an endemic area.',
     patientInfo: {
       name: 'Kwame Mensah',
@@ -37,6 +38,7 @@ Doctor: Yes, if your fever doesn't come down after 48 hours, or if you start vom
     id: 'hypertension-diabetes',
     title: 'Uncontrolled Hypertension & Type 2 Diabetes',
     category: 'Chronic Care',
+    language: 'en',
     description: 'Routine follow-up for hypertension and diabetes with elevated blood pressure and medication adherence check.',
     patientInfo: {
       name: 'Maria Santos',
@@ -65,6 +67,7 @@ Doctor: Please visit the clinic nurse next week for a quick BP check, and see me
     id: 'pediatric-urti',
     title: 'Pediatric Cough & Fever (Otitis Media)',
     category: 'Pediatrics',
+    language: 'en',
     description: 'Mother brings 4-year-old child with 2-day fever, ear pulling, and runny nose.',
     patientInfo: {
       name: 'Liam O\'Connor (Mother: Sarah)',
@@ -93,6 +96,7 @@ Doctor: Return immediately if he develops difficulty breathing, extreme lethargy
     id: 'antenatal-check',
     title: 'Routine Antenatal Care (2nd Trimester)',
     category: 'Maternal Care',
+    language: 'en',
     description: 'Routine 24-week prenatal visit with routine blood test review showing mild gestational anemia.',
     patientInfo: {
       name: 'Amina Yusuf',
@@ -121,6 +125,7 @@ Doctor: Return in 4 weeks at 28 weeks for your routine checkup, Tetanus toxoid b
     id: 'gastroenteritis-dehydration',
     title: 'Acute Gastroenteritis with Mild Dehydration',
     category: 'Gastrointestinal',
+    language: 'en',
     description: 'Adult presenting with 1-day watery diarrhea and cramps after eating local street food.',
     patientInfo: {
       name: 'Rajesh Kumar',
@@ -150,6 +155,7 @@ Doctor: No anti-motility pills like Loperamide, as we want your body to naturall
     id: 'spanish-consultation-fever',
     title: 'Spanish Consultation (Gastroenteritis & Fever)',
     category: 'Spanish Consultation',
+    language: 'es',
     description: 'Spanish language consultation for high fever, severe headache, and acute watery diarrhea.',
     patientInfo: {
       name: 'Carlos Rodríguez',
@@ -173,5 +179,88 @@ Doctor: El diagnóstico es una Gastroenteritis Aguda Infecciosa con deshidrataci
 Doctor: Plan de tratamiento: Vamos a iniciar Sales de Rehidratación Oral (SRO), 1 sobre disuelto en 1 litro de agua hervida, tomando a libre demanda tras cada deposición. Para la fiebre, Paracetamol 500mg cada 8 horas por 3 días. No utilizaremos penicilina ni derivados debido a su alergia.
 Paciente: Muchas gracias doctor. ¿Cuándo debo regresar a control?
 Doctor: Si la fiebre no cede en 48 horas, si presenta vómitos persistentes o sangre en las heces, regrese de inmediato. Si mejora, control en 5 días.`
+  },
+  {
+    id: 'hindi-consultation-fever',
+    title: 'Hindi Consultation (Acute Febrile Illness / तीव्र ज्वर)',
+    category: 'Hindi Consultation',
+    language: 'hi',
+    description: 'तीव्र बुखार, बदन दर्द और सिरदर्द के लिए प्राथमिक स्वास्थ्य केंद्र में परामर्श।',
+    patientInfo: {
+      name: 'राजेश शर्मा (Rajesh Sharma)',
+      age: 35,
+      sex: 'Male',
+      medicalHistory: 'कोई पूर्व पुरानी बीमारी नहीं।',
+      currentMedications: 'पैरासिटामोल 500mg आवश्यकतानुसार',
+      knownAllergies: 'NKDA (कोई ज्ञात दवा एलर्जी नहीं)',
+      encounterType: 'आकस्मिक परामर्श (Acute Visit)',
+      clinicLocation: 'प्राथमिक स्वास्थ्य केंद्र, ब्लॉक 2'
+    },
+    transcript: `Doctor: नमस्ते राजेश जी, बैठिए। बताइए आज क्या परेशानी है?
+मरीज: नमस्ते डॉक्टर साहब। मुझे पिछले तीन दिनों से बहुत तेज बुखार आ रहा है, कंपकंपी छूट रही है और सिर में बहुत तेज दर्द है।
+Doctor: क्या आपको उल्टी, जी मिचलाना, या बदन में दर्द की शिकायत भी है?
+मरीज: जी डॉक्टर साहब, पूरे शरीर और जोड़ों में बहुत तेज दर्द है। कल शाम को एक बार उल्टी भी हुई थी और भूख बिल्कुल नहीं लग रही।
+Doctor: खांसी, सीने में दर्द या सांस लेने में कोई तकलीफ तो नहीं?
+मरीज: नहीं डॉक्टर, खांसी नहीं है, बस आंखों के पीछे और सिर में बहुत भारीपन लग रहा है।
+Doctor: ठीक है, आइए जांच कर लेते हैं। तापमान 38.8°C है, रक्तचाप 120/78 mmHg, और नाड़ी 98 प्रति मिनट है।
+Doctor: शारीरिक परीक्षण में गले में कोई गंभीर संक्रमण नहीं है, पेट सामान्य है। हम तुरंत रैपिड मलेरिया टेस्ट (mRDT) और हीमोग्लोबिन की जांच करेंगे।
+Doctor: लैब रिपोर्ट के अनुसार मलेरिया टेस्ट पॉजिटिव आया है (Plasmodium vivax)। हीमोग्लोबिन 11.4 g/dL है।
+Doctor: आपको मलेरिया का संक्रमण हुआ है। हम क्लोरोक्वीन (Chloroquine) और प्राइमाक्वीन (Primaquine) का पूरा कोर्स शुरू करेंगे। बुखार और दर्द के लिए पैरासिटामोल 650mg दिन में तीन बार लें। खूब सारा उबला हुआ पानी और ओआरएस (ORS) पिएं।
+मरीज: धन्यवाद डॉक्टर साहब। दोबारा कब दिखाना होगा?
+Doctor: यदि दो दिन में बुखार कम न हो या अत्यधिक कमजोरी लगे तो तुरंत आएं, अन्यथा एक सप्ताह बाद पुनः जांच के लिए आएं।`
+  },
+  {
+    id: 'marathi-consultation-htn',
+    title: 'Marathi Consultation (Hypertension Follow-up / उच्च रक्तदाब)',
+    category: 'Marathi Consultation',
+    language: 'mr',
+    description: 'रक्तदाब तपासणी आणि औषधोपचार नियमिततेसाठी पाठपुरावा सल्लामसलत.',
+    patientInfo: {
+      name: 'सचिन जोशी (Sachin Joshi)',
+      age: 52,
+      sex: 'Male',
+      medicalHistory: 'आवश्यक उच्च रक्तदाब (Essential Hypertension, 4 वर्षे).',
+      currentMedications: 'अम्लोडिपिन 5mg दररोज सकाळी',
+      knownAllergies: 'कोणतीही औषध अ‍ॅलर्जी नाही (NKDA)',
+      encounterType: 'नियमित पाठपुरावा (Follow-up)',
+      clinicLocation: 'ग्रामीण प्राथमिक आरोग्य केंद्र'
+    },
+    transcript: `Doctor: नमस्कार सचिनराव, या बसा. कसे वाटत आहे सध्या? नियमित तपासणीसाठी आला आहात ना?
+रुग्ण: नमस्कार डॉक्टर. होय, पण गेल्या आठवड्यापासून मला सकाळी उठल्यावर डोकेदुखी जाणवते आणि थोडे चक्कर आल्यासारखे वाटते.
+Doctor: तुम्ही तुमची रक्तदाबाची गोळी दररोज न चुकता घेत आहात का?
+रुग्ण: खरे सांगायचे तर डॉक्टर, गेल्या १५ दिवसांत शेतातील कामाच्या धावपळीत २-३ वेळा गोळी घ्यायची विसरून गेलो.
+Doctor: रक्तदाबाची औषधे नियमित घेणे अत्यंत महत्त्वाचे असते. चला आधी तुमचा रक्तदाब तपासूया.
+Doctor: रक्तदाब आज वाढलेला आहे: 154/94 mmHg. हृदयाचे ठोके 76 प्रति मिनिट आहेत. फुफ्फुसे आणि छातीची तपासणी सामान्य आहे.
+Doctor: गोळी चुकवल्यामुळे रक्तदाब वाढला आहे. आपण तात्काळ अम्लोडिपिन 5mg पूर्ववत सुरू ठेवू, आणि आवश्यकता भासल्यास डोस वाढवू.
+Doctor: आहारात मिठाचे प्रमाण कमी करा, रोज ३० मिनिटे चालण्याचा व्यायाम करा आणि गोळी अजिबात चुकवू नका.
+रुग्ण: नक्की काळजी घेईन डॉक्टर. पुन्हा तपासणी कधी करू?
+Doctor: पुढच्या आठवड्यात आरोग्य सेविकेकडून रक्तदाब तपासून घ्या आणि १५ दिवसांनी मला पुन्हा भेटा.`
+  },
+  {
+    id: 'tamil-consultation-diabetes',
+    title: 'Tamil Consultation (Diabetes Follow-up / நீரிழிவு நோய்)',
+    category: 'Tamil Consultation',
+    language: 'ta',
+    description: 'வகை 2 நீரிழிவு நோய் மற்றும் இரத்த சர்க்கரை அளவை கண்காணிக்கும் மருத்துவ ஆலோசனை.',
+    patientInfo: {
+      name: 'செந்தில் குமார் (Senthil Kumar)',
+      age: 48,
+      sex: 'Male',
+      medicalHistory: 'வகை 2 நீரிழிவு நோய் (5 ஆண்டுகள்), ஆரம்ப நிலை உயர் இரத்த அழுத்தம்.',
+      currentMedications: 'மெட்ஃபோர்மின் 500mg தினமும் இருமுறை உணவுக்குப் பின்',
+      knownAllergies: 'சல்ஃபா மருந்து ஒவ்வாமை (Sulfa Allergy)',
+      encounterType: 'வழக்கமான நீரிழிவு பரிசோதனை',
+      clinicLocation: 'சமூக ஆரம்ப சுகாதார நிலையம்'
+    },
+    transcript: `Doctor: வணக்கம் செந்தில், வாருங்கள். கடந்த இரண்டு மாதங்களாக உங்கள் உடல்நிலை எப்படி இருக்கிறது?
+நோயாளி: வணக்கம் டாக்டர். பொதுவாக பரவாயில்லை, ஆனால் கடந்த பத்து நாட்களாக மாலை நேரங்களில் கால்களில் லேசான எரிச்சல் மற்றும் அதீத சோர்வு இருக்கிறது.
+Doctor: உங்கள் மெட்ஃபோர்மின் மாத்திரையை தினமும் குறித்த நேரத்தில் எடுத்துக்கொள்கிறீர்களா? உணவுக்கட்டுப்பாடு எப்படி இருக்கிறது?
+நோயாளி: மாத்திரைகளை தவறாமல் எடுக்கிறேன் டாக்டர். ஆனால் கடந்த வாரம் குடும்ப விசேஷம் காரணமாக இனிப்புகள் கொஞ்சம் அதிகம் சாப்பிட்டுவிட்டேன்.
+Doctor: சரி செந்தில், நாம் உங்கள் இரத்த சர்க்கரை மற்றும் இரத்த அழுத்தத்தை பரிசோதிப்போம்.
+Doctor: இரத்த அழுத்தம் 130/82 mmHg உள்ளது. இன்று காலை வெறும் வயிற்றில் எடுக்கப்பட்ட இரத்த சர்க்கரை அளவு 168 mg/dL (அதிகமாக உள்ளது).
+Doctor: உடற்பரிசோதனையில் பாதங்களில் உணர்ச்சி சீராக உள்ளது, காயம் ஏதும் இல்லை. ஆனால் இரத்த சர்க்கரை அளவு கட்டுப்பாட்டில் இல்லை.
+Doctor: மெட்ஃபோர்மின் அளவை 500mg-லிருந்து 850mg ஆக உயர்த்துகிறோம், தினமும் இருவேளை உணவுக்குப் பின் எடுத்துக் கொள்ளுங்கள். இனிப்பு மற்றும் அரிசி உணவைக் குறைத்து, காய்கறிகள் அதிகம் சேர்த்துக் கொள்ளுங்கள்.
+நோயாளி: நன்றி டாக்டர், மீண்டும் எப்போது வர வேண்டும்?
+Doctor: ஒரு மாதம் கழித்து HbA1c பரிசோதனை செய்துவிட்டு மீண்டும் வாருங்கள்.`
   }
 ];

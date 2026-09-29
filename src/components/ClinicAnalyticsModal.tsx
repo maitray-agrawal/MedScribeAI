@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { EncounterRecord } from '../types';
 import { BarChart3, X, Clock, ShieldAlert, FileCheck, Award } from 'lucide-react';
+import { useTranslation } from '../i18n';
 
 interface ClinicAnalyticsModalProps {
   encounters: EncounterRecord[];
@@ -9,6 +10,7 @@ interface ClinicAnalyticsModalProps {
 }
 
 export const ClinicAnalyticsModal: React.FC<ClinicAnalyticsModalProps> = ({ encounters, onClose }) => {
+  const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,7 +79,7 @@ export const ClinicAnalyticsModal: React.FC<ClinicAnalyticsModalProps> = ({ enco
   return (
     <motion.div
       id="analytics-modal-overlay"
-      className="modal-overlay"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -93,85 +95,89 @@ export const ClinicAnalyticsModal: React.FC<ClinicAnalyticsModalProps> = ({ enco
         aria-modal="true"
         aria-labelledby="analytics-modal-title"
         tabIndex={-1}
-        className="modal-container max-w-2xl max-h-[85vh] focus:outline-none focus:ring-2 focus:ring-teal-400/50"
-        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        className="vx-card max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl focus:outline-none focus:ring-1 focus:ring-[var(--vx-primary)]"
+        initial={{ opacity: 0, scale: 0.97, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+        exit={{ opacity: 0, scale: 0.97, y: 8 }}
         transition={{ duration: 0.15 }}
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-800/80">
-          <div className="flex items-center space-x-2">
-            <BarChart3 className="w-5 h-5 text-teal-400" />
-            <h3 id="analytics-modal-title" className="font-bold text-base text-slate-100">
-              Clinic Documentation & Impact Analytics
+        <div className="px-5 py-4 border-b border-[var(--vx-border)] flex items-center justify-between bg-[var(--vx-surface)]">
+          <div className="flex items-center space-x-2.5">
+            <BarChart3 className="w-4 h-4 text-[var(--vx-primary)]" />
+            <h3 id="analytics-modal-title" className="font-serif font-semibold text-sm text-[var(--vx-text)]">
+              {t.modals.analyticsTitle}
             </h3>
           </div>
 
           <button
             onClick={onClose}
-            aria-label="Close modal"
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-900 transition-colors"
+            aria-label={t.modals.close}
+            className="p-1.5 rounded-sm hover:bg-[var(--vx-surface-muted)] text-[var(--vx-text-muted)] hover:text-[var(--vx-text)] cursor-pointer transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-6 text-xs sm:text-sm bg-slate-950">
+        <div className="p-6 overflow-y-auto space-y-5 text-xs bg-[var(--vx-surface)] text-[var(--vx-text)]">
           {/* Top Key Metrics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-lg bg-teal-950 border border-teal-800 text-teal-400 flex items-center justify-center font-bold">
-                <FileCheck className="w-5 h-5" />
+            <div className="bg-[var(--vx-surface-muted)] p-3.5 rounded-sm border border-[var(--vx-border)] flex items-center space-x-3">
+              <div className="w-9 h-9 rounded-xs bg-[var(--vx-surface)] border border-[var(--vx-border)] text-[var(--vx-primary)] flex items-center justify-center font-bold">
+                <FileCheck className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-slate-400 text-xs font-semibold">Total Encounters</p>
-                <p className="text-xl font-bold text-slate-100">{totalEncounters}</p>
+                <p className="text-[var(--vx-text-muted)] text-[10px] font-mono uppercase tracking-wider">{t.modals.totalEncounters}</p>
+                <p className="text-xl font-serif font-bold text-[var(--vx-text)]">{totalEncounters}</p>
               </div>
             </div>
 
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-950 border border-emerald-800 text-emerald-400 flex items-center justify-center font-bold">
-                <Clock className="w-5 h-5" />
+            <div className="bg-[var(--vx-surface-muted)] p-3.5 rounded-sm border border-[var(--vx-border)] flex items-center space-x-3">
+              <div className="w-9 h-9 rounded-xs bg-[var(--vx-surface)] border border-[var(--vx-border)] text-[var(--vx-primary)] flex items-center justify-center font-bold">
+                <Clock className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-slate-400 text-xs font-semibold">Clinician Time Saved</p>
-                <p className="text-xl font-bold text-emerald-400">{hoursSaved} <span className="text-xs font-medium text-slate-400">hrs</span></p>
+                <p className="text-[var(--vx-text-muted)] text-[10px] font-mono uppercase tracking-wider">{t.modals.timeSaved}</p>
+                <p className="text-xl font-serif font-bold text-[var(--vx-primary)]">
+                  {hoursSaved} <span className="text-xs font-mono font-normal text-[var(--vx-text-muted)]">hrs</span>
+                </p>
               </div>
             </div>
 
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-950 border border-amber-800 text-amber-400 flex items-center justify-center font-bold">
-                <ShieldAlert className="w-5 h-5" />
+            <div className="bg-[var(--vx-surface-muted)] p-3.5 rounded-sm border border-[var(--vx-border)] flex items-center space-x-3">
+              <div className="w-9 h-9 rounded-xs bg-[var(--vx-surface)] border border-[var(--vx-border)] text-[var(--vx-secondary)] flex items-center justify-center font-bold">
+                <ShieldAlert className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-slate-400 text-xs font-semibold">Safety Flags Audited</p>
-                <p className="text-xl font-bold text-amber-300">{totalAlertsIntercepted}</p>
+                <p className="text-[var(--vx-text-muted)] text-[10px] font-mono uppercase tracking-wider">{t.modals.safetyAudited}</p>
+                <p className="text-xl font-serif font-bold text-[var(--vx-secondary)]">{totalAlertsIntercepted}</p>
               </div>
             </div>
           </div>
 
           {/* Primary Diagnoses Breakdown */}
-          <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3">
-            <h4 className="font-bold text-sm text-slate-200 flex items-center justify-between">
-              <span>Top Clinical Conditions Documented</span>
-              <span className="text-slate-500 text-xs font-normal">Primary Care Volume</span>
+          <div className="bg-[var(--vx-surface-muted)] p-4 rounded-sm border border-[var(--vx-border)] space-y-3">
+            <h4 className="font-serif font-semibold text-xs text-[var(--vx-text)] flex items-center justify-between uppercase tracking-wider">
+              <span>Clinical Conditions Documented</span>
+              <span className="text-[var(--vx-text-subtle)] text-[10px] font-mono font-normal">Encounter Distribution</span>
             </h4>
 
             {diagnosisList.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {diagnosisList.slice(0, 6).map(([diag, count], idx) => {
                   const percentage = Math.round((count / Math.max(totalEncounters, 1)) * 100);
                   return (
                     <div key={idx} className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="font-semibold text-slate-300 truncate max-w-[280px]">{diag}</span>
-                        <span className="text-teal-400 font-bold">{count} patient{count > 1 ? 's' : ''} ({percentage}%)</span>
+                      <div className="flex justify-between text-xs font-medium">
+                        <span className="text-[var(--vx-text)] truncate max-w-[280px]">{diag}</span>
+                        <span className="text-[var(--vx-primary)] font-mono text-[11px] font-semibold">
+                          {count} case{count > 1 ? 's' : ''} ({percentage}%)
+                        </span>
                       </div>
-                      <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                      <div className="w-full h-1.5 bg-[var(--vx-surface)] rounded-xs overflow-hidden border border-[var(--vx-border)]">
                         <div
-                          className="h-full bg-gradient-to-r from-teal-500 to-emerald-400 rounded-full"
+                          className="h-full bg-[var(--vx-primary)] rounded-xs transition-all"
                           style={{ width: `${Math.max(percentage, 5)}%` }}
                         ></div>
                       </div>
@@ -180,18 +186,20 @@ export const ClinicAnalyticsModal: React.FC<ClinicAnalyticsModalProps> = ({ enco
                 })}
               </div>
             ) : (
-              <p className="text-slate-500 italic">No encounter records saved yet to calculate diagnosis distribution.</p>
+              <p className="text-[var(--vx-text-subtle)] italic text-xs">
+                No encounter records saved yet to calculate diagnosis distribution.
+              </p>
             )}
           </div>
 
-          {/* Low-Resource Primary Care Impact Summary */}
-          <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
-            <h4 className="font-bold text-sm text-teal-300 flex items-center space-x-1.5">
-              <Award className="w-4 h-4 text-teal-400" />
-              <span>Low-Resource Clinic Impact Statement</span>
+          {/* Sovereignty & Impact Statement */}
+          <div className="bg-[var(--vx-surface-muted)] p-4 rounded-sm border border-[var(--vx-border)] space-y-2 text-xs">
+            <h4 className="font-serif font-semibold text-xs text-[var(--vx-secondary)] flex items-center space-x-1.5 uppercase tracking-wider">
+              <Award className="w-3.5 h-3.5 text-[var(--vx-secondary)]" />
+              <span>Sovereign Clinical Intelligence Statement</span>
             </h4>
-            <p className="text-slate-300 leading-relaxed">
-              In low-resource primary care clinics where clinicians handle up to 40+ consultations per day, administrative burden consumes up to 40% of consultation time. By reducing SOAP note creation from 15 minutes to under 2 minutes, MedScribe Lite empowers rural healthcare workers to dedicate maximum time to patient care.
+            <p className="text-[var(--vx-text-muted)] leading-relaxed text-xs">
+              VAIDHYA combines sovereign mathematical precision, privacy-preserving clinical extraction, and real-time evidence grounding. In high-demand primary care environments, it reduces clinical documentation burden by up to 80% while keeping all inference under clinician oversight.
             </p>
           </div>
         </div>

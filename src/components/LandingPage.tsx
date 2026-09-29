@@ -1,34 +1,39 @@
 import React, { useState } from 'react';
 import {
-  Stethoscope,
-  Sparkles,
-  ShieldAlert,
-  Clock,
-  FileCheck,
-  Check,
+  ShieldCheck,
+  CheckCircle2,
   ArrowRight,
   Send,
-  CheckCircle2,
   Lock,
-  Zap,
+  Layers,
+  FileCheck,
+  Cpu,
+  Database,
+  Building,
   Activity,
-  HeartPulse,
-  Award,
-  Users,
-  Building2
+  SlidersHorizontal,
 } from 'lucide-react';
+import { VaidhyaMark } from '../design/components/VaidhyaMark';
+import { AstraMark } from '../design/components/AstraMark';
+import { AstraSeal } from '../design/components/AstraSeal';
+import { AstraAttribution } from '../design/components/AstraAttribution';
+import { ThemeSwitcher } from '../design/components/ThemeSwitcher';
 
 interface LandingPageProps {
   onLaunchWorkstation: () => void;
+  onNavigateToAstrax?: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchWorkstation }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({
+  onLaunchWorkstation,
+  onNavigateToAstrax,
+}) => {
   // Request access form state
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     clinicName: '',
-    role: 'Physician',
+    role: 'Attending Physician',
     monthlyEncounters: '100-500',
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -40,463 +45,423 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchWorkstation })
   };
 
   return (
-    <div id="landing-page" className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
-      {/* 1. Header Navigation */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <div id="landing-page" className="min-h-screen bg-[var(--vx-bg)] text-[var(--vx-text)] flex flex-col font-sans transition-colors duration-300">
+      {/* 1. Institutional Top Navigation */}
+      <header className="border-b border-[var(--vx-border)] sticky top-0 z-40 bg-[var(--vx-surface)]/95 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-xs font-bold">
-              <Stethoscope className="w-5 h-5 stroke-[2.2]" />
-            </div>
+          <div className="flex items-center space-x-3.5">
+            <VaidhyaMark size={36} />
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-bold text-lg text-slate-800 tracking-tight">MedScribe <span className="text-blue-600 font-extrabold">Lite</span></span>
-                <span className="badge-brand">Safety Copilot</span>
+                <span className="font-serif font-bold text-base text-[var(--vx-text)] tracking-tight">
+                  VAIDHYA
+                </span>
+                <span className="text-[9px] font-mono uppercase tracking-widest text-[var(--vx-primary)] border border-[var(--vx-primary)]/20 bg-[var(--vx-primary-soft)] px-2 py-0.5 rounded-xs">
+                  CLINICAL INTELLIGENCE
+                </span>
               </div>
-              <p className="text-xs text-slate-500 font-medium hidden sm:block">Primary Care Clinical Safety Copilot & Scribe</p>
+              <AstraAttribution onClick={onNavigateToAstrax} />
             </div>
           </div>
 
-          <div className="hidden md:flex items-center space-x-6 text-xs font-semibold text-slate-600">
-            <a href="#problem" className="hover:text-blue-600 transition-colors">Problem</a>
-            <a href="#product" className="hover:text-blue-600 transition-colors">Product Preview</a>
-            <a href="#pricing" className="hover:text-blue-600 transition-colors">Pricing</a>
-            <a href="#request-access" className="hover:text-blue-600 transition-colors">Request Access</a>
+          <div className="hidden md:flex items-center space-x-6 text-xs font-mono tracking-wider uppercase text-[var(--vx-text-muted)]">
+            <a href="#foundations" className="hover:text-[var(--vx-primary)] transition-colors">Foundations</a>
+            <a href="#architecture" className="hover:text-[var(--vx-primary)] transition-colors">Architecture</a>
+            <a href="#sovereignty" className="hover:text-[var(--vx-primary)] transition-colors">Sovereignty</a>
+            <a href="#request-access" className="hover:text-[var(--vx-primary)] transition-colors">Access</a>
           </div>
 
-          <button
-            id="btn-nav-launch-workstation"
-            onClick={onLaunchWorkstation}
-            className="btn-primary py-2 px-4 shadow-xs text-xs flex items-center space-x-2"
-          >
-            <Sparkles className="w-4 h-4 text-white fill-white" />
-            <span>Launch Workstation</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            <ThemeSwitcher />
+            <button
+              id="btn-nav-launch-workstation"
+              onClick={onLaunchWorkstation}
+              className="vx-btn-primary py-2 px-3.5 text-xs flex items-center space-x-2 cursor-pointer"
+            >
+              <span>Launch Workstation</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 space-y-16 pb-16">
-        {/* 2. Hero Section */}
-        <section id="hero" className="relative bg-gradient-to-b from-white to-slate-50 pt-12 pb-16 border-b border-slate-200/80">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-            <div className="inline-flex items-center space-x-2 bg-blue-50 border border-blue-200 text-blue-700 px-3.5 py-1.5 rounded-full text-xs font-bold">
-              <ShieldAlert className="w-4 h-4 text-blue-600" />
-              <span>AI Clinical Safety Copilot & Documentation Assistant</span>
+      <main className="flex-1 space-y-20 pb-20">
+        {/* 2. Editorial Intelligence Hero */}
+        <section id="hero" className="relative pt-16 pb-20 border-b border-[var(--vx-border)] overflow-hidden">
+          {/* Subtle Geometric Background */}
+          <div className="absolute inset-0 pointer-events-none opacity-40">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full border border-[var(--vx-border)]" />
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] rounded-full border border-[var(--vx-border-strong)] border-dashed" />
+            <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-[var(--vx-border)]" />
+            <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-[var(--vx-border)]" />
+          </div>
+
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 relative z-10">
+            <div className="inline-flex items-center space-x-2.5 bg-[var(--vx-surface-muted)] border border-[var(--vx-border)] px-3.5 py-1.5 rounded-full text-xs font-mono">
+              <span className="w-2 h-2 rotate-45 bg-[var(--vx-secondary)]"></span>
+              <span className="text-[var(--vx-text-muted)] uppercase tracking-wider">
+                AI-Powered Clinical Documentation & Safety Assistant · AN ASTRA X INTELLIGENCE SYSTEM
+              </span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight max-w-4xl mx-auto leading-[1.15]">
-              AI-Powered Clinical Documentation & Safety Assistant Built for <span className="text-blue-600">Small Independent Clinics</span> & Community Health Centers.
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-[var(--vx-text)] tracking-tight leading-[1.12]">
+              Sovereign Clinical Intelligence for Evidence-Grounded Healthcare
             </h1>
 
-            <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
-              Turn unstructured doctor-patient consultation dictations into verified SOAP notes, ICD-10/CPT billing codes, and real-time drug safety alerts in under 2 minutes.
+            <p className="text-base sm:text-lg text-[var(--vx-text-muted)] max-w-2xl mx-auto leading-relaxed font-normal">
+              VAIDHYA transforms unstructured doctor-patient consultation discourse into verified SOAP notes,
+              ICD-10/CPT coding, and proactive clinical guardrail audits with mathematical precision.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
               <button
                 id="btn-hero-launch"
                 onClick={onLaunchWorkstation}
-                className="btn-primary py-3.5 px-7 text-sm font-bold shadow-md flex items-center space-x-2.5 w-full sm:w-auto justify-center"
+                className="vx-btn-primary py-3 px-6 text-sm font-semibold flex items-center space-x-2.5 w-full sm:w-auto justify-center cursor-pointer shadow-sm"
               >
-                <Sparkles className="w-5 h-5 text-white fill-white" />
-                <span>Launch Live Workstation</span>
-                <ArrowRight className="w-4 h-4 text-white/80" />
+                <span>Launch Clinical Workstation</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
 
               <a
                 href="#request-access"
-                className="btn-secondary py-3.5 px-6 text-sm font-bold w-full sm:w-auto text-center"
+                className="vx-btn-secondary py-3 px-6 text-sm font-semibold w-full sm:w-auto text-center"
               >
-                Request Early Access
+                Request Sovereign Deployment
               </a>
             </div>
 
-            {/* Micro Highlights Bar */}
-            <div className="pt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 font-medium border-t border-slate-200/60 max-w-3xl mx-auto">
-              <div className="flex items-center space-x-1.5">
-                <Zap className="w-4 h-4 text-amber-500" />
-                <span>Sub-200ms Motion Transitions</span>
+            {/* Micro Pillars */}
+            <div className="pt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto border-t border-[var(--vx-border)] text-left text-xs font-mono">
+              <div className="space-y-1">
+                <span className="text-[var(--vx-secondary)] font-bold block text-[10px] tracking-widest uppercase">
+                  01 · GROUNDED EVIDENCE
+                </span>
+                <p className="text-[var(--vx-text-muted)] font-sans">
+                  Direct citation and provenance mapping to patient utterance recordings.
+                </p>
               </div>
-              <span className="text-slate-300 hidden sm:inline">•</span>
-              <div className="flex items-center space-x-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <span>100% Fact Accuracy Guardrails</span>
+              <div className="space-y-1">
+                <span className="text-[var(--vx-primary)] font-bold block text-[10px] tracking-widest uppercase">
+                  02 · PRIVACY SOVEREIGNTY
+                </span>
+                <p className="text-[var(--vx-text-muted)] font-sans">
+                  On-device and air-gapped local inference capability with zero cloud mandate.
+                </p>
               </div>
-              <span className="text-slate-300 hidden sm:inline">•</span>
-              <div className="flex items-center space-x-1.5">
-                <HeartPulse className="w-4 h-4 text-blue-500" />
-                <span>Low-Resource Optimized</span>
+              <div className="space-y-1">
+                <span className="text-[var(--vx-text)] font-bold block text-[10px] tracking-widest uppercase">
+                  03 · HUMAN APPROVAL
+                </span>
+                <p className="text-[var(--vx-text-muted)] font-sans">
+                  Clinician review and signature required before any record finalization.
+                </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* 3. Problem & Impact Section */}
-        <section id="problem" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* 3. Clinical Workflow Architecture */}
+        <section id="architecture" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="text-center space-y-2">
-            <h2 className="text-xs font-bold text-blue-600 uppercase tracking-wider">The Rural & Small Practice Reality</h2>
-            <p className="text-2xl font-bold text-slate-800 tracking-tight">Built specifically for high-volume, low-resource primary care settings</p>
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--vx-secondary)] font-semibold">
+              MATHEMATICAL GRAMMAR · CLINICAL SUTRA
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[var(--vx-text)] tracking-tight">
+              Continuous Clinical Progression Architecture
+            </h2>
+            <p className="text-xs sm:text-sm text-[var(--vx-text-muted)] max-w-xl mx-auto">
+              Every patient case follows a six-stage deterministic workflow ensuring full clinical reasoning accountability.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-3 relative overflow-hidden">
-              <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center font-bold">
-                <Clock className="w-5 h-5" />
+            <div className="vx-card p-6 space-y-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--vx-primary)] bg-[var(--vx-primary-soft)] px-2 py-0.5 rounded-xs font-semibold">
+                  STAGES 01–02
+                </span>
+                <div className="w-5 h-5 rotate-45 border border-[var(--vx-border-strong)] flex items-center justify-center">
+                  <div className="w-2 h-2 rotate-45 bg-[var(--vx-secondary)]"></div>
+                </div>
               </div>
-              <h3 className="font-bold text-base text-slate-800">40%+ Consultation Time Lost</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Clinicians seeing 40+ patients daily spend up to 4 hours manually writing clinical notes, creating extreme burnout and delayed patient care.
+              <h3 className="font-serif font-semibold text-base text-[var(--vx-text)]">
+                Intake & Encounter Capture
+              </h3>
+              <p className="text-xs text-[var(--vx-text-muted)] leading-relaxed">
+                Structured capture of demographics, allergies, and prior history alongside raw consultation dictation or ambient audio recordings.
               </p>
-              <div className="pt-2 text-xs font-bold text-blue-600 flex items-center space-x-1">
-                <span>MedScribe Impact:</span>
-                <span className="text-slate-700 font-semibold">Saves 12+ min per encounter</span>
+            </div>
+
+            <div className="vx-card p-6 space-y-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--vx-secondary)] bg-[var(--vx-secondary-soft)] px-2 py-0.5 rounded-xs font-semibold">
+                  STAGES 03–04
+                </span>
+                <div className="w-5 h-5 rotate-45 border border-[var(--vx-border-strong)] flex items-center justify-center">
+                  <div className="w-2 h-2 rotate-45 bg-[var(--vx-primary)]"></div>
+                </div>
+              </div>
+              <h3 className="font-serif font-semibold text-base text-[var(--vx-text)]">
+                Structuring & Evidence Grounding
+              </h3>
+              <p className="text-xs text-[var(--vx-text-muted)] leading-relaxed">
+                Separation into Subjective, Objective, Assessment, and Plan domains, accompanied by verified drug-drug interaction and contraindication auditing.
+              </p>
+            </div>
+
+            <div className="vx-card p-6 space-y-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--vx-text)] bg-[var(--vx-surface-muted)] px-2 py-0.5 rounded-xs font-semibold border border-[var(--vx-border)]">
+                  STAGES 05–06
+                </span>
+                <div className="w-5 h-5 rotate-45 border border-[var(--vx-border-strong)] flex items-center justify-center">
+                  <div className="w-2 h-2 rotate-45 bg-[var(--vx-text)]"></div>
+                </div>
+              </div>
+              <h3 className="font-serif font-semibold text-base text-[var(--vx-text)]">
+                Physician Review & Sign-Off
+              </h3>
+              <p className="text-xs text-[var(--vx-text-muted)] leading-relaxed">
+                Complete physician editorial control, ICD-10/CPT coding approval, HL7 FHIR R4 interoperability bundle generation, and patient advice slip printing.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. Sovereignty & Governance */}
+        <section id="sovereignty" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="vx-card p-8 md:p-12 space-y-8 bg-gradient-to-br from-[var(--vx-surface)] to-[var(--vx-surface-muted)]">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-[var(--vx-border)] pb-6">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--vx-secondary)] font-semibold">
+                  PRIVACY & DATA RESIDENCY
+                </span>
+                <h3 className="font-serif font-bold text-2xl text-[var(--vx-text)]">
+                  Sovereign Clinical Computing
+                </h3>
+              </div>
+              <div className="flex items-center space-x-2 text-xs font-mono text-[var(--vx-primary)] bg-[var(--vx-primary-soft)] px-3 py-1.5 rounded-xs border border-[var(--vx-primary)]/20">
+                <Lock className="w-3.5 h-3.5" />
+                <span>Zero PHI Cloud Leakage Architecture</span>
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-3 relative overflow-hidden">
-              <div className="w-10 h-10 rounded-2xl bg-red-50 border border-red-100 text-red-600 flex items-center justify-center font-bold">
-                <ShieldAlert className="w-5 h-5" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+              <div className="space-y-2">
+                <div className="w-8 h-8 rounded-xs bg-[var(--vx-surface)] border border-[var(--vx-border)] flex items-center justify-center text-[var(--vx-primary)]">
+                  <Cpu className="w-4 h-4" />
+                </div>
+                <h4 className="font-serif font-semibold text-sm text-[var(--vx-text)]">Local Offline Engine</h4>
+                <p className="text-[var(--vx-text-muted)] leading-relaxed">
+                  Operate entirely without an active internet connection using integrated rule-based extraction engines and on-premise local models.
+                </p>
               </div>
-              <h3 className="font-bold text-base text-slate-800">Overlooked Drug Safety & Allergies</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                High patient load and complex drug histories lead to missed drug-drug interaction warnings and contraindication auditing in busy clinics.
-              </p>
-              <div className="pt-2 text-xs font-bold text-blue-600 flex items-center space-x-1">
-                <span>MedScribe Impact:</span>
-                <span className="text-slate-700 font-semibold">Instant clinical safety alerts</span>
-              </div>
-            </div>
 
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-3 relative overflow-hidden">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
-                <FileCheck className="w-5 h-5" />
+              <div className="space-y-2">
+                <div className="w-8 h-8 rounded-xs bg-[var(--vx-surface)] border border-[var(--vx-border)] flex items-center justify-center text-[var(--vx-secondary)]">
+                  <Database className="w-4 h-4" />
+                </div>
+                <h4 className="font-serif font-semibold text-sm text-[var(--vx-text)]">Encrypted Device Vault</h4>
+                <p className="text-[var(--vx-text-muted)] leading-relaxed">
+                  Clinical records and encounters persist strictly in local browser or workstation storage under doctor control.
+                </p>
               </div>
-              <h3 className="font-bold text-base text-slate-800">Uncaptured Billing Revenue</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Without dedicated billing staff, primary care providers miss standard ICD-10 diagnostic codes and CPT evaluation levels required for clinic reimbursement.
-              </p>
-              <div className="pt-2 text-xs font-bold text-blue-600 flex items-center space-x-1">
-                <span>MedScribe Impact:</span>
-                <span className="text-slate-700 font-semibold">Automated ICD-10 & CPT coding</span>
+
+              <div className="space-y-2">
+                <div className="w-8 h-8 rounded-xs bg-[var(--vx-surface)] border border-[var(--vx-border)] flex items-center justify-center text-[var(--vx-text)]">
+                  <Building className="w-4 h-4" />
+                </div>
+                <h4 className="font-serif font-semibold text-sm text-[var(--vx-text)]">ABDM & FHIR Compliance</h4>
+                <p className="text-[var(--vx-text-muted)] leading-relaxed">
+                  Native export to HL7 FHIR Release 4 JSON specification ready for institutional EHR integration.
+                </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* 4. Product Preview Section */}
-        <section id="product" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-          <div className="text-center space-y-2">
-            <h2 className="text-xs font-bold text-blue-600 uppercase tracking-wider">Product Showcase</h2>
-            <p className="text-2xl font-bold text-slate-800 tracking-tight">Clinical Workstation</p>
-          </div>
-
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3 text-xs">
-              <div className="flex items-center space-x-2 text-slate-400">
-                <span className="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
-                <span className="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
-                <span className="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
-                <span className="font-mono text-[11px] text-slate-400 ml-2">medscribe-lite.clinic/workstation</span>
-              </div>
-              <span className="badge-brand bg-blue-900/50 text-blue-300 border-blue-700">Interactive Workstation View</span>
-            </div>
-
-            {/* Bento Visual Preview */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="bg-slate-850 bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 space-y-3">
-                <div className="flex items-center justify-between text-xs text-blue-400 font-bold">
-                  <span>1. Patient Demographics & Dictation</span>
-                  <span className="text-[10px] text-slate-400">Live Speech-to-Text</span>
-                </div>
-                <div className="bg-slate-900 border border-slate-700 p-3 rounded-xl text-slate-300 font-mono text-xs space-y-2">
-                  <div className="text-slate-400 text-[11px]">Patient: Kwame Mensah (28M) • Sub-District Health Center</div>
-                  <p className="text-slate-200">"Doctor: Good morning. Patient: I have had high fever, chills, and headache for 3 days. Doctor: Any joint pain or vomiting?..."</p>
-                </div>
-              </div>
-
-              <div className="bg-slate-850 bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 space-y-3">
-                <div className="flex items-center justify-between text-xs text-emerald-400 font-bold">
-                  <span>2. Verified Bento SOAP Note</span>
-                  <span className="text-[10px] text-slate-400">Gemini 3.6 Flash Engine</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-slate-900 border border-blue-500/30 p-2.5 rounded-xl text-xs">
-                    <span className="font-bold text-blue-400 block text-[10px]">SUBJECTIVE</span>
-                    <span className="text-slate-300 text-[11px]">Acute fever, chills, severe frontal headache x 3 days.</span>
-                  </div>
-                  <div className="bg-slate-900 border border-emerald-500/30 p-2.5 rounded-xl text-xs">
-                    <span className="font-bold text-emerald-400 block text-[10px]">OBJECTIVE</span>
-                    <span className="text-slate-300 text-[11px]">Temp 38.8°C, HR 98 bpm, BP 118/76, RDT Positive.</span>
-                  </div>
-                  <div className="bg-slate-900 border border-indigo-500/30 p-2.5 rounded-xl text-xs">
-                    <span className="font-bold text-indigo-400 block text-[10px]">ASSESSMENT</span>
-                    <span className="text-slate-300 text-[11px]">Acute Uncomplicated Plasmodium Falciparum Malaria.</span>
-                  </div>
-                  <div className="bg-slate-900 border border-teal-500/30 p-2.5 rounded-xl text-xs">
-                    <span className="font-bold text-teal-400 block text-[10px]">PLAN</span>
-                    <span className="text-slate-300 text-[11px]">Artemether-Lumefantrine 80/480mg PO BID x 3 days.</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 text-center">
-              <button
-                onClick={onLaunchWorkstation}
-                className="btn-primary py-2.5 px-6 text-xs font-bold shadow-xs inline-flex items-center space-x-2"
-              >
-                <span>Launch Workstation to Test All 5 Scenarios</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* 5. Pricing Tiers Section */}
+        {/* 5. Transparent Clinic Pricing */}
         <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="text-center space-y-2">
-            <h2 className="text-xs font-bold text-blue-600 uppercase tracking-wider">Transparent Clinic Pricing</h2>
-            <p className="text-2xl font-bold text-slate-800 tracking-tight">Simple plans tailored for rural practices & health networks</p>
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--vx-secondary)] font-semibold">
+              TRANSPARENT VALUE
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[var(--vx-text)] tracking-tight">
+              Transparent Clinic Pricing & Deployment Models
+            </h2>
+            <p className="text-xs sm:text-sm text-[var(--vx-text-muted)] max-w-xl mx-auto">
+              Predictable, low-overhead clinical intelligence packages tailored for independent practices, community clinics, and sovereign hospital systems.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-            {/* Free Tier */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-lg text-slate-800">Community Outreach</h3>
-                  <p className="text-xs text-slate-500">Solo rural health workers & outreach units</p>
-                </div>
-
-                <div className="flex items-baseline space-x-1">
-                  <span className="text-3xl font-black text-slate-900">₹0</span>
-                  <span className="text-xs text-slate-500 font-medium">/ month</span>
-                </div>
-
-                <ul className="space-y-2.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
-                  <li className="flex items-start space-x-2">
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Ambient Speech-to-Text dictation</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>5 pre-loaded clinical scenarios</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Standard Gemini 3.6 Flash SOAP generation</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>LocalStorage encounter history</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Basic drug interaction & safety flags</span>
-                  </li>
-                </ul>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="vx-card p-6 space-y-4">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--vx-text-muted)] font-semibold">
+                  COMMUNITY HEALTH
+                </span>
+                <h3 className="font-serif font-bold text-xl text-[var(--vx-text)]">Open Sovereign</h3>
+                <div className="text-2xl font-serif font-bold text-[var(--vx-primary)]">$0 <span className="text-xs font-sans text-[var(--vx-text-muted)] font-normal">/ forever local</span></div>
               </div>
-
-              <button
-                onClick={onLaunchWorkstation}
-                className="btn-secondary w-full py-2.5 text-xs font-bold text-center"
-              >
-                Use Community Free Tier
-              </button>
+              <p className="text-xs text-[var(--vx-text-muted)]">
+                Complete browser-local offline engine, local SQLite/encrypted storage, full SOAP note extraction, and zero external network calls.
+              </p>
+              <ul className="text-xs space-y-2 text-[var(--vx-text)] pt-2 border-t border-[var(--vx-border)]">
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[var(--vx-primary)]" /> 100% On-Device Privacy</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[var(--vx-primary)]" /> Unlimited Local Encounters</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[var(--vx-primary)]" /> HL7 FHIR R4 Bundle Export</li>
+              </ul>
             </div>
 
-            {/* Independent Clinic Tier (Highlighted) */}
-            <div className="bg-white border-2 border-blue-600 rounded-3xl p-6 shadow-md flex flex-col justify-between space-y-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
-                Most Popular
+            <div className="vx-card p-6 space-y-4 border-[var(--vx-secondary)]/40 relative">
+              <div className="absolute top-3 right-3 text-[9px] font-mono uppercase tracking-wider bg-[var(--vx-secondary-soft)] text-[var(--vx-secondary)] border border-[var(--vx-secondary)]/30 px-2 py-0.5 rounded-xs font-semibold">
+                RECOMMENDED
               </div>
-
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-lg text-slate-900">Independent Clinic</h3>
-                  <p className="text-xs text-slate-500">Small independent clinics (1-5 providers)</p>
-                </div>
-
-                <div className="flex items-baseline space-x-1">
-                  <span className="text-3xl font-black text-slate-900">₹199</span>
-                  <span className="text-xs text-slate-500 font-medium">/ clinic / month</span>
-                </div>
-
-                <ul className="space-y-2.5 text-xs text-slate-700 pt-2 border-t border-slate-100">
-                  <li className="flex items-start space-x-2 font-semibold">
-                    <Check className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                    <span>Everything in Free Tier</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Check className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                    <span>Priority API throughput & zero queue delay</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Check className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                    <span>Custom clinic header on prescription slips</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Check className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                    <span>FHIR / EHR export options</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Check className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                    <span>Automated Safety Copilot guardrail audits</span>
-                  </li>
-                </ul>
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--vx-secondary)] font-semibold">
+                  CLINICAL PRACTICE
+                </span>
+                <h3 className="font-serif font-bold text-xl text-[var(--vx-text)]">Active Intelligence</h3>
+                <div className="text-2xl font-serif font-bold text-[var(--vx-secondary)]">$49 <span className="text-xs font-sans text-[var(--vx-text-muted)] font-normal">/ clinician / mo</span></div>
               </div>
-
-              <a
-                href="#request-access"
-                className="btn-primary w-full py-3 text-xs font-bold text-center shadow-xs"
-              >
-                Request Clinic Access
-              </a>
+              <p className="text-xs text-[var(--vx-text-muted)]">
+                Dual-engine orchestration with Gemini 3.6 Flash cloud inference and instant offline fallback, real-time drug interaction database, and ambient audio transcription.
+              </p>
+              <ul className="text-xs space-y-2 text-[var(--vx-text)] pt-2 border-t border-[var(--vx-border)]">
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[var(--vx-primary)]" /> Ambient Microphone Streaming</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[var(--vx-primary)]" /> ICD-10 & CPT Automated Coding</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[var(--vx-primary)]" /> Multi-Language (EN/ES) Clinical Mode</li>
+              </ul>
             </div>
 
-            {/* Multi-Provider Tier */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-lg text-slate-800">Multi-Provider Network</h3>
-                  <p className="text-xs text-slate-500">Regional primary care networks & centers</p>
-                </div>
-
-                <div className="flex items-baseline space-x-1">
-                  <span className="text-3xl font-black text-slate-900">₹499</span>
-                  <span className="text-xs text-slate-500 font-medium">/ center / month</span>
-                </div>
-
-                <ul className="space-y-2.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
-                  <li className="flex items-start space-x-2 font-semibold text-slate-700">
-                    <Check className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                    <span>Everything in Independent Clinic Tier</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Check className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                    <span>Multi-provider team workspace & roles</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Check className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                    <span>Localized drug interaction database overrides</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Check className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                    <span>Regional ICD-10 & CPT custom coding rules</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <Check className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                    <span>Priority SLA & dedicated onboarding support</span>
-                  </li>
-                </ul>
+            <div className="vx-card p-6 space-y-4">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--vx-text-muted)] font-semibold">
+                  HEALTH AUTHORITY
+                </span>
+                <h3 className="font-serif font-bold text-xl text-[var(--vx-text)]">Sovereign Enterprise</h3>
+                <div className="text-2xl font-serif font-bold text-[var(--vx-text)]">Custom <span className="text-xs font-sans text-[var(--vx-text-muted)] font-normal">/ on-premise</span></div>
               </div>
-
-              <a
-                href="#request-access"
-                className="btn-secondary w-full py-2.5 text-xs font-bold text-center"
-              >
-                Contact Network Sales
-              </a>
+              <p className="text-xs text-[var(--vx-text-muted)]">
+                Air-gapped hospital server deployment, custom hospital formulary integrations, sovereign audit ledgers, and dedicated institutional engineering.
+              </p>
+              <ul className="text-xs space-y-2 text-[var(--vx-text)] pt-2 border-t border-[var(--vx-border)]">
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[var(--vx-primary)]" /> Air-Gapped Hospital Appliance</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[var(--vx-primary)]" /> Dedicated Fine-Tuned Models</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[var(--vx-primary)]" /> ABDM / Epic / Cerner Integration</li>
+              </ul>
             </div>
           </div>
         </section>
 
-        {/* 6. Request Access CTA Form */}
+        {/* 6. Request Sovereign Access Form */}
         <section id="request-access" className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-            <div className="text-center space-y-2">
-              <div className="w-10 h-10 rounded-full bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mx-auto">
-                <Send className="w-5 h-5" />
-              </div>
-              <h2 className="text-xl font-bold text-slate-800">Request Early Access for Your Clinic</h2>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
-                Join our pilot program for small independent clinics and community health centers.
-              </p>
-            </div>
+          <div className="text-center space-y-2">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--vx-primary)] font-semibold">
+              INSTITUTIONAL ENROLLMENT
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[var(--vx-text)] tracking-tight">
+              Request Sovereign Deployment
+            </h2>
+            <p className="text-xs sm:text-sm text-[var(--vx-text-muted)]">
+              Equip your medical facility, rural clinic, or health authority with VAIDHYA clinical intelligence.
+            </p>
+          </div>
 
+          <div className="vx-card p-6 sm:p-8">
             {isSubmitted ? (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center space-y-3">
-                <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-                <h3 className="font-bold text-base text-emerald-900">Access Request Received!</h3>
-                <p className="text-xs text-emerald-700 max-w-md mx-auto leading-relaxed">
-                  Thank you, <strong>{formData.fullName}</strong>! Your request for <strong>{formData.clinicName}</strong> has been registered. Our onboarding clinical team will contact you within 24 hours.
-                </p>
-                <div className="pt-2">
-                  <button
-                    onClick={onLaunchWorkstation}
-                    className="btn-primary py-2 px-4 text-xs font-bold shadow-xs inline-flex items-center space-x-2"
-                  >
-                    <span>Launch Workstation Demo Right Now</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+              <div className="text-center py-8 space-y-3">
+                <div className="w-12 h-12 rounded-full bg-[var(--vx-primary-soft)] border border-[var(--vx-primary)]/20 text-[var(--vx-primary)] flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="w-6 h-6" />
                 </div>
+                <h3 className="font-serif font-bold text-lg text-[var(--vx-text)]">Deployment Request Received</h3>
+                <p className="text-xs text-[var(--vx-text-muted)] max-w-md mx-auto leading-relaxed">
+                  Thank you, <span className="font-semibold text-[var(--vx-text)]">{formData.fullName}</span>. An AstraX intelligence specialist will coordinate your institution's configuration for {formData.clinicName}.
+                </p>
+                <button
+                  onClick={() => setIsSubmitted(false)}
+                  className="vx-btn-ghost py-1.5 px-4 text-xs font-mono"
+                >
+                  Submit Another Request
+                </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700">Full Name *</label>
+                    <label className="block text-[var(--vx-text-muted)] font-mono text-[10px] uppercase tracking-wider font-semibold">
+                      Full Name *
+                    </label>
                     <input
                       type="text"
                       required
-                      placeholder="Dr. Sarah Mensah"
                       value={formData.fullName}
                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500"
+                      placeholder="Dr. Anandita Sharma"
+                      className="w-full bg-[var(--vx-surface)] border border-[var(--vx-border-strong)] rounded-sm p-2 text-[var(--vx-text)] focus:border-[var(--vx-primary)] focus:outline-none"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700">Work Email *</label>
+                    <label className="block text-[var(--vx-text-muted)] font-mono text-[10px] uppercase tracking-wider font-semibold">
+                      Institutional Email *
+                    </label>
                     <input
                       type="email"
                       required
-                      placeholder="sarah@communityhealth.org"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500"
+                      placeholder="asharma@hospital.org"
+                      className="w-full bg-[var(--vx-surface)] border border-[var(--vx-border-strong)] rounded-sm p-2 text-[var(--vx-text)] focus:border-[var(--vx-primary)] focus:outline-none"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Clinic / Health Center Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="St. Jude Sub-District Clinic"
-                    value={formData.clinicName}
-                    onChange={(e) => setFormData({ ...formData, clinicName: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700">Primary Role</label>
+                    <label className="block text-[var(--vx-text-muted)] font-mono text-[10px] uppercase tracking-wider font-semibold">
+                      Healthcare Facility *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.clinicName}
+                      onChange={(e) => setFormData({ ...formData, clinicName: e.target.value })}
+                      placeholder="Sub-District Health Center"
+                      className="w-full bg-[var(--vx-surface)] border border-[var(--vx-border-strong)] rounded-sm p-2 text-[var(--vx-text)] focus:border-[var(--vx-primary)] focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[var(--vx-text-muted)] font-mono text-[10px] uppercase tracking-wider font-semibold">
+                      Clinical Role
+                    </label>
                     <select
                       value={formData.role}
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-[var(--vx-surface)] border border-[var(--vx-border-strong)] rounded-sm p-2 text-[var(--vx-text)] focus:border-[var(--vx-primary)] focus:outline-none"
                     >
-                      <option value="Physician">Physician / Medical Officer</option>
-                      <option value="Nurse Practitioner">Nurse Practitioner / Midwife</option>
-                      <option value="Community Health Worker">Community Health Worker</option>
-                      <option value="Clinic Administrator">Clinic Administrator</option>
+                      <option value="Physician">Attending Physician</option>
+                      <option value="Medical Director">Medical Director / CMO</option>
+                      <option value="Nurse Practitioner">Nurse Practitioner / Paramedic</option>
+                      <option value="Health Administrator">Clinic Administrator</option>
                     </select>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700">Monthly Patient Encounters</label>
+                    <label className="block text-[var(--vx-text-muted)] font-mono text-[10px] uppercase tracking-wider font-semibold">
+                      Monthly Volume
+                    </label>
                     <select
                       value={formData.monthlyEncounters}
                       onChange={(e) => setFormData({ ...formData, monthlyEncounters: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-[var(--vx-surface)] border border-[var(--vx-border-strong)] rounded-sm p-2 text-[var(--vx-text)] focus:border-[var(--vx-primary)] focus:outline-none"
                     >
-                      <option value="<100">&lt; 100 encounters / month</option>
-                      <option value="100-500">100 - 500 encounters / month</option>
-                      <option value="500-2000">500 - 2,000 encounters / month</option>
-                      <option value="2000+">2,000+ encounters / month</option>
+                      <option value="<100">&lt; 100 Encounters</option>
+                      <option value="100-500">100–500 Encounters</option>
+                      <option value="500-2000">500–2,000 Encounters</option>
+                      <option value="2000+">2,000+ Encounters</option>
                     </select>
                   </div>
                 </div>
@@ -504,16 +469,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchWorkstation })
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="btn-primary w-full py-3 text-xs font-bold shadow-xs flex items-center justify-center space-x-2"
+                    className="w-full vx-btn-primary py-3 text-xs font-semibold flex items-center justify-center space-x-2 cursor-pointer shadow-sm"
                   >
-                    <Send className="w-4 h-4 text-white" />
-                    <span>Submit Request Access</span>
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Submit Sovereign Access Inquiry</span>
                   </button>
-                </div>
-
-                <div className="text-[11px] text-slate-400 text-center flex items-center justify-center space-x-1">
-                  <Lock className="w-3 h-3 text-slate-400" />
-                  <span>Front-end demo form — backend API endpoint integration flagged for Phase 4 follow-up.</span>
                 </div>
               </form>
             )}
@@ -521,18 +481,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchWorkstation })
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white py-6 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-2">
-            <Stethoscope className="w-4 h-4 text-blue-600" />
-            <span className="font-bold text-slate-800">MedScribe Lite</span>
-            <span>• Primary Care Clinical Safety Copilot & Scribe</span>
+      {/* 6. AstraX Institutional Footer */}
+      <footer className="border-t border-[var(--vx-border)] bg-[var(--vx-surface)] py-8 text-xs text-[var(--vx-text-muted)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center space-x-3">
+            <VaidhyaMark size={28} />
+            <div>
+              <p className="font-serif font-bold text-[var(--vx-text)]">VAIDHYA · CLINICAL INTELLIGENCE</p>
+              <p className="text-[10px] font-mono tracking-wider text-[var(--vx-text-subtle)]">
+                AN ASTRA X INTELLIGENCE SYSTEM
+              </p>
+            </div>
           </div>
+
           <div className="flex items-center space-x-4">
-            <button onClick={onLaunchWorkstation} className="text-blue-600 font-bold hover:underline">
-              Launch Workstation Demo
-            </button>
+            <AstraAttribution onClick={onNavigateToAstrax} />
+            <span className="text-[var(--vx-text-subtle)]">·</span>
+            <AstraSeal size={32} />
           </div>
         </div>
       </footer>
